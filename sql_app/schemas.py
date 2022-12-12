@@ -56,7 +56,8 @@ class PersonBase(BaseModel):
     is_admin: bool
 
 class PersonCreate(PersonBase):
-    password: str
+    #password: str
+    pass
 
 class Person(BaseModel):
     id: int
@@ -80,6 +81,7 @@ class Hand(HandBase):
 
     class Config:
         orm_mode = True
+        use_enum_values = True
 
 class GameBase(BaseModel):
     person_id: int
@@ -113,3 +115,4 @@ class Room(RoomBase):
 
     class Config:
         orm_mode = True
+        use_enum_values = True

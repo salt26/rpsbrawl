@@ -69,10 +69,13 @@ def get_person_by_affilation_and_name(db: Session, affiliation: str, name: str):
     return db.query(models.Person).filter(models.Person.affiliation == affiliation and \
         models.Person.name == name).first()
 
-def create_person(db: Session, person: schemas.PersonCreate):
+def create_person(db: Session, affiliation: str, name: str, \
+    #hashed_password: str, 
+    is_admin: bool = False):
     # 회원 가입
-    db_person = models.Person(affiliation=person.affiliation, name=person.name, \
-        hashed_password=hash_password(person.password))
+    db_person = models.Person(affiliation=affiliation, name=name, \
+        #hashed_password=hash_password(hashed_password)
+        )
     db.add(db_person)
     db.commit()
     db.refresh(db_person)
@@ -97,7 +100,8 @@ def get_room(db: Session, room_id: int):
 
 def get_last_wait_room(db: Session):
     # 마지막 대기 방 반환 (없으면 생성해서 반환)
-    db_room = db.query(models.Room).filter(models.Room.state == schemas.RoomStateEnum.Wait).all()
+    print(type(models.Room.state))
+    db_room = db.query(models.Room).filter(models.Room.state is schemas.RoomStateEnum.Wait).all()
     if len(db_room) > 0:
         return db_room[-1]
     else:
@@ -112,8 +116,10 @@ def create_room(db: Session):
     return db_room
 
 def update_room_to_enter(db: Session, room_id: int, person_id: int):
-    db_room = db.query(models.Room).filter(models.Room.id == room_id and models.Room.state == schemas.RoomStateEnum.Wait)
+    db_room = db.query(models.Room).filter(models.Room.id == room_id and models.Room.state is schemas.RoomStateEnum.Wait)
     db_person = db.query(models.Person).filter(models.Person.id == person_id).first()
+    if db_person is None:
+        return None
     db_room.update({
         "persons" : db_room.first().persons.append(db_person)
     })
@@ -122,8 +128,10 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int):
     return db_room
 
 def update_room_to_quit(db: Session, room_id: int, person_id: int):
-    db_room = db.query(models.Room).filter(models.Room.id == room_id and models.Room.state == schemas.RoomStateEnum.Wait)
+    db_room = db.query(models.Room).filter(models.Room.id == room_id and models.Room.state is schemas.RoomStateEnum.Wait)
     db_person = db.query(models.Person).filter(models.Person.id == person_id).first()
+    if db_person is None:
+        return None
     db_room.update({
         "persons" : db_room.first().persons.remove(db_person)
     })
@@ -132,7 +140,7 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
     return db_room
 
 def update_room_to_play(db: Session, room_id: int):
-    db_room = db.query(models.Room).filter(models.Room.id == room_id and models.Room.state == schemas.RoomStateEnum.Wait)
+    db_room = db.query(models.Room).filter(models.Room.id == room_id and models.Room.state is schemas.RoomStateEnum.Wait)
     db_room.update({
         "state" : schemas.RoomStateEnum.Play,
         "start_time" : datetime.now() + timedelta(seconds=5)
@@ -142,7 +150,7 @@ def update_room_to_play(db: Session, room_id: int):
     return db_room
 
 def update_room_to_end(db: Session, room_id: int):
-    db_room = db.query(models.Room).filter(models.Room.id == room_id and models.Room.state == schemas.RoomStateEnum.Play)
+    db_room = db.query(models.Room).filter(models.Room.id == room_id and models.Room.state is schemas.RoomStateEnum.Play)
     db_room.update({
         "state" : schemas.RoomStateEnum.End
     })
@@ -150,32 +158,39 @@ def update_room_to_end(db: Session, room_id: int):
     db.refresh(db_room)
     return db_room
 
+def get_hands(db: Session, room_id: int):
+    db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
+    db_hands.sort(key=lambda e: e.time)
+    return db_hands.reverse()
+    # 가장 마지막의 손이 [0]번째 인덱스
+
 def get_hands_from_last(db: Session, room_id: int, limit: int = 15):
     if limit <= 0:
         limit = 1
     db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
     db_hands.sort(key=lambda e: e.time)
     return db_hands[-limit:].reverse()
+    # 가장 마지막의 손이 [0]번째 인덱스
 
 def get_hands_by_person(db: Session, room_id: int, person_id: int):
     db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id and \
         models.Hand.person_id == person_id).all()
     return db_hands
 
-def create_hand(db: Session, hand: schemas.HandCreate):
-    # TODO 시간 확인
-    db_room = db.query(models.Room).filter(models.Room.id == hand.room_id).first()
-    if db_room.state != schemas.RoomStateEnum.Play or db_room.start_time > datetime.now():
+def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnum):
+    # 시간 확인
+    db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if db_room.state is not schemas.RoomStateEnum.Play or db_room.start_time > datetime.now():
         # 오류
         return None
-    db_last_hand = get_hands_from_last(db, hand.room_id, limit=1)
-    score = hand_score(hand.hand, db_last_hand.hand)
-    db_hand = models.Hand(**hand.dict(), time=datetime.now(), score=score)
+    db_last_hand = get_hands_from_last(db, room_id, limit=1)
+    score = hand_score(hand, db_last_hand.hand)
+    db_hand = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)
     db.add(db_hand)
     db.commit()
     db.refresh(db_hand)
-    # TODO 개인 점수 변경
-    update_game(db, room_id=hand.room_id, person_id=hand.person_id, score=score)
+    # 개인 점수 변경
+    update_game(db, room_id=room_id, person_id=person_id, score=score)
     return db_hand
 
 def get_game(db: Session, room_id: int, person_id: int):
@@ -201,7 +216,7 @@ def create_game_for_all(db: Session, room_id: int, person_ids: list):
 
 def update_game(db: Session, room_id: int, person_id: int, score: int):
     db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
-    if db_room.state != schemas.RoomStateEnum.Play or db_room.start_time > datetime.now():
+    if db_room.state is not schemas.RoomStateEnum.Play or db_room.start_time > datetime.now():
         # 오류
         return None
     db_game = db.query(models.Game).filter(models.Game.room_id == room_id and \
