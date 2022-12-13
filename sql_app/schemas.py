@@ -41,30 +41,14 @@ class User(UserBase):
 """
 
 class HandEnum(IntEnum):
-    Rock: 0
-    Scissor: 1
-    Paper: 2
+    Rock = 0
+    Scissor = 1
+    Paper = 2
 
 class RoomStateEnum(IntEnum):
-    Wait: 0
-    Play: 1
-    End: 2
-
-class PersonBase(BaseModel):
-    affiliation: str
-    name: str
-    is_admin: bool
-
-class PersonCreate(PersonBase):
-    #password: str
-    pass
-
-class Person(BaseModel):
-    id: int
-    is_active: bool
-
-    class Config:
-        orm_mode = True
+    Wait = 0
+    Play = 1
+    End = 2
 
 class HandBase(BaseModel):
     room_id: int
@@ -92,7 +76,7 @@ class GameCreate(GameBase):
 
 class Game(GameBase):
     score: int
-    # rank: int -> 직접 계산
+    rank: int # -> 직접 계산
     win: int
     draw: int
     lose: int
@@ -101,17 +85,34 @@ class Game(GameBase):
     class Config:
         orm_mode = True
 
+class PersonBase(BaseModel):
+    affiliation: str
+    name: str
+    is_admin: bool
+
+class PersonCreate(PersonBase):
+    #password: str
+    pass
+
+class Person(PersonBase):
+    id: int
+    is_active: bool
+    rooms: List[Game] = []
+
+    class Config:
+        orm_mode = True
+
 class RoomBase(BaseModel):
-    state: RoomStateEnum
+    state: RoomStateEnum = RoomStateEnum.Wait
 
 class RoomCreate(RoomBase):
     pass
 
 class Room(RoomBase):
     id: int
-    start_time: datetime
-    persons: List[Person] = []
-    games: List[Game] = []
+    start_time: Union[datetime, None] = None
+    persons: List[Game] = []
+    #games: List[Game] = []
 
     class Config:
         orm_mode = True

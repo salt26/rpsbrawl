@@ -50,6 +50,6 @@ def read_hands(room_id: int):
     pass
 
 @app.post("/room/{room_id}/game")
-def add_hand(room_id: int, affiliation: str, name: str, hand: HandEnum):
+def add_hand(room_id: int, affiliation: str, name: str, hand: schemas.HandEnum):
     # 해당 방에 새로운 손 추가
     pass
