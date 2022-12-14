@@ -72,6 +72,8 @@ class Person(Base):
 
 class Game(Base):
     # Room과 Person의 association object (https://docs.sqlalchemy.org/en/20/orm/basic_relationships.html#association-object)
+    # 각 방마다 입장한 사람 수에 맞추어 생성
+    # 전적, 점수 등을 기록
     __tablename__ = "games"
 
     room_id = Column(Integer, ForeignKey("rooms.id"), primary_key=True)
@@ -80,7 +82,6 @@ class Game(Base):
     draw = Column(Integer, default=0)
     lose = Column(Integer, default=0)
     score = Column(Integer, default=0)
-    rank = Column(Integer, default=sys.maxsize)
 
     room = relationship("Room", back_populates="persons")
     person = relationship("Person", back_populates="rooms")

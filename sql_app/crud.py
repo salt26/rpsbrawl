@@ -7,49 +7,32 @@ from . import models, schemas
 from pydantic import parse_obj_as
 import random
 
-
-def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
-
-
-def get_user_by_email(db: Session, email: str):
-    return db.query(models.User).filter(models.User.email == email).first()
-
-
-def get_users(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.User).offset(skip).limit(limit).all()
-
-
-def create_user(db: Session, user: schemas.UserCreate):
-    fake_hashed_password = user.password + "notreallyhashed"
-    db_user = models.User(email=user.email, hashed_password=fake_hashed_password)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
-
-def get_items(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Item).offset(skip).limit(limit).all()
-
-
-def create_user_item(db: Session, item: schemas.ItemCreate, user_id: int):
-    db_item = models.Item(**item.dict(), owner_id=user_id)
-    db.add(db_item)
-    db.commit()
-    db.refresh(db_item)
-    return db_item
-
-"""
-"""
-
 # 알려진 문제 목록 TODO
-# * 상태가 Wait이 아닌 Play인 방에서 사람이 퇴장할 수 있음
+# * (해결) 상태가 Wait이 아닌 Play인 방에서 사람이 퇴장할 수 있음
 # * (해결) Hand를 추가하거나 읽을 때 항상 null이 반환되고 아무것도 추가되지 않는 것으로 보임
-# * 사람의 is_active가 false인 상태에서 다시 로그인을 하면(방에 입장하면) 같은 사람으로 로그인되어야 하는데 새로 생긴다. true인 상태에서 새로 로그인하면(방에 입장하면) 막혀야 하는데 역시 새로 생긴다.
-# * 한 사람이 동시에 여러 방에 입장할 수 있다. (이미 입장한 방이 Play 모드로 바뀌고 새 방에 입장하는 경우)
-# * 게임 시작 시 추가되는 첫 번째 Hand의 person_id가 1부터 시작한다 (조금 더 확인 필요)
+# * (해결) 사람의 is_active가 false인 상태에서 다시 로그인을 하면(방에 입장하면) 같은 사람으로 로그인되어야 하는데 새로 생긴다. true인 상태에서 새로 로그인하면(방에 입장하면) 막혀야 하는데 역시 새로 생긴다.
+# * (해결) 한 사람이 동시에 여러 방에 입장할 수 있다. (이미 입장한 방이 Play 모드로 바뀌고 새 방에 입장하는 경우)
+# * (무시) 게임 시작 시 추가되는 첫 번째 Hand의 person_id가 그 방에 입장한 가장 작은 person_id부터 시작한다
 # * 1분 시간 제한 넣기
+# * (해결) Add Hand에서 해당 방에 해당 사람이 없는 경우 오류 발생
+# * (해결) 해당 방에 입장한 사람 수를 얻는 메서드 추가
+# * (해결) 해당 방의 사람들의 순위를 반환하는 메서드 추가 -> 이건 attribute로 들고 있지 않도록 한다.
+# * (무시) 해당 방의 특정 사람의 순위를 반환하는 메서드 추가?
+
+# 사람의 is_active를 관리해야 할 이유가 있나?
+# 중복 로그인만 안 되게 하면 되는 것 아닌가? 이미 로그인한 사람이 있는데 같은 아이디로 누군가가 또 로그인하는 경우만 아니면 괜찮을 것 같다.
+# 현재 로그인 상태인지 알아야 하니까 is_active가 필요하다.
+# 로그인 상태의 사람은 Wait 또는 Play 방에 들어가 있는 사람을 말한다.
+# 로그인과 회원가입을 하나로 통일해보자. 중복되는 계정이 있으면 로그인되고, 아니면 회원가입 후 로그인된다.
+
+# 팁:
+# db.query().filter()는 lazy evaluation을 하기 때문에 이것을 변수로 선언해 두고
+# 이것의 filter에 해당하는 조건 값을 다르게 업데이트한 후 이 변수를 다시 사용하면
+# 이전의 데이터를 제대로 불러오지 못한다!
+# 예:
+# db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Wait))
+# db_room.update({"state" : schemas.RoomStateEnum.Play})
+# print(db_room.first())  # None 이 출력된다!
 
 def hash_password(password: str):
     return password + "PleaseHashIt" # TODO
@@ -134,7 +117,7 @@ def update_last_wait_room_to_enter(db: Session, person_id: int):
     room_id = get_last_wait_room(db).id
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
     db_person = db.query(models.Person).filter(models.Person.id == person_id)
-    if db_person.first() is None:
+    if db_person.first() is None or db_person.first().is_active:
         return None
     db_game = models.Game(person=db_person.first(), room=db_room.first())
     db.add(db_game)
@@ -182,8 +165,6 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
     if db_game.first() is None:
         return None
     
-    #db_room.first().persons.remove(db_game.first())
-    #db_person.first().rooms.remove(db_game.first())
     db_person.update({
         "is_active" : False
     })
@@ -212,10 +193,16 @@ def update_room_to_play(db: Session, room_id: int):
 def update_room_to_end(db: Session, room_id: int):
     # 게임 종료(Hand 입력 불가능)
     db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play))
+    print(list(map(lambda p: p.person_id, db_room.first().persons)))
+    db_persons = db.query(models.Person).filter(models.Person.id.in_(list(map(lambda p: p.person_id, db_room.first().persons))))
+    db_persons.update({
+        "is_active" : False
+    })
     db_room.update({
         "state" : schemas.RoomStateEnum.End
     })
     db.commit()
+    db_room = db.query(models.Room).filter(models.Room.id == room_id)
     db.refresh(db_room.first())
     return schemas.Room.from_orm(db_room.first())
 
@@ -244,21 +231,30 @@ def get_hands_by_person(db: Session, room_id: int, person_id: int):
 def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnum):
     # 시간 확인
     db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
-    if db_room.state != schemas.RoomStateEnum.Play or db_room.start_time > datetime.now():
+    if db_room is None:
         # 오류
-        return None
+        return (None, 5)
+    elif db_room.state != schemas.RoomStateEnum.Play:
+        return (None, 1)
+    elif db_room.start_time > datetime.now():
+        return (None, 2)
+    db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
+        models.Game.person_id == person_id))
+    if db_game.first() is None:
+        return (None, 3)
+
     db_last_hand = get_hands_from_last(db, room_id, limit=1)
     print(db_last_hand)
     if db_last_hand is None or len(db_last_hand) <= 0:
-        return None
+        return (None, 4)
     score = hand_score(hand, db_last_hand[0].hand)
     db_hand = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)
     db.add(db_hand)
     db.commit()
     db.refresh(db_hand)
     # 개인 점수 변경
-    update_game(db, room_id=room_id, person_id=person_id, score=score)
-    return schemas.Hand.from_orm(db_hand)
+    _, error_code = update_game(db, room_id=room_id, person_id=person_id, score=score)
+    return (schemas.Hand.from_orm(db_hand), error_code)
 
 def get_game(db: Session, room_id: int, person_id: int):
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
@@ -285,11 +281,18 @@ def create_game_for_all(db: Session, room_id: int, person_ids: list):
 
 def update_game(db: Session, room_id: int, person_id: int, score: int):
     db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
-    if db_room.state != schemas.RoomStateEnum.Play or db_room.start_time > datetime.now():
+    if db_room is None:
         # 오류
-        return None
+        return (None, 15)
+    elif db_room.state != schemas.RoomStateEnum.Play:
+        # 오류
+        return (None, 11)
+    if db_room.start_time > datetime.now():
+        return (None, 12)
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id))
+    if db_game.first() is None:
+        return (None, 13)
     if score == 0:
         # draw
         db_game.update({
@@ -309,8 +312,12 @@ def update_game(db: Session, room_id: int, person_id: int, score: int):
         })
     db.commit()
     db.refresh(db_game.first())
-    return schemas.Game.from_orm(db_game.first())
+    return (schemas.Game.from_orm(db_game.first()), 0)
 
 def get_games(db: Session):
     db_game = db.query(models.Game).all()
-    return db_game
+    return parse_obj_as(schemas.List[schemas.Game], db_game)
+
+def get_games_in_room(db: Session, room_id: int):
+    db_game = db.query(models.Game).filter(models.Game.room_id == room_id).all()
+    return parse_obj_as(schemas.List[schemas.Game], db_game)

@@ -76,7 +76,6 @@ class GameCreate(GameBase):
 
 class Game(GameBase):
     score: int
-    rank: int # -> 직접 계산
     win: int
     draw: int
     lose: int
