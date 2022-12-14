@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 #from fastapi.security import OAuth2PasswordBearer
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
@@ -11,6 +12,18 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 #oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+origins = [
+    "http://localhost" # TODO 포트 번호 바꾸기
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=False, # OAuth 사용 시 True로 바꾸기
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Dependency
 def get_db():
@@ -203,7 +216,7 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
         })
     return ret
 
-
+"""
 # route 없음
 def add_person(affiliation: str, name: str, \
     # hashed_password: str,
@@ -232,3 +245,4 @@ def read_person_with_affiliation_and_name(affiliation: str, name: str, \
 def read_all_games(db: Session = Depends(get_db)):
     # (디버깅 용도)
     return crud.get_games(db)
+"""
