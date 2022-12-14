@@ -4,42 +4,6 @@ from enum import IntEnum
 
 from pydantic import BaseModel
 
-class ItemBase(BaseModel):
-    title: str
-    description: Union[str, None] = None
-
-
-class ItemCreate(ItemBase):
-    pass
-
-
-class Item(ItemBase):
-    id: int
-    owner_id: int
-
-    class Config:
-        orm_mode = True
-
-
-class UserBase(BaseModel):
-    email: str
-
-
-class UserCreate(UserBase):
-    password: str
-
-
-class User(UserBase):
-    id: int
-    is_active: bool
-    items: List[Item] = []
-
-    class Config:
-        orm_mode = True
-
-"""
-"""
-
 class HandEnum(IntEnum):
     Rock = 0
     Scissor = 1
@@ -110,6 +74,7 @@ class RoomCreate(RoomBase):
 class Room(RoomBase):
     id: int
     start_time: Union[datetime, None] = None
+    end_time: Union[datetime, None] = None
     persons: List[Game] = []
     #games: List[Game] = []
 

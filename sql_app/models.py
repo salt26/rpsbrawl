@@ -1,35 +1,10 @@
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table, Enum, ForeignKeyConstraint
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Enum, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
 #from enum import IntEnum
 from .schemas import HandEnum, RoomStateEnum
 
-import sys
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
-
-    items = relationship("Item", back_populates="owner")
-
-
-class Item(Base):
-    __tablename__ = "items"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True)
-    description = Column(String, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"))
-
-    owner = relationship("User", back_populates="items")
-
-"""
-"""
 
 # https://docs.sqlalchemy.org/en/20/orm/basic_relationships.html
 # https://docs.sqlalchemy.org/en/20/core/type_basics.html#sqlalchemy.types.Enum
@@ -37,14 +12,14 @@ class Item(Base):
 
 """
 class HandEnum(IntEnum):
-    rock = 0
-    scissor = 1
-    paper = 2
+    Rock = 0
+    Scissor = 1
+    Paper = 2
 
 class RoomStateEnum(IntEnum):
-    wait = 0
-    play = 1
-    end = 2
+    Wait = 0
+    Play = 1
+    End = 2
 """
 
 class Room(Base):
@@ -53,6 +28,7 @@ class Room(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     state = Column(Enum(RoomStateEnum), default=RoomStateEnum.Wait)
     start_time = Column(DateTime(timezone=True), nullable=True)
+    end_time = Column(DateTime(timezone=True), nullable=True)
 
     persons = relationship("Game", back_populates="room", cascade="all, delete-orphan")
     #hands = relationship("Hand", primaryjoin="Room.id == foreign(Hand.room_id)")
@@ -65,7 +41,7 @@ class Person(Base):
     name = Column(String, index=True)
     is_admin = Column(Boolean, default=False)
     #hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=False)
 
     rooms = relationship("Game", back_populates="person", cascade="all, delete-orphan")
     #hands = relationship("Hand", back_populates="person")
@@ -100,7 +76,6 @@ class Hand(Base):
     score = Column(Integer)
 
     game = relationship("Game",
-        #primaryjoin="and_(Game.room_id == foreign(Hand.room_id), Game.person_id == foreign(Hand.person_id))",
         foreign_keys=[room_id, person_id],
         viewonly=True
     )
