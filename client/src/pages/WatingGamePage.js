@@ -61,7 +61,24 @@ export default function WatingGamePage() {
       });
   };
 
-  const _startGame = () => {};
+  const _startGame = () => {
+    HTTP.put(`/room/${room_id}/play`)
+      .then((res) => {
+        if (res.status == 200) {
+          navigate(`/room/${room_id}/game`);
+        } else {
+          alert("게임 입장에 실패하였습니다. 새로고침 후 다시시도해주세요.");
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+
+        alert(
+          `해당 소속과 이름의 유저는 게임중입니다. 게임을 강제종료했다면 
+    게임이 종료될때까지 기다린 후에 다시 시도해주세요.`
+        );
+      });
+  };
   return (
     <Container>
       <Medium color="white" size={"60px"}>
