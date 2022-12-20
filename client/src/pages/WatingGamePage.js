@@ -7,13 +7,29 @@ import Button from "../components/common/Button";
 import SizedBox from "../components/common/SizedBox";
 import UserList from "../components/gameroom/UserList";
 import { useNavigate } from "react-router-dom";
-
+import HTTP from "../utils/HTTP";
+import { useParams } from "react-router-dom";
 export default function WatingGamePage() {
   var number_of_user = 1;
+  const { room_id } = useParams();
+
+  const person_id = localStorage.getItem("person_id");
   var navigate = useNavigate();
 
   const _quitGame = () => {
-    navigate("/");
+    HTTP.delete(`/room/${room_id}?person_id=${person_id}`)
+      .then((res) => {
+        if (res.status == 200) {
+          localStorage.removeItem("person_id");
+          localStorage.removeItem("person_name");
+          navigate("/");
+        } else {
+          console.log(res.data.detail);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
   return (
     <Container>
