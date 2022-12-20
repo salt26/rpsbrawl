@@ -47,8 +47,9 @@ function LoginBox() {
       .then((res) => {
         if (res.status == 200) {
           const { person_id, room_id } = res.data;
-          localStorage.setItem("person_id", person_id);
-          localStorage.setItem("person_name", name);
+          sessionStorage.setItem("person_id", person_id);
+          sessionStorage.setItem("person_name", name);
+          sessionStorage.setItem("affiliation", selectedOption);
           navigate(`/room/${room_id}/waiting`);
         } else {
           alert("게임 입장에 실패하였습니다. 새로고침 후 다시시도해주세요.");

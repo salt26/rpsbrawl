@@ -3,17 +3,18 @@ import { NameTag, AdminTag, MyNameTag } from "./NameTags";
 import styled from "styled-components";
 
 export default function UserList({ users }) {
+  const my_name = sessionStorage.getItem("person_name");
   return (
     <Container>
-      <NameTag>김서연</NameTag>
-      <NameTag>김서연</NameTag>
-      <NameTag>김서연</NameTag>
-      <NameTag>김서연</NameTag>
-      <NameTag>김서연</NameTag>
-      <NameTag>김서연</NameTag>
-      <NameTag>김서연</NameTag>
-      <AdminTag>방장</AdminTag>
-      <MyNameTag>나자신</MyNameTag>
+      {users.map(({ affiliation, name }, idx) => {
+        if (name == my_name) {
+          return <MyNameTag key={idx}>{name}</MyNameTag>;
+        } else if (affiliation == "STAFF") {
+          return <AdminTag key={idx}>{name}</AdminTag>;
+        } else {
+          return <NameTag key={idx}>{name}</NameTag>;
+        }
+      })}
     </Container>
   );
 }

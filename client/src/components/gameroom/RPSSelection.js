@@ -1,12 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import RockSrc from "../../assets/images/rock.png";
 import ScissorSrc from "../../assets/images/scissor.png";
 import PaperSrc from "../../assets/images/paper.png";
-export default function RPSSelction() {
+
+export default function RPSSelection({ last }) {
+  var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
+
   return (
     <>
-      <img src={RockSrc} width="500px" />
+      <img src={rpsDic[last]} width="500px" />
       <Row>
         <ImgBox>
           <img src={RockSrc} width="100px" />

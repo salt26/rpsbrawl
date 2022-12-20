@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Medium } from "../styles/font";
 import styled from "styled-components";
@@ -9,20 +9,32 @@ import UserList from "../components/gameroom/UserList";
 import { useNavigate } from "react-router-dom";
 import HTTP from "../utils/HTTP";
 import { useParams } from "react-router-dom";
+import useInterval from "../utils/useInterval";
 export default function WatingGamePage() {
-  var number_of_user = 1;
   const { room_id } = useParams();
 
-  const person_id = localStorage.getItem("person_id");
+  const [numberOfUser, setNumberOfUser] = useState(1);
+  const [users, setUsers] = useState([]);
+
+  const isAuthorized = sessionStorage.getItem("affiliation") == "STAFF";
+
+  const person_id = sessionStorage.getItem("person_id");
   var navigate = useNavigate();
 
-  const _quitGame = () => {
-    HTTP.delete(`/room/${room_id}?person_id=${person_id}`)
+  useEffect(() => {
+    /*방정보 받아오기 */
+    _fetchRoomInfo();
+  }, []);
+
+  const _fetchRoomInfo = () => {
+    /*방 인원 정보 받아오기*/
+
+    HTTP.get(`/room/${room_id}/game`)
       .then((res) => {
         if (res.status == 200) {
-          localStorage.removeItem("person_id");
-          localStorage.removeItem("person_name");
-          navigate("/");
+          setNumberOfUser(res.data.length);
+          setUsers(res.data);
+          console.log(res.data);
         } else {
           console.log(res.data.detail);
         }
@@ -31,21 +43,51 @@ export default function WatingGamePage() {
         console.log(err);
       });
   };
+
+  useInterval(_fetchRoomInfo, 1000);
+  const _quitGame = () => {
+    HTTP.delete(`/room/${room_id}?person_id=${person_id}`)
+      .then((res) => {
+        if (res.status == 200) {
+          sessionStorage.removeItem("person_id");
+          sessionStorage.removeItem("person_name");
+          navigate("/");
+        } else {
+          alert(res.data.detail);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const _startGame = () => {};
   return (
     <Container>
       <Medium color="white" size={"60px"}>
         무엇을 낼지 고민하는 중..
       </Medium>
       <Medium color="white" size={"30px"}>
-        난투가 곧 시작됩니다! (현재 {number_of_user}명)
+        난투가 곧 시작됩니다! (현재 {numberOfUser}명)
       </Medium>
       <Row>
-        <Button text="나가기" onClick={_quitGame} />
+        <Sector>
+          <Button text="나가기" onClick={_quitGame} />
+        </Sector>
         <SizedBox width={"50px"} />
-
-        <BgBox bgColor={"var(--light-purple)"} width="1000px" height="500px">
-          <UserList />
-        </BgBox>
+        <Sector>
+          <BgBox bgColor={"var(--light-purple)"} width="1000px" height="500px">
+            <UserList users={users} />
+          </BgBox>
+        </Sector>
+        <SizedBox width={"50px"} />
+        <Sector>
+          {isAuthorized ? (
+            <Button text="시작" onClick={_startGame} bgColor="var(--red)" />
+          ) : (
+            <></>
+          )}
+        </Sector>
       </Row>
     </Container>
   );
@@ -66,5 +108,10 @@ const Row = styled.div`
   flex-direction: row;
   align-items: flex-end;
   justify-content: center;
-  margin-left: -150px;
+`;
+const Sector = styled.div`
+  flex: 0.3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
