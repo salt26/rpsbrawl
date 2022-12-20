@@ -13,7 +13,7 @@ import SelectBox from "../components/common/SelectBox";
 import Button from "../components/common/Button";
 import { Medium } from "../styles/font";
 import { useNavigate } from "react-router-dom";
-
+import HTTP from "../utils/HTTP";
 function RuleBox() {
   return (
     <BgBox width="250px" height="300px" color="white">
@@ -24,8 +24,8 @@ function RuleBox() {
         </Row>
         <SizedBox height={"20px"} />
         <Medium size="25px">
-          가장 마지막에 낸 사람의 손이 화면에 크게 보입니다. 이 손을 이기면 +1점! 지면 -1점!
-          60초 안에 가장 많은 점수를 획득하세요!
+          가장 마지막에 낸 사람의 손이 화면에 크게 보입니다. 이 손을 이기면
+          +1점! 지면 -1점! 60초 안에 가장 많은 점수를 획득하세요!
         </Medium>
       </Col>
     </BgBox>
@@ -36,12 +36,32 @@ function LoginBox() {
   const [name, setName] = useState("");
   const [selectedOption, setSelectedOption] = useState(""); //소속
   var navigate = useNavigate();
-  const id = null;
-
-  console.log(name, selectedOption);
 
   const _joinGame = () => {
-    navigate(`/room/${id}/waiting`);
+    if (selectedOption == "" || name == "") {
+      alert("소속과 이름을 모두 채워주세요.");
+      return;
+    }
+
+    HTTP.post(`/room?affiliation=${selectedOption}&name=${name}`)
+      .then((res) => {
+        if (res.status == 200) {
+          const { person_id, room_id } = res.data;
+          localStorage.setItem("person_id", person_id);
+          localStorage.setItem("person_name", name);
+          navigate(`/room/${room_id}/waiting`);
+        } else {
+          alert("게임 입장에 실패하였습니다. 새로고침 후 다시시도해주세요.");
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+
+        alert(
+          `해당 소속과 이름의 유저는 게임중입니다. 게임을 강제종료했다면 
+          게임이 종료될때까지 기다린 후에 다시 시도해주세요.`
+        );
+      });
   };
   return (
     <BgBox width="250px" height="300px" color="white">
