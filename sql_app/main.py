@@ -91,23 +91,27 @@ class ConnectionManager:
         text["message"] = message
         await websocket.send_text(text)
 
-    async def send_json(request: str, response: str, type: str, json: dict, websocket: WebSocket):
+    async def send_json(request: str, response: str, type: str, data: dict | list, websocket: WebSocket):
+        json = {}
         json["request"] = request
         json["response"] = response
         json["type"] = type
+        json["data"] = data
         await websocket.send_json(json, mode=JSON_SENDING_MODE)
 
-    async def broadcast_json(self, request: str, type: str, json: dict, room_id: int):
+    async def broadcast_json(self, request: str, type: str, data: dict | list, room_id: int):
         # 한 방 전체의 사람들에게 공통된 JSON을 보냄
+        json = {}
         json["request"] = request
         json["response"] = "broadcast"
         json["type"] = type
+        json["data"] = data
         for connection in self.find_all_connections_by_room_id(room_id):
             await connection[0].send_json(json, mode=JSON_SENDING_MODE)
 
 manager = ConnectionManager()
 
-@app.websocket("/room")
+@app.websocket("/join")
 async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, db: Session = Depends(get_db)):
     # 웹소켓 연결 시작
     # 한 번 연결하면 연결을 끊거나 끊어질 때까지 while True:로 모든 데이터를 다 받아야 하나?
@@ -147,7 +151,7 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
         # 개인에게 전적('room_id', 'person_id'가 포함된 JSON) 반환 응답
         await ConnectionManager.send_json("join", "success", "game", game, websocket)
         # 해당 방 전체에게 전적(사람) 목록 반환 응답
-        await manager.broadcast_json('join', 'game_list', read_game(room.id, db), room.id)
+        await manager.broadcast_json("join", 'game_list', read_game(room.id, db), room.id)
         while True:
             # 클라이언트의 요청 대기
             data = await websocket.receive_json(mode=JSON_RECEIVING_MODE)
@@ -218,7 +222,13 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
                 await manager.broadcast_json("start", "hand_list", read_all_hands(room.id, db), room.id)
                 await manager.broadcast_json("start", "game_list", read_game(room.id, db), room.id)
 
-            # TODO 게임이 시간이 끝나 종료될 때를 처리해 주어야 함 (각 방마다 확인하면서)
+            # 게임이 시간이 끝나 종료될 때를 처리해 주어야 함 (각 방마다 확인하면서)
+            expired_rooms = crud.get_expired_rooms(db)
+            for r in expired_rooms:
+                room_id = r["id"]
+                crud.update_room_to_end(db, room_id)
+                await manager.broadcast_json("end", "game_list", read_game(room_id, db), room.id)
+
     except WebSocketDisconnect:
         """
         connection = manager.find_connection_by_websocket(websocket)
@@ -279,6 +289,7 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
     
     return db_room
 
+"""
 @app.delete("/room/{room_id}")
 def delete_person_from_room(room_id: int, person_id: int, db: Session = Depends(get_db)):
     # 대기 중인 방일 경우에, 해당 방에 해당 사람이 있으면 제거
@@ -293,6 +304,7 @@ def delete_person_from_room(room_id: int, person_id: int, db: Session = Depends(
         raise HTTPException(status_code=404, detail="Person not found")
     elif error_code == 4:
         raise HTTPException(status_code=404, detail="Person does not exist in the Room")
+"""
 
 @app.get("/room/{room_id}/persons")
 def read_number_of_persons(room_id: int, db: Session = Depends(get_db)):
@@ -303,6 +315,7 @@ def read_number_of_persons(room_id: int, db: Session = Depends(get_db)):
     
     return len(db_room.persons)
 
+"""
 @app.put("/room/{room_id}/play")
 def update_room_to_play(room_id: int, time_offset: int = 5, \
     time_duration: int = 60, db: Session = Depends(get_db)):
@@ -355,6 +368,7 @@ def add_hand(room_id: int, person_id: int, hand: schemas.HandEnum, db: Session =
         raise HTTPException(status_code=404, detail="Room not found")
     elif error_code == 6 or error_code == 16:
         raise HTTPException(status_code=403, detail="Game has ended")
+"""
 
 @app.get("/room/{room_id}/hand")
 def read_hands(room_id: int, limit: int = 15, db: Session = Depends(get_db)):
@@ -406,6 +420,7 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
             'rank': index + 1, # 순위는 점수가 가장 높은 사람이 1
             'affiliation': person.affiliation,
             'name': person.name,
+            'is_admin': person.is_admin,
             'score': game.score,
             'win': game.win,
             'draw': game.draw,

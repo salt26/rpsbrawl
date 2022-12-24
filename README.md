@@ -19,6 +19,249 @@
   * 브라우저에서 `http://127.0.0.1:8000/docs` 접속
 
 ### API
+#### 입장(join)
+
+프론트엔드(JavaScript)의 입장 전 화면에서 다음을 요청하여 입장
+```
+let ws = new WebSocket("ws://localhost:8000/join?affiliation=" + "소속" + "&name=" + "이름");
+```
+
+* 소속(`affiliation`)과 이름(`name`)을 가진 사람을 마지막 대기 방에 입장시킴 (회원가입 겸 로그인)
+* 특별히 `affiliation=Staff`이고 `name=관리자`인 사람은 admin으로 취급됨
+
+join error: 입장하려는 대기 방에 같은 사람이 이미 입장해 있는 경우 다음 메시지 응답
+```
+{
+  request: "join",
+  response: "error",
+  type: "message",
+  message: "Person already exists in the Room"
+}
+```
+
+join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 입장해 있는 경우 다음 메시지 응답
+```
+{
+  request: "join",
+  response: "error",
+  type: "message",
+  message: "Person has already entered in non-end Room"
+}
+```
+
+**join success**: 입장 성공 시 해당 개인에게 `data.room_id`, `data.person_id`가 포함된 다음 정보 응답 > 이때 받은 `data.person_id`를 클라이언트에서 꼭 기억하고 있을 것!
+```
+{
+  request: "join",
+  response: "success",
+  type: "game",
+  data: {
+    room_id: 1,
+    person_id: 1,
+    ...
+  }
+}
+```
+
+**join broadcast**: 누군가가 방에 입장 성공 시(본인 포함) 해당 방의 모든 사람들에게 다음 정보 응답
+```
+{
+  request: "join",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      affiliation: "소속",
+      name: "이름",
+      is_admin: False,
+      ...
+    },
+    ...
+  ]
+}
+```
+
+* 입장에 성공하면 그 이후로 연결이 종료될 때까지 소켓 통신을 통해 실시간으로 다른 요청들을 보내고 응답을 받을 수 있다.
+
+---
+
+#### 퇴장(quit)
+
+프론트엔드에서 대기 방 화면에 있는 동안 다음을 요청하여 퇴장
+```
+let request = {
+  request: "quit"
+};
+ws.send(request);
+```
+
+quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가려고 하는 경우 다음 메시지 응답
+```
+{
+  request: "quit",
+  response: "error",
+  type: "message",
+  message: "Cannot quit from non-wait Room"
+}
+```
+
+**quit success**: 퇴장 성공 시 해당 개인에게 다음 메시지 응답
+```
+{
+  request: "quit",
+  response: "success",
+  type: "message",
+  message: "Successfully signed out"
+}
+```
+* 퇴장하면 소켓 통신이 종료되어 재입장할 때까지 다른 요청을 보낼 수 없다.
+
+**quit broadcast**: 퇴장 성공 시 해당 방에 남아있는 모든 사람들(퇴장한 본인 제외)에게 다음 정보 응답
+```
+{
+  request: "join",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      affiliation: "소속",
+      name: "이름",
+      ...
+    },
+    ...
+  ]
+}
+```
+
+---
+
+#### 게임 시작(start)
+
+프론트엔드에서 대기 방 화면에 있는 동안 admin 등의 누군가가 다음을 요청하여 방 상태를 플레이 중인 방으로 변경
+```
+let request = {
+  request: "start",
+  time_offset: 5,  // seconds, 플레이 중인 방으로 전환 후 처음 손을 입력받기까지 기다리는 시간
+  time_duration: 60  // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
+};
+ws.send(request);
+```
+
+start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 게임을 시작하려 하는 경우 아래 메시지 응답
+```
+{
+  request: "start",
+  response: "error",
+  type: "message",
+  message: "Room is not in a wait mode"
+}
+```
+
+**start broadcast**: 여기서부터 작성 바람!!!
+```
+ㅁㄴㅇㄹ
+```
+
+---
+
+#### 손 입력(hand)
+
+프론트엔드에서 플레이 중인 방 화면에 있는 동안 다음을 요청하여 손 입력
+```
+let request = {
+  request: "hand",
+  hand: 0  // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
+};
+ws.send(request);
+```
+
+hand error: 방이 플레이 중인 방이 아니라서 손 입력 실패 시 다음 메시지 응답
+```
+{
+  request: "hand",
+  response: "error",
+  type: "message",
+  message: "Room is not in a play mode"
+}
+```
+
+hand error: 방이 플레이 중인 방이지만 손 입력을 받기 전의 시간이라서 손 입력 실패 시 다음 메시지 응답
+```
+{
+  request: "hand",
+  response: "error",
+  type: "message",
+  message: "Game not started yet"
+}
+```
+
+hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초과되어 손 입력 실패 시 다음 메시지 응답
+```
+{
+  request: "hand",
+  response: "error",
+  type: "message",
+  message: "Game has ended"
+}
+```
+
+**hand broadcast**: 손 입력 성공 시 해당 방의 모든 사람들에게 다음 정보 응답
+```
+{
+  request: "hand",
+  response: "broadcast",
+  type: "hand_list",
+  data: [
+    {
+      affiliation: "소속",
+      name: "이름",
+      hand: 0,  // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
+      score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
+      time: 2022-12-25 04:47:12.492291,  // TODO 타입 확인해봐야 함
+      room_id: 1
+    },
+    ...  // 해당 방에서 입력된 손 개수만큼 존재
+  ]
+}
+```
+
+**hand broadcast**: 손 입력 성공 시 해당 방의 모든 사람들에게 다음 정보 응답
+```
+{
+  request: "hand",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      rank: 1,  // 순위는 점수가 가장 높은 사람이 1
+      affiliation: "소속",
+      name: "이름",
+      is_admin: False,
+      score: 13,
+      win: 18,
+      draw: 4,
+      lose: 5,
+      room_id: 1
+    },
+    ...  // 해당 방에서 플레이하는 사람 수만큼 존재
+  ]
+}
+```
+* 점수(`score` = `win - lose`)가 같다면 `win` 수가 많을수록 순위가 높고, `win` 수도 같다면 `draw` 수가 많을수록 순위가 높다.
+* 누군가가 손을 입력하면 모든 사람들에게 새로운 손 목록(hand_list)과 전적 목록(game_list)이 전송되므로 이를 바탕으로 화면을 표시하면 된다.
+
+---
+
+#### 게임 종료(end)
+
+* 여기도 작성 바람!!!!!!
+```
+ㅁㄴㅇㄹ
+```
+
+<!--
+---
+
 #### POST `/room` (`affiliation`(string), `name`(string))
 * 소속(`affiliation`)과 이름(`name`)을 가진 사람을 마지막 대기 방에 입장시킴 (회원가입 겸 로그인)
 * 특별히 `affiliation=Staff`이고 `name=관리자`인 사람은 admin으로 표시됨
@@ -96,3 +339,4 @@
 * **대기 창 또는 관리 창에서 방에 입장한 사람들의 목록을 표시할 때 호출할 것!**
 * **게임 창에서 사람들의 순위를 포함한 정보를 표시할 때 호출할 것!**
 * **결과 창에서 사람들의 순위를 포함한 정보를 표시할 때 호출할 것!**
+-->
