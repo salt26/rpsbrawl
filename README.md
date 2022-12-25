@@ -8,6 +8,7 @@
 #### Install
 * Python 3.11.0 사용
   * 3.6 이상의 버전이면 작동
+* Windows의 경우 터미널(PowerShell)을 관리자 권한으로 실행하고 아래 명령어 모두 입력
 * `pip install fastapi`
 * `pip install "uvicorn[standard]"`
 * `pip install sqlalchemy`
@@ -15,7 +16,7 @@
 
 #### Run
 * `cd {root_of_this_repository}`
-* `uvicorn sql_app.main:app --port 8000 --reload`
+* `python -m uvicorn sql_app.main:app --port 8000 --reload`
   * 배포할 때에는 `--reload` 옵션 없이 실행
   * 브라우저에서 `http://127.0.0.1:8000/docs` 접속
 
@@ -166,8 +167,8 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
   type: "room",
   data: {
     state: 1,  // Play
-    start_time: 2022-12-25 04:47:05.492291,  // TODO 타입 확인해봐야 함
-    end_time: 2022-12-25 04:48:05.492291,    // TODO 타입 확인해봐야 함
+    start_time: "2022-12-25T11:24:05.388Z",  // TODO 타입 확인해봐야 함
+    end_time: "2022-12-25T11:25:05.388Z",    // TODO 타입 확인해봐야 함
     ...
   }
 }
@@ -185,7 +186,7 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
       name: "이름",         // 이 방에 입장한 첫 번째 사람 이름
       hand: 0,   // 0(Rock) 또는 1(Scissor) 또는 2(Paper) 중 랜덤으로 부여
       score: 0,  // 첫 번째 손이므로 항상 비긴(0) 것으로 취급
-      time: 2022-12-25 04:47:00.492291,  // TODO 타입 확인해봐야 함
+      time: "2022-12-25T11:24:00.388Z",  // TODO 타입 확인해봐야 함
       room_id: 1
     }
   ]
@@ -271,7 +272,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
       name: "이름",
       hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
       score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
-      time: 2022-12-25 04:47:12.492291,  // TODO 타입 확인해봐야 함
+      time: "2022-12-25T11:24:12.388Z",  // TODO 타입 확인해봐야 함
       room_id: 1
     },
     ...  // 해당 방에서 입력된 손 개수만큼 존재
