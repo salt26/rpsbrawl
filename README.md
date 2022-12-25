@@ -6,11 +6,12 @@
 ### How to run
 
 #### Install
-* Python 3.8.4 사용
+* Python 3.11.0 사용
   * 3.6 이상의 버전이면 작동
 * `pip install fastapi`
 * `pip install "uvicorn[standard]"`
 * `pip install sqlalchemy`
+* `pip install websockets`
 
 #### Run
 * `cd {root_of_this_repository}`
@@ -157,9 +158,62 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
 }
 ```
 
-**start broadcast**: 여기서부터 작성 바람!!!
+**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 해당 방에서 손 입력을 받기 시작하는 시간(`start_time`)과 손 입력이 종료되는 시간(`end_time`)이 포함된 아래 정보 응답
 ```
-ㅁㄴㅇㄹ
+{
+  request: "start",
+  response: "broadcast",
+  type: "room",
+  data: {
+    state: 1,  // Play
+    start_time: 2022-12-25 04:47:05.492291,  // TODO 타입 확인해봐야 함
+    end_time: 2022-12-25 04:48:05.492291,    // TODO 타입 확인해봐야 함
+    ...
+  }
+}
+```
+
+**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 첫 번째 랜덤 손이 포함된 손 목록 정보 응답
+```
+{
+  request: "start",
+  response: "broadcast",
+  type: "hand_list",
+  data: [
+    {
+      affiliation: "소속",  // 이 방에 입장한 첫 번째 사람 소속
+      name: "이름",         // 이 방에 입장한 첫 번째 사람 이름
+      hand: 0,   // 0(Rock) 또는 1(Scissor) 또는 2(Paper) 중 랜덤으로 부여
+      score: 0,  // 첫 번째 손이므로 항상 비긴(0) 것으로 취급
+      time: 2022-12-25 04:47:00.492291,  // TODO 타입 확인해봐야 함
+      room_id: 1
+    }
+  ]
+}
+```
+* 첫 번째 랜덤 손은 이 방에 입장한 첫 번째 사람 명의로 표시되지만, 이 사람의 전적(score, win, draw, lose)에는 영향을 주지 않는다.
+
+**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 해당 방에서 플레이하게 되는 사람(전적) 목록 정보 응답
+```
+{
+  request: "start",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      rank: 1,  // 초기 순위는 이 방에 입장한 첫 번째 사람이 1
+      affiliation: "소속",
+      name: "이름",
+      is_admin: False,
+      score: 0,
+      win: 0,
+      draw: 0,
+      lose: 0,
+      room_id: 1
+    },
+    ...  // 해당 방에서 플레이하는 사람 수만큼 존재
+  ]
+}
 ```
 
 ---
@@ -205,7 +259,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 }
 ```
 
-**hand broadcast**: 손 입력 성공 시 해당 방의 모든 사람들에게 다음 정보 응답
+**hand broadcast**: 손 입력 성공 시 해당 방의 모든 사람들에게 업데이트된 손 목록 정보 응답
 ```
 {
   request: "hand",
@@ -215,7 +269,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
     {
       affiliation: "소속",
       name: "이름",
-      hand: 0,  // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
+      hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
       score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
       time: 2022-12-25 04:47:12.492291,  // TODO 타입 확인해봐야 함
       room_id: 1
@@ -224,6 +278,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
   ]
 }
 ```
+* 가장 최근에 입력된 손이 목록의 인덱스 0번에 위치한다.
 
 **hand broadcast**: 손 입력 성공 시 해당 방의 모든 사람들에게 다음 정보 응답
 ```
@@ -233,7 +288,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
   type: "game_list",
   data: [
     {
-      rank: 1,  // 순위는 점수가 가장 높은 사람이 1
+      rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
       affiliation: "소속",
       name: "이름",
       is_admin: False,
@@ -248,16 +303,40 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 }
 ```
 * 점수(`score` = `win - lose`)가 같다면 `win` 수가 많을수록 순위가 높고, `win` 수도 같다면 `draw` 수가 많을수록 순위가 높다.
+* 가장 순위가 높은 사람(1)이 목록의 인덱스 0번에 위치한다.
 * 누군가가 손을 입력하면 모든 사람들에게 새로운 손 목록(hand_list)과 전적 목록(game_list)이 전송되므로 이를 바탕으로 화면을 표시하면 된다.
 
 ---
 
 #### 게임 종료(end)
 
-* 여기도 작성 바람!!!!!!
+* **end broadcast**: 프론트엔드에서 요청하지 않아도, 플레이 중인 방에서 손 입력 시간이 종료되는 경우 서버에서 먼저 해당 방의 모든 사람들에게 다음 정보 응답
 ```
-ㅁㄴㅇㄹ
+{
+  request: "end",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
+      affiliation: "소속",
+      name: "이름",
+      is_admin: False,
+      score: 17,
+      win: 23,
+      draw: 6,
+      lose: 6,
+      room_id: 1
+    },
+    ...  // 해당 방에서 플레이하는 사람 수만큼 존재
+  ]
+}
 ```
+* 가장 순위가 높은 사람(1)이 목록의 인덱스 0번에 위치한다.
+* 이 응답을 받은 이후에는 손 입력을 받지 않고, 해당 방에서의 게임이 종료된다.
+* 프론트엔드에서는 이 응답을 받고 나서 3초 정도 후에 결과 화면을 보여주고, 결과 화면에서 "나가기" 버튼을 눌러 입장 전 화면으로 이동하면 된다.
+  * *결과 화면에서는 여기서 받은 "game_list" 정보를 바탕으로 csv 등의 파일로 결과를 export하는 기능이 있으면 좋겠다.*
+  * *입장 전 화면에서는 기존에 접속했던 계정(소속 및 이름) 정보가 그대로 입력 필드에 차 있어서 "입장!" 버튼만 누르면 바로 다시 입장할 수 있도록 하면 좋겠다.*
 
 <!--
 ---

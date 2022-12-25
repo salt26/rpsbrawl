@@ -190,6 +190,7 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
                     await ConnectionManager.send_text("quit", "success", "Successfully signed out", websocket)
                     await manager.close(websocket)
                     await manager.broadcast_json("quit", "game_list", read_game(room.id, db), room.id)
+                    return
                 elif error_code == 1:
                     await ConnectionManager.send_text("quit", "error", "Room not found", websocket)
                     #raise HTTPException(status_code=404, detail="Room not found")
@@ -222,12 +223,17 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
                 await manager.broadcast_json("start", "hand_list", read_all_hands(room.id, db), room.id)
                 await manager.broadcast_json("start", "game_list", read_game(room.id, db), room.id)
 
-            # 게임이 시간이 끝나 종료될 때를 처리해 주어야 함 (각 방마다 확인하면서)
-            expired_rooms = crud.get_expired_rooms(db)
-            for r in expired_rooms:
-                room_id = r["id"]
-                crud.update_room_to_end(db, room_id)
-                await manager.broadcast_json("end", "game_list", read_game(room_id, db), room.id)
+            # 게임이 시간이 끝나 종료될 때를 처리해 주어야 함
+            # 내가 접속한 방은 동시에 하나만 존재하므로, 해당 방에 대해 시간이 끝났는지 확인하고,
+            # 끝났다면 해당 개인에게 응답을 보내고 연결 종료
+
+            # 아직 플레이 시간이 종료되지 않았거나 이미 종료 상태가 된 방이면 아무 일도 일어나지 않음
+            crud.update_room_to_end(db, room.id)
+            db_room = crud.get_room(db, room.id)
+            if db_room is not None and db_room.state == schemas.RoomStateEnum.End:
+                await ConnectionManager.send_json("end", "broadcast", "game_list", read_game(room.id, db), room.id)
+                await manager.close(websocket)
+                return
 
     except WebSocketDisconnect:
         """
