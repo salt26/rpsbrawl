@@ -21,7 +21,7 @@
 
 #### Run
 * `cd {root_of_this_repository}`
-* `./sql_app/Scripts/activate.ps1` (가상환경 실행)
+* `./sql_app/Scripts/Activate.ps1` (가상환경 실행)
 * `uvicorn sql_app.main:app --port 8000 --reload`
   * 배포할 때에는 `--reload` 옵션 없이 실행
   * 브라우저에서 `http://127.0.0.1:8000/docs` 접속
