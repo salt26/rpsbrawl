@@ -1,6 +1,4 @@
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from fastapi.websockets import WebSocket
 import time
 
 def test_websocket_join_and_quit(app):

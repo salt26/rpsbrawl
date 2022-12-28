@@ -1,7 +1,6 @@
 from typing import List, Tuple
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.testclient import TestClient
 #from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -16,7 +15,7 @@ app = FastAPI()
 #oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 origins = [
-    "http://localhost" # TODO 포트 번호 바꾸기
+    "http://localhost:3000" # TODO 포트 번호 바꾸기
 ]
 
 app.add_middleware(
