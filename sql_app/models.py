@@ -31,7 +31,6 @@ class Room(Base):
     end_time = Column(DateTime(timezone=True), nullable=True)
 
     persons = relationship("Game", back_populates="room", cascade="all, delete-orphan")
-    #hands = relationship("Hand", primaryjoin="Room.id == foreign(Hand.room_id)")
 
 class Person(Base):
     __tablename__ = "persons"
@@ -44,7 +43,6 @@ class Person(Base):
     is_active = Column(Boolean, default=False)
 
     rooms = relationship("Game", back_populates="person", cascade="all, delete-orphan")
-    #hands = relationship("Hand", back_populates="person")
 
 class Game(Base):
     # Room과 Person의 association object (https://docs.sqlalchemy.org/en/20/orm/basic_relationships.html#association-object)
@@ -61,7 +59,7 @@ class Game(Base):
 
     room = relationship("Room", back_populates="persons")
     person = relationship("Person", back_populates="rooms")
-    hands = relationship("Hand")
+    #hands = relationship("Hand")
     
 # https://docs.sqlalchemy.org/en/20/orm/join_conditions.html#overlapping-foreign-keys
 

@@ -43,7 +43,7 @@ class Game(GameBase):
     win: int
     draw: int
     lose: int
-    hands: List[Hand] = []
+    #hands: List[Hand] = []
 
     class Config:
         orm_mode = True

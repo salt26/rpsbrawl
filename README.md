@@ -9,14 +9,20 @@
 * Python 3.11.0 사용
   * 3.6 이상의 버전이면 작동
 * Windows의 경우 터미널(PowerShell)을 관리자 권한으로 실행하고 아래 명령어 모두 입력
+* `cd {root_of_this_repository}`
+* `python -m venv sql_app`
+* `./sql_app/Scripts/activate.ps1` (가상환경 실행)
 * `pip install fastapi`
 * `pip install "uvicorn[standard]"`
 * `pip install sqlalchemy`
 * `pip install websockets`
+* `pip install pytz`
+* `pip install httpx` (테스트 용도)
 
 #### Run
 * `cd {root_of_this_repository}`
-* `python -m uvicorn sql_app.main:app --port 8000 --reload`
+* `./sql_app/Scripts/activate.ps1` (가상환경 실행)
+* `uvicorn sql_app.main:app --port 8000 --reload`
   * 배포할 때에는 `--reload` 옵션 없이 실행
   * 브라우저에서 `http://127.0.0.1:8000/docs` 접속
 
@@ -59,8 +65,7 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
   type: "game",
   data: {
     room_id: 1,
-    person_id: 1,
-    ...
+    person_id: 1
   }
 }
 ```
@@ -167,9 +172,8 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
   type: "room",
   data: {
     state: 1,  // Play
-    start_time: "2022-12-25T11:24:05.388Z",  // TODO 타입 확인해봐야 함
-    end_time: "2022-12-25T11:25:05.388Z",    // TODO 타입 확인해봐야 함
-    ...
+    start_time: "2022-12-25 03:24:05.388157 KST",  // 한국 시간 기준
+    end_time: "2022-12-25 03:25:05.388157 KST"
   }
 }
 ```
@@ -186,7 +190,7 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
       name: "이름",         // 이 방에 입장한 첫 번째 사람 이름
       hand: 0,   // 0(Rock) 또는 1(Scissor) 또는 2(Paper) 중 랜덤으로 부여
       score: 0,  // 첫 번째 손이므로 항상 비긴(0) 것으로 취급
-      time: "2022-12-25T11:24:00.388Z",  // TODO 타입 확인해봐야 함
+      time: "2022-12-25 03:24:00.388157 KST",
       room_id: 1
     }
   ]
@@ -272,7 +276,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
       name: "이름",
       hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
       score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
-      time: "2022-12-25T11:24:12.388Z",  // TODO 타입 확인해봐야 함
+      time: "2022-12-25 03:24:12.388157 KST",
       room_id: 1
     },
     ...  // 해당 방에서 입력된 손 개수만큼 존재
@@ -420,3 +424,17 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 * **게임 창에서 사람들의 순위를 포함한 정보를 표시할 때 호출할 것!**
 * **결과 창에서 사람들의 순위를 포함한 정보를 표시할 때 호출할 것!**
 -->
+
+### API test
+* 백엔드 서버를 실행 중인 상황에서([Run](#run) 참조) 별도의 터미널을 켜고 아래 명령어 실행
+* `cd {root_of_this_repository}`
+* `./sql_app/Scripts/activate.ps1` (가상환경 실행)
+* `python ./backend_websocket_test.py`
+
+#### 현재 테스트한 항목
+* join을 통한 웹 소켓 연결: 성공
+* quit 요청을 통해 대기 방에서 나가기: 성공
+* start 요청을 통해 대기 방에서 플레이 중인 방으로 전환하기: 성공
+* start 직후에 hand 요청을 날리고 오류 메시지 받기: 성공
+* start 후 6초 후에 hand 요청을 날리고 반영된 결과 받기: 성공
+* start 후 게임이 종료될 시간 이후에 end 응답 받기: **실패**

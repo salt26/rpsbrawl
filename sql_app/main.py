@@ -1,9 +1,11 @@
 from typing import List, Tuple
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.testclient import TestClient
 #from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from pytz import timezone
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
@@ -26,7 +28,7 @@ app.add_middleware(
 )
 
 JSON_SENDING_MODE = "text"
-JSON_RECEIVING_MODE = "binary"
+JSON_RECEIVING_MODE = "text"
 
 # Dependency
 def get_db():
@@ -48,7 +50,7 @@ class ConnectionManager:
         return next((x for x in self.active_connections if x[1] == person_id), None)
 
     def find_all_connections_by_room_id(self, room_id: int):
-        return list(filter(lambda x: x[2] == room_id))
+        return list(filter(lambda x: x[2] == room_id, self.active_connections))
 
     async def connect(self, websocket: WebSocket, person_id: int, room_id: int):
         await websocket.accept()
@@ -59,7 +61,7 @@ class ConnectionManager:
 
     async def close(self, websocket: WebSocket):
         await websocket.close()
-        self.disconnect(self, websocket=websocket)
+        self.disconnect(websocket=websocket)
 
     async def close_with_person_id(self, person_id: int):
         connection = self.find_connection_by_person_id(person_id)
@@ -89,25 +91,25 @@ class ConnectionManager:
         text["response"] = response
         text["type"] = "message"
         text["message"] = message
-        await websocket.send_text(text)
+        await websocket.send_json(text, mode=JSON_SENDING_MODE)
 
-    async def send_json(request: str, response: str, type: str, data: dict | list, websocket: WebSocket):
-        json = {}
-        json["request"] = request
-        json["response"] = response
-        json["type"] = type
-        json["data"] = data
-        await websocket.send_json(json, mode=JSON_SENDING_MODE)
+    async def send_json(request: str, response: str, type: str, data: dict or list, websocket: WebSocket):
+        obj = {}
+        obj["request"] = request
+        obj["response"] = response
+        obj["type"] = type
+        obj["data"] = data
+        await websocket.send_json(obj, mode=JSON_SENDING_MODE)
 
-    async def broadcast_json(self, request: str, type: str, data: dict | list, room_id: int):
+    async def broadcast_json(self, request: str, type: str, data: dict or list, room_id: int):
         # 한 방 전체의 사람들에게 공통된 JSON을 보냄
-        json = {}
-        json["request"] = request
-        json["response"] = "broadcast"
-        json["type"] = type
-        json["data"] = data
+        obj = {}
+        obj["request"] = request
+        obj["response"] = "broadcast"
+        obj["type"] = type
+        obj["data"] = data
         for connection in self.find_all_connections_by_room_id(room_id):
-            await connection[0].send_json(json, mode=JSON_SENDING_MODE)
+            await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
 
 manager = ConnectionManager()
 
@@ -149,7 +151,7 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
     await manager.connect(websocket, person.id, room.id)
     try:
         # 개인에게 전적('room_id', 'person_id'가 포함된 JSON) 반환 응답
-        await ConnectionManager.send_json("join", "success", "game", game, websocket)
+        await ConnectionManager.send_json("join", "success", "game", game.dict(include={'room_id', 'person_id'}), websocket)
         # 해당 방 전체에게 전적(사람) 목록 반환 응답
         await manager.broadcast_json("join", 'game_list', read_game(room.id, db), room.id)
         while True:
@@ -209,17 +211,17 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
 
                 # 해당 방의 상태 변경
                 # 시작 후 time_offset 초 후부터 time_duration 초 동안 손 입력을 받음
-                db_room = crud.get_room(db, room.id)
+                db_room = read_room(room.id, db)
                 if db_room is None:
                     await ConnectionManager.send_text("start", "error", "Room not found", websocket)
                     #raise HTTPException(status_code=404, detail="Room not found")
 
-                if db_room.state == schemas.RoomStateEnum.Wait:
+                if db_room["state"] == schemas.RoomStateEnum.Wait:
                     room = crud.update_room_to_play(db, room_id=room.id, \
                         time_offset=data["time_offset"], time_duration=data["time_duration"])
                 else:
                     await ConnectionManager.send_text("start", "error", "Room is not in a wait mode", websocket)
-                await manager.broadcast_json("start", "room", db_room, room.id)
+                await manager.broadcast_json("start", "room", read_room(room.id, db), room.id)
                 await manager.broadcast_json("start", "hand_list", read_all_hands(room.id, db), room.id)
                 await manager.broadcast_json("start", "game_list", read_game(room.id, db), room.id)
 
@@ -291,9 +293,21 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
     # 해당 방 반환
     db_room = crud.get_room(db, room_id)
     if db_room is None:
-        raise HTTPException(status_code=404, detail="Room not found")
+        return None
+        #raise HTTPException(status_code=404, detail="Room not found")
     
-    return db_room
+    if db_room.start_time is None or db_room.end_time is None:
+        return {
+            'state': db_room.state,
+            'start_time': "",
+            'end_time': ""
+        }
+    else:
+        return {
+            'state': db_room.state,
+            'start_time': db_room.start_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z"),
+            'end_time': db_room.end_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+        }
 
 """
 @app.delete("/room/{room_id}")
@@ -388,7 +402,7 @@ def read_hands(room_id: int, limit: int = 15, db: Session = Depends(get_db)):
             'name': person.name,
             'hand': hand.hand,
             'score': hand.score,
-            'time': hand.time,
+            'time': hand.time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z"),
             'room_id': hand.room_id,
             #'person_id': hand.person_id
         })
@@ -406,7 +420,7 @@ def read_all_hands(room_id: int, db: Session = Depends(get_db)):
             'name': person.name,
             'hand': hand.hand,
             'score': hand.score,
-            'time': hand.time,
+            'time': hand.time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z"),
             'room_id': hand.room_id,
             #'person_id': hand.person_id
         })
