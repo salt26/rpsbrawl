@@ -188,14 +188,19 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
   response: "broadcast",
   type: "room",
   data: {
-    state: 1,  // Play
-    start_time: "2022-12-25 03:24:05.388157 KST",  // 한국 시간 기준
-    end_time: "2022-12-25 03:25:05.388157 KST"
+    state: 1,                                     // Play
+    time_offset : 5,                              // 이때는 항상 0 이상의 정수이지만 대기 방에서는 -1
+    time_duration : 60,                           // 이때는 항상 1 이상의 정수이지만 대기 방에서는 -1
+    init_time: "2022-12-25 03:24:00.388157 KST",  // 한국 시간 기준
+    start_time: "",                               // 아직 빈 문자열로 반환
+    end_time: ""                                  // 아직 빈 문자열로 반환
   }
 }
 ```
+* start_time: 실제로 손 입력을 받기 시작할 때(`message: "Game start"`라는 메시지를 서버가 응답할 때) 결정되므로 그 이후에 GET `/room/{room_id}` 하면 확인할 수 있음
+* end_time: 실제로 게임이 종료될 때(`response: "end"`인 정보를 서버가 응답할 때) 결정되므로 그 이후에 GET `/room/{room_id}` 하면 확인할 수 있음
 
-**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 첫 번째 랜덤 손이 포함된 손 목록 정보 응답
+**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 해당 방의 모든 사람들에게 첫 번째 랜덤 손이 포함된 손 목록 정보 응답
 ```
 {
   request: "start",
@@ -215,7 +220,7 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
 ```
 * 첫 번째 랜덤 손은 이 방에 입장한 첫 번째 사람 명의로 표시되지만, 이 사람의 전적(score, win, draw, lose)에는 영향을 주지 않는다.
 
-**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 해당 방에서 플레이하게 되는 사람(전적) 목록 정보 응답
+**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 해당 방의 모든 사람들에게 해당 방에서 플레이하게 되는 사람(전적) 목록 정보 응답
 ```
 {
   request: "start",
@@ -235,6 +240,16 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
     },
     ...  // 해당 방에서 플레이하는 사람 수만큼 존재
   ]
+}
+```
+
+**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환된 후에 `time_offset`초가 지나 손 입력을 받기 시작하는 순간이 되면 해당 방의 모든 사람들에게 아래 메시지 응답
+```
+{
+  request: "start",
+  response: "broadcast",
+  type: "message",
+  message: "Game start"
 }
 ```
 

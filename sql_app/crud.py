@@ -184,6 +184,8 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
 
 def update_room_to_play(db: Session, room_id: int, time_offset: int = 5, time_duration: int = 60):
     # 게임 시작(사람 입장 불가, 시작 후 time_offset 초 이후부터 time_duration 초 동안 Hand 입력 가능)
+    # 데이터베이스 상의 time_offset 및 time_duration은 정보를 저장하기 위한 용도이며, 실제 시간 관리에는 관여하지 않음
+    # 즉, time_offset/time_duration으로 계산한 시간과 실제 게임 시작/종료 시간이 몇 초의 차이가 있을 수 있음
     if time_offset < 0:
         time_offset = 5
     if time_duration <= 0:
@@ -195,8 +197,26 @@ def update_room_to_play(db: Session, room_id: int, time_offset: int = 5, time_du
     db.add(initial_hand)
     db_room.update({
         "state" : schemas.RoomStateEnum.Play,
-        "start_time" : datetime.now() + timedelta(seconds=time_offset),
-        "end_time" : datetime.now() + timedelta(seconds=time_offset + time_duration),
+        "time_offset" : time_offset,
+        "time_duration" : time_duration,
+        "init_time" : datetime.now(),
+    })
+    db.commit()
+    db_room = db.query(models.Room).filter(models.Room.id == room_id)
+    db.refresh(db_room.first())
+    return schemas.Room.from_orm(db_room.first())
+
+def update_room_to_start(db: Session, room_id: int):
+    # 손 입력 받기 시작
+    if time_offset < 0:
+        time_offset = 5
+    if time_duration <= 0:
+        time_duration = 60
+    db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play))
+    if db_room.first() is None:
+        return None
+    db_room.update({
+        "start_time" : datetime.now(),
     })
     db.commit()
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
@@ -206,8 +226,7 @@ def update_room_to_play(db: Session, room_id: int, time_offset: int = 5, time_du
 def update_room_to_end(db: Session, room_id: int):
     # 게임 종료 (Hand 입력 불가능)
     # 플레이 시간이 다 된 방에서 명시적으로 함수를 호출해 주어야 함
-    db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play, \
-        models.Room.end_time < datetime.now()))
+    db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play))
     if db_room.first() is None:
         return None
     db_persons = db.query(models.Person).filter(models.Person.id.in_(list(map(lambda p: p.person_id, db_room.first().persons))))
@@ -215,7 +234,8 @@ def update_room_to_end(db: Session, room_id: int):
         "is_active" : False
     })
     db_room.update({
-        "state" : schemas.RoomStateEnum.End
+        "state" : schemas.RoomStateEnum.End,
+        "end_time" : datetime.now()
     })
     db.commit()
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
