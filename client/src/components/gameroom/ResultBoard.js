@@ -55,11 +55,11 @@ const ScrollView = styled.div`
 function Place({ rank, belong, name, score }) {
   var img = <Rank rank={rank} />;
 
-  if (rank == 1) {
+  if (rank === 1) {
     img = <SvgIcon src={GoldSrc} size="30px" />;
-  } else if (rank == 2) {
+  } else if (rank === 2) {
     img = <SvgIcon src={SilverSrc} size="30px" />;
-  } else if (rank == 3) {
+  } else if (rank === 3) {
     img = <SvgIcon src={BronzeSrc} size="30px" />;
   }
 

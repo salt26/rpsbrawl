@@ -7,9 +7,9 @@ export default function UserList({ users }) {
   return (
     <Container>
       {users.map(({ affiliation, name }, idx) => {
-        if (name == my_name) {
+        if (name === my_name) {
           return <MyNameTag key={idx}>{name}</MyNameTag>;
-        } else if (affiliation == "STAFF") {
+        } else if (affiliation === "STAFF") {
           return <AdminTag key={idx}>{name}</AdminTag>;
         } else {
           return <NameTag key={idx}>{name}</NameTag>;

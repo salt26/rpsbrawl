@@ -35,7 +35,7 @@ def hash_password(password: str):
     return password + "PleaseHashIt" # TODO
 
 def check_admin(affiliation: str, name: str):
-    admin_list = [("Staff", "관리자")]
+    admin_list = [("STAFF", "관리자")]
     filtered = [item for item in admin_list if item[0] == affiliation and item[1] == name]
     return len(filtered) > 0
 
@@ -339,3 +339,8 @@ def get_games(db: Session):
 def get_games_in_room(db: Session, room_id: int):
     db_game = db.query(models.Game).filter(models.Game.room_id == room_id).all()
     return parse_obj_as(schemas.List[schemas.Game], db_game)
+
+def get_expired_rooms(db: Session):
+    db_room = db.query(models.Room).filter(and_(models.Room.state == schemas.RoomStateEnum.Play,
+        models.Room.end_time < datetime.now())).all()
+    return parse_obj_as(schemas.List[schemas.Room], db_room)

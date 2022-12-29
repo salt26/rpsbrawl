@@ -4,14 +4,14 @@ import FirstPlace from "../components/gameroom/FirstPlace";
 import MyPlace from "../components/gameroom/MyPlace";
 import NetworkLogs from "../components/gameroom/NetworkLogs";
 import TimeBar from "../components/gameroom/TimeBar";
-import RPSSelction from "../components/gameroom/RPSSelction";
+import RPSSelection from "../components/gameroom/RPSSelection";
 
 export default function InGamePage() {
   return (
     <Container>
       <Left>
         <TimeBar />
-        <RPSSelction />
+        <RPSSelection />
       </Left>
 
       <Right>

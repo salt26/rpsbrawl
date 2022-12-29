@@ -14,6 +14,8 @@ import Button from "../components/common/Button";
 import { Medium } from "../styles/font";
 import { useNavigate } from "react-router-dom";
 import HTTP from "../utils/HTTP";
+
+import { BASE_WEBSOCKET_URL } from "../Config";
 function RuleBox() {
   return (
     <BgBox width="250px" height="300px" color="white">
@@ -38,31 +40,39 @@ function LoginBox() {
   var navigate = useNavigate();
 
   const _joinGame = () => {
-    if (selectedOption == "" || name == "") {
+    if (selectedOption === "" || name === "") {
       alert("소속과 이름을 모두 채워주세요.");
       return;
     }
 
-    HTTP.post(`/room?affiliation=${selectedOption}&name=${name}`)
-      .then((res) => {
-        if (res.status == 200) {
-          const { person_id, room_id } = res.data;
-          sessionStorage.setItem("person_id", person_id);
-          sessionStorage.setItem("person_name", name);
-          sessionStorage.setItem("affiliation", selectedOption);
-          navigate(`/room/${room_id}/waiting`);
-        } else {
-          alert("게임 입장에 실패하였습니다. 새로고침 후 다시시도해주세요.");
-        }
-      })
-      .catch((err) => {
-        console.log(err);
+    try {
+      // 웹소켓 연결
 
-        alert(
-          `해당 소속과 이름의 유저는 게임중입니다. 게임을 강제종료했다면 
-          게임이 종료될때까지 기다린 후에 다시 시도해주세요.`
-        );
-      });
+      let ws = new WebSocket(
+        `${BASE_WEBSOCKET_URL}/join?affiliation=${selectedOption}&name=${name}`
+      );
+
+      ws.onopen = (event) => {
+        console.log("Socket open", event);
+
+        // ws.send("Successfully connected to socket"); // 여기에서 오류 발생
+        ws.send(JSON.stringify({request: 'quit'}))      // 이것은 퇴장 요청, 적절히 수정 바람
+      };
+      ws.onerror = (err) => {
+        console.log("err occured", err);
+      };
+      ws.onclose = (event) => {
+        console.log("onclose!", event);
+      };
+      ws.onmessage = function (event) {
+        const data = JSON.parse(event.data); // 전달된 json string을 object로 변환
+
+        console.log("message from the server", data); //응답 정보 출력
+      };
+    } catch (e) {
+      console.log(e);
+      console.log("failed to connect socket");
+    }
   };
   return (
     <BgBox width="250px" height="300px" color="white">
