@@ -208,10 +208,6 @@ def update_room_to_play(db: Session, room_id: int, time_offset: int = 5, time_du
 
 def update_room_to_start(db: Session, room_id: int):
     # 손 입력 받기 시작
-    if time_offset < 0:
-        time_offset = 5
-    if time_duration <= 0:
-        time_duration = 60
     db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play))
     if db_room.first() is None:
         return None
@@ -271,9 +267,9 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
         return (None, 5)
     elif db_room.state != schemas.RoomStateEnum.Play:
         return (None, 1)
-    elif db_room.start_time > datetime.now():
+    elif db_room.start_time is None or db_room.start_time > datetime.now():
         return (None, 2)
-    elif db_room.end_time < datetime.now():
+    elif db_room.end_time is not None and db_room.end_time < datetime.now():
         return (None, 6)
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id))
@@ -283,6 +279,7 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
     db_last_hand = get_hands_from_last(db, room_id, limit=1)
     if db_last_hand is None or len(db_last_hand) <= 0:
         return (None, 4)
+    
     score = hand_score(hand, db_last_hand[0].hand)
     db_hand = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)
     db.add(db_hand)
@@ -290,6 +287,7 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
     db.refresh(db_hand)
     # 개인 점수 변경
     _, error_code = update_game(db, room_id=room_id, person_id=person_id, score=score)
+    
     return (schemas.Hand.from_orm(db_hand), error_code)
 
 def get_game(db: Session, room_id: int, person_id: int):
@@ -323,9 +321,9 @@ def update_game(db: Session, room_id: int, person_id: int, score: int):
     elif db_room.state != schemas.RoomStateEnum.Play:
         # 오류
         return (None, 11)
-    if db_room.start_time > datetime.now():
+    if db_room.start_time is None or db_room.start_time > datetime.now():
         return (None, 12)
-    elif db_room.end_time < datetime.now():
+    elif db_room.end_time is not None and db_room.end_time < datetime.now():
         return (None, 16)
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id))

@@ -164,7 +164,7 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
         await ConnectionManager.send_json("join", "success", "game", game.dict(include={'room_id', 'person_id'}), websocket)
         # 해당 방 전체에게 전적(사람) 목록 반환 응답
         await manager.broadcast_json("join", 'game_list', read_game(room.id, db), room.id)
-        asyncio.run(after_join(websocket, person.id, room.id, db))
+        await after_join(websocket, person.id, room.id, db)
 
     except WebSocketDisconnect:
         """
