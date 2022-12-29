@@ -55,7 +55,8 @@ function LoginBox() {
       ws.onopen = (event) => {
         console.log("Socket open", event);
 
-        ws.send("Successfully connected to socket");
+        // ws.send("Successfully connected to socket"); // 여기에서 오류 발생
+        ws.send(JSON.stringify({request: 'quit'}))      // 이것은 퇴장 요청, 적절히 수정 바람
       };
       ws.onerror = (err) => {
         console.log("err occured", err);
