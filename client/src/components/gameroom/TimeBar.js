@@ -14,7 +14,7 @@ export default function TimeBar() {
     () => {
       setSec(sec - 1);
       console.log(sec);
-      if (sec == 1) {
+      if (sec === 1) {
         setIsRunning(false);
       }
     },

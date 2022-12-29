@@ -16,7 +16,7 @@ export default function WatingGamePage() {
   const [numberOfUser, setNumberOfUser] = useState(1);
   const [users, setUsers] = useState([]);
 
-  const isAuthorized = sessionStorage.getItem("affiliation") == "STAFF";
+  const isAuthorized = sessionStorage.getItem("affiliation") === "STAFF";
 
   const person_id = sessionStorage.getItem("person_id");
   var navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function WatingGamePage() {
 
     HTTP.get(`/room/${room_id}/game`)
       .then((res) => {
-        if (res.status == 200) {
+        if (res.status === 200) {
           setNumberOfUser(res.data.length);
           setUsers(res.data);
           console.log(res.data);
@@ -48,7 +48,7 @@ export default function WatingGamePage() {
   const _quitGame = () => {
     HTTP.delete(`/room/${room_id}?person_id=${person_id}`)
       .then((res) => {
-        if (res.status == 200) {
+        if (res.status === 200) {
           sessionStorage.removeItem("person_id");
           sessionStorage.removeItem("person_name");
           navigate("/");
@@ -64,7 +64,7 @@ export default function WatingGamePage() {
   const _startGame = () => {
     HTTP.put(`/room/${room_id}/play`)
       .then((res) => {
-        if (res.status == 200) {
+        if (res.status === 200) {
           navigate(`/room/${room_id}/game`);
         } else {
           alert("게임 입장에 실패하였습니다. 새로고침 후 다시시도해주세요.");

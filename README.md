@@ -1,6 +1,23 @@
 # Rock-Scissor-Paper Brawl
 * 네트워크 가위바위보 난투
-* FastAPI로 구현
+* 백엔드는 FastAPI로 구현
+* 프론트엔드는 React로 구현
+
+## Frontend
+### How to run
+
+#### Install
+* React 사용
+* `npm install -g react-scripts`
+* `npm install react react-dom`
+
+#### Run
+* `npm start`
+  * 브라우저에서 `http://127.0.0.1:3000` 접속
+* *유선 LAN을 사용하는 네트워크 환경에서는 다음 오류를 띄우며 실행이 되지 않을 수 있다.*
+  * `Invalid options object. Dev Server has been initialized using an options object that does not match the API schema.`
+  * ` - options.allowedHosts[0] should be a non-empty string.`
+  * 이때는 Wi-Fi 또는 핫스팟을 사용하는 네트워크 환경에서 실행하면 잘 작동한다.
 
 ## Backend
 ### How to run
@@ -35,7 +52,7 @@ let ws = new WebSocket("ws://localhost:8000/join?affiliation=" + "소속" + "&na
 ```
 
 * 소속(`affiliation`)과 이름(`name`)을 가진 사람을 마지막 대기 방에 입장시킴 (회원가입 겸 로그인)
-* 특별히 `affiliation=Staff`이고 `name=관리자`인 사람은 admin으로 취급됨
+* 특별히 `affiliation=STAFF`이고 `name=관리자`인 사람은 admin으로 취급됨
 
 join error: 입장하려는 대기 방에 같은 사람이 이미 입장해 있는 경우 다음 메시지 응답
 ```
@@ -348,7 +365,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 
 #### POST `/room` (`affiliation`(string), `name`(string))
 * 소속(`affiliation`)과 이름(`name`)을 가진 사람을 마지막 대기 방에 입장시킴 (회원가입 겸 로그인)
-* 특별히 `affiliation=Staff`이고 `name=관리자`인 사람은 admin으로 표시됨
+* 특별히 `affiliation=STAFF`이고 `name=관리자`인 사람은 admin으로 표시됨
 * 같은 사람이 이미 다른 대기 방 또는 플레이 방에 들어가 있는 경우 새로 입장할 수 없음
 * `person_id`(사람 번호), `room_id`(입장한 방 번호) 등이 포함된 오브젝트(`{}`)를 반환
 * **계정 접속 창에서 입장 버튼을 누를 때 호출할 것!**

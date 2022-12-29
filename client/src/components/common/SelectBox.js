@@ -8,7 +8,7 @@ export default function SelectBox({ selectedOption, setSelectedOption }) {
     "KING",
     "UPnL",
     "SNUGDC",
-    "CAT&Dog",
+    "CAT&DOG",
     "G-POS",
     "HAJE",
     "PoolC",

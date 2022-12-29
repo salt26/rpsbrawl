@@ -40,7 +40,7 @@ function LoginBox() {
   var navigate = useNavigate();
 
   const _joinGame = () => {
-    if (selectedOption == "" || name == "") {
+    if (selectedOption === "" || name === "") {
       alert("소속과 이름을 모두 채워주세요.");
       return;
     }
