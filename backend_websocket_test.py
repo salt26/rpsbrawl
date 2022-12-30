@@ -150,7 +150,38 @@ def test_websocket_join_and_error_and_disconnect(app):
         print(data)
         assert data["request"] == "" and data["response"] == "error"
         
-        print("@@@ disconnect (without sending quit)")
+        print("@@@ disconnected (without sending quit)")
+
+    
+    print("@@@@ send join")
+    with client.websocket_connect("/join?affiliation=STAFF&name=test_villain") as websocket:
+        data = websocket.receive_json(mode='text')
+        print(data)
+        assert data["request"] == "join" and data["response"] == "success"
+        room_id = data["data"]["room_id"]
+        data = websocket.receive_json(mode='text')
+        print(data)
+        assert data["request"] == "join" and data["response"] == "broadcast"
+
+        print("@@@@@ send start (without required keyword arguments) -> disconnect")
+        websocket.send_json({
+            'request': 'start'
+        })
+        data = client.get("/room/" + str(room_id))
+        print(data.json())
+        assert data.json()["state"] == 0
+
+    print("@@@@@@ send join")
+    with client.websocket_connect("/join?affiliation=STAFF&name=test_villain") as websocket:
+        data = websocket.receive_json(mode='text')
+        print(data)
+        assert data["request"] == "join" and data["response"] == "success"
+        room_id = data["data"]["room_id"]
+        data = websocket.receive_json(mode='text')
+        print(data)
+        assert data["request"] == "join" and data["response"] == "broadcast"
+        
+        print("@@@@@@@ disconnected (without sending quit)")
 
 
 # 프로젝트 루트 폴더(sql_app 폴더의 상위 폴더)에서 실행할 것!
@@ -158,7 +189,6 @@ if __name__ == '__main__':
     if __package__ is None:
         import sys
         from os import path
-        print(path.dirname(path.abspath(__file__)))
         sys.path.append(path.dirname(path.abspath(__file__)))
 
         from sql_app.main import app

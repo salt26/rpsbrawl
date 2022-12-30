@@ -202,7 +202,7 @@ def read_root():
 @app.get("/connections")
 def read_connections():
     # (디버깅 용도)
-    return {"connections": manager.active_connections}
+    return {"connections": json.dumps(manager.active_connections)}
 
 @app.get("/room/list", response_model=List[schemas.Room])
 def read_all_room(db: Session = Depends(get_db)):
