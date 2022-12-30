@@ -16,7 +16,7 @@ import random
 # * 시간 제한 넣기 -> 내부에서 Play 시간에만 손 입력을 받도록 했지만, 시간이 종료된 후에 직접 update_room_to_end()을 호출해 주어야 한다.
 # * (해결) Add Hand에서 해당 방에 해당 사람이 없는 경우 오류 발생
 # * (해결) 해당 방에 입장한 사람 수를 얻는 메서드 추가
-# * (해결) 해당 방의 사람들의 순위를 반환하는 메서드 추가 -> 이건 attribute로 들고 있지 않도록 한다.
+# * (해결) 해당 방의 사람들의 순위를 반환하는 메서드 추가 -> 이건 key로 들고 있지 않도록 한다.
 # * (무시) 해당 방의 특정 사람의 순위를 반환하는 메서드 추가?
 
 # 로그인 상태의 사람은 Wait 또는 Play 방에 들어가 있는 사람을 말한다.
@@ -161,6 +161,7 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int):
 
 def update_room_to_quit(db: Session, room_id: int, person_id: int):
     # 해당 방에서 사람 퇴장(로그아웃)
+    # 대기 방인 경우에만 퇴장 가능
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
     if db_room.first() is None:
         return (None, 1)
@@ -184,6 +185,8 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
 
 def update_room_to_play(db: Session, room_id: int, time_offset: int = 5, time_duration: int = 60):
     # 게임 시작(사람 입장 불가, 시작 후 time_offset 초 이후부터 time_duration 초 동안 Hand 입력 가능)
+    # 데이터베이스 상의 time_offset 및 time_duration은 정보를 저장하기 위한 용도이며, 실제 시간 관리에는 관여하지 않음
+    # 즉, time_offset/time_duration으로 계산한 시간과 실제 게임 시작/종료 시간이 몇 초의 차이가 있을 수 있음
     if time_offset < 0:
         time_offset = 5
     if time_duration <= 0:
@@ -195,8 +198,22 @@ def update_room_to_play(db: Session, room_id: int, time_offset: int = 5, time_du
     db.add(initial_hand)
     db_room.update({
         "state" : schemas.RoomStateEnum.Play,
-        "start_time" : datetime.now() + timedelta(seconds=time_offset),
-        "end_time" : datetime.now() + timedelta(seconds=time_offset + time_duration),
+        "time_offset" : time_offset,
+        "time_duration" : time_duration,
+        "init_time" : datetime.now(),
+    })
+    db.commit()
+    db_room = db.query(models.Room).filter(models.Room.id == room_id)
+    db.refresh(db_room.first())
+    return schemas.Room.from_orm(db_room.first())
+
+def update_room_to_start(db: Session, room_id: int):
+    # 손 입력 받기 시작
+    db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play))
+    if db_room.first() is None:
+        return None
+    db_room.update({
+        "start_time" : datetime.now(),
     })
     db.commit()
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
@@ -206,8 +223,7 @@ def update_room_to_play(db: Session, room_id: int, time_offset: int = 5, time_du
 def update_room_to_end(db: Session, room_id: int):
     # 게임 종료 (Hand 입력 불가능)
     # 플레이 시간이 다 된 방에서 명시적으로 함수를 호출해 주어야 함
-    db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play, \
-        models.Room.end_time < datetime.now()))
+    db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play))
     if db_room.first() is None:
         return None
     db_persons = db.query(models.Person).filter(models.Person.id.in_(list(map(lambda p: p.person_id, db_room.first().persons))))
@@ -215,7 +231,8 @@ def update_room_to_end(db: Session, room_id: int):
         "is_active" : False
     })
     db_room.update({
-        "state" : schemas.RoomStateEnum.End
+        "state" : schemas.RoomStateEnum.End,
+        "end_time" : datetime.now()
     })
     db.commit()
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
@@ -251,9 +268,9 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
         return (None, 5)
     elif db_room.state != schemas.RoomStateEnum.Play:
         return (None, 1)
-    elif db_room.start_time > datetime.now():
+    elif db_room.start_time is None or db_room.start_time > datetime.now():
         return (None, 2)
-    elif db_room.end_time < datetime.now():
+    elif db_room.end_time is not None and db_room.end_time < datetime.now():
         return (None, 6)
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id))
@@ -263,6 +280,7 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
     db_last_hand = get_hands_from_last(db, room_id, limit=1)
     if db_last_hand is None or len(db_last_hand) <= 0:
         return (None, 4)
+    
     score = hand_score(hand, db_last_hand[0].hand)
     db_hand = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)
     db.add(db_hand)
@@ -270,6 +288,7 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
     db.refresh(db_hand)
     # 개인 점수 변경
     _, error_code = update_game(db, room_id=room_id, person_id=person_id, score=score)
+    
     return (schemas.Hand.from_orm(db_hand), error_code)
 
 def get_game(db: Session, room_id: int, person_id: int):
@@ -303,9 +322,9 @@ def update_game(db: Session, room_id: int, person_id: int, score: int):
     elif db_room.state != schemas.RoomStateEnum.Play:
         # 오류
         return (None, 11)
-    if db_room.start_time > datetime.now():
+    if db_room.start_time is None or db_room.start_time > datetime.now():
         return (None, 12)
-    elif db_room.end_time < datetime.now():
+    elif db_room.end_time is not None and db_room.end_time < datetime.now():
         return (None, 16)
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id))
