@@ -1,11 +1,13 @@
 from typing import List, Tuple
 
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, BackgroundTasks
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 #from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pytz import timezone
 import asyncio
+import json
+import traceback
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
@@ -125,6 +127,12 @@ manager = ConnectionManager()
 
 @app.websocket("/join")
 async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, db: Session = Depends(get_db)):
+    if affiliation is None or name is None or affiliation == "" or name == "":
+        await websocket.accept()
+        await ConnectionManager.send_text("join", "error", "Both affiliation and name are required", websocket)
+        await websocket.close()
+        return
+    
     # 웹소켓 연결 시작
     # 한 번 연결하면 연결을 끊거나 끊어질 때까지 while True:로 모든 데이터를 다 받아야 하나?
     person = crud.get_person_by_affiliation_and_name(db, affiliation=affiliation, name=name)
@@ -151,7 +159,7 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
         await websocket.close()
         return
         #raise HTTPException(status_code=400, detail="Person has already entered in non-end Room")
-    game = crud.get_game(db, room.id, person.id)
+    #game = crud.get_game(db, room.id, person.id)
 
     connection = manager.find_connection_by_person_id(person.id)
     if connection:
@@ -160,27 +168,41 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
         
     await manager.connect(websocket, person.id, room.id)
     try:
-        # 개인에게 전적('room_id', 'person_id'가 포함된 JSON) 반환 응답
-        await ConnectionManager.send_json("join", "success", "game", game.dict(include={'room_id', 'person_id'}), websocket)
+        # 개인에게 프로필('affiliation', 'name', 'is_admin', 'room_id', 'person_id'가 포함된 JSON) 반환 응답
+        await ConnectionManager.send_json("join", "success", "profile", read_profile(room.id, person.id, db), websocket)
         # 해당 방 전체에게 전적(사람) 목록 반환 응답
         await manager.broadcast_json("join", 'game_list', read_game(room.id, db), room.id)
+
+        # 무한 루프를 돌면서 클라이언트에게 요청을 받고 처리하고 응답
         await after_join(websocket, person.id, room.id, db)
 
     except WebSocketDisconnect:
-        """
-        connection = manager.find_connection_by_websocket(websocket)
-        if connection:
-            room_id = connection[2]
-            manager.disconnect(websocket)
-            await manager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id)
-        """
         manager.disconnect(websocket)
-        await manager.broadcast_json("disconnected", "game_list", read_game(room.id, db), room.id)
+
+        # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
+        crud.update_room_to_quit(db, room.id, person.id)
+        await manager.broadcast_json("disconnected", "game_list", read_game(room.id, db), room.id) # disconnect`ed`
+    except:
+        if websocket.state == 1:
+            # CONNECTED
+            await manager.close(websocket)
+        else:
+            # DISCONNECTED or CONNECTING
+            manager.disconnect(websocket)
+
+        # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
+        crud.update_room_to_quit(db, room.id, person.id)
+        await manager.broadcast_json("disconnect", "game_list", read_game(room.id, db), room.id)   # disconnect
 
 @app.get("/")
 def read_root():
     # (디버깅 용도)
     return {"Hello": "World"}
+
+@app.get("/connections")
+def read_connections():
+    # (디버깅 용도)
+    return {"connections": manager.active_connections}
 
 @app.get("/room/list", response_model=List[schemas.Room])
 def read_all_room(db: Session = Depends(get_db)):
@@ -369,7 +391,7 @@ def read_all_hands(room_id: int, db: Session = Depends(get_db)):
 
 @app.get("/room/{room_id}/game")
 def read_game(room_id: int, db: Session = Depends(get_db)):
-    # 해당 방의 사람들의 {순위, 소속, 이름, 점수, win, draw, lose} 반환
+    # 해당 방의 사람들의 {순위, 소속, 이름, 관리자 여부, 점수, win, draw, lose, 방 번호} 반환
     games = crud.get_games_in_room(db, room_id=room_id)
     # 점수가 같다면 이긴 횟수가 많을수록 높은 순위, 이긴 횟수도 같다면 비긴 횟수가 많을수록 높은 순위
     # (많이 낼수록 유리)
@@ -390,6 +412,18 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
             #'person_id': game.person_id
         })
     return ret
+
+def read_profile(room_id: int, person_id: int, db: Session = Depends(get_db)):
+    # 해당 방의 특정 사람의 {소속, 이름, 관리자 여부, 방 번호, 개인 번호} 반환
+    game = crud.get_game(db, room_id=room_id, person_id=person_id)
+    person = crud.get_person(db, person_id=person_id)
+    return {
+        'affiliation': person.affiliation,
+        'name': person.name,
+        'is_admin': person.is_admin,
+        'room_id': game.room_id,
+        'person_id': game.person_id
+    }
 
 """
 # route 없음
@@ -453,9 +487,27 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
 async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Session = Depends(get_db)):
     while True:
         # 클라이언트의 요청 대기
-        data = await websocket.receive_json(mode=JSON_RECEIVING_MODE)
+        try:
+            data = await websocket.receive_json(mode=JSON_RECEIVING_MODE)
+            request = data["request"]
+        except json.decoder.JSONDecodeError:
+            # JSON 형식이 아닌 문자열을 클라이언트에서 보낸 경우 발생
+            await ConnectionManager.send_text("", "error", "Bad request", websocket)
+            continue
+        except KeyError:
+            # JSON에 "request"라는 key가 없는 경우 발생
+            await ConnectionManager.send_text("", "error", "Bad request", websocket)
+            continue
+        except WebSocketDisconnect:
+            raise
+        except:
+            # TypeError의 경우 데이터 스키마가 변경된 경우에 발생하는 것으로 알려져 있음
+            await ConnectionManager.send_text("", "error", "Internal server error", websocket)
+            traceback.print_exc()
+            print("Internal server error")
+            raise
 
-        if data["request"] == "hand":
+        if request == "hand":
             # 손 입력 요청
             # 해당 방에 새로운 손 추가
             _, error_code = crud.create_hand(db, room_id=room_id, person_id=person_id, hand=data["hand"])
@@ -481,7 +533,7 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
                 await ConnectionManager.send_text("hand", "error", "Game has ended", websocket)
                 #raise HTTPException(status_code=403, detail="Game has ended")
                 
-        elif data["request"] == "quit":
+        elif request == "quit":
             # 나가기 요청
             # 대기 중인 방일 경우에, 해당 방에 해당 사람이 있으면 제거
             _, error_code = crud.update_room_to_quit(db, room_id, person_id)
@@ -503,7 +555,7 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
                 await ConnectionManager.send_text("quit", "error", "Person does not exist in the Room", websocket)
                 #raise HTTPException(status_code=404, detail="Person does not exist in the Room")
             
-        elif data["request"] == "start":
+        elif request == "start":
             # 게임 시작 요청
 
             # 해당 방의 상태 변경
@@ -519,3 +571,7 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
                 asyncio.create_task(manage_time_for_room(room_id, time_offset=data["time_offset"], time_duration=data["time_duration"], db=db))
             else:
                 await ConnectionManager.send_text("start", "error", "Room is not in a wait mode", websocket)
+
+        else:
+            # 오류 메시지 응답
+            await ConnectionManager.send_text("", "error", "Bad request", websocket)

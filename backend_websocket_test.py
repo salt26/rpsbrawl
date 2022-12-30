@@ -122,6 +122,36 @@ def test_websocket_join_and_start_and_hand(app):
         print(data)
         assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'game_list'
 
+        print("@@@@@@@@@ send hand 0 -> not connected")
+        try:
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+        except Exception as e:
+            assert e.__class__ == RuntimeError and str(e) == 'Cannot call "send" once a close message has been sent.'
+
+def test_websocket_join_and_error_and_disconnect(app):
+    client = TestClient(app)
+    print("--------- Test 3: join and error and disconnect ---------")
+    # 입장 요청
+    print("@ send join")
+    with client.websocket_connect("/join?affiliation=STAFF&name=test_villain") as websocket:
+        data = websocket.receive_json(mode='text')
+        print(data)
+        assert data["request"] == "join" and data["response"] == "success"
+        data = websocket.receive_json(mode='text')
+        print(data)
+        assert data["request"] == "join" and data["response"] == "broadcast"
+
+        print("@@ send plain text (not a JSON)")
+        websocket.send_text("Hello world!")
+        data = websocket.receive_json(mode='text')
+        print(data)
+        assert data["request"] == "" and data["response"] == "error"
+        
+        print("@@@ disconnect (without sending quit)")
+
 
 # 프로젝트 루트 폴더(sql_app 폴더의 상위 폴더)에서 실행할 것!
 if __name__ == '__main__':
@@ -137,3 +167,5 @@ if __name__ == '__main__':
     test_websocket_join_and_quit(app)
     print()
     test_websocket_join_and_start_and_hand(app)
+    print()
+    test_websocket_join_and_error_and_disconnect(app)

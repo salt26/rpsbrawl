@@ -54,6 +54,16 @@ let ws = new WebSocket("ws://localhost:8000/join?affiliation=" + "소속" + "&na
 * 소속(`affiliation`)과 이름(`name`)을 가진 사람을 마지막 대기 방에 입장시킴 (회원가입 겸 로그인)
 * 특별히 `affiliation=STAFF`이고 `name=관리자`인 사람은 admin으로 취급됨
 
+join error: `affiliation` 또는 `name`이 주어지지 않는 경우 다음 메시지 응답
+```
+{
+  request: "join",
+  response: "error",
+  type: "message",
+  message: "Both affiliation and name are required"
+}
+```
+
 join error: 입장하려는 대기 방에 같은 사람이 이미 입장해 있는 경우 다음 메시지 응답
 ```
 {
@@ -74,13 +84,16 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
 }
 ```
 
-**join success**: 입장 성공 시 해당 개인에게 `data.room_id`, `data.person_id`가 포함된 다음 정보 응답 > 이때 받은 `data.person_id`를 클라이언트에서 꼭 기억하고 있을 것!
+**join success**: 입장 성공 시 해당 개인에게 `data.room_id`, `data.person_id` 등이 포함된 다음 정보 응답 > 이때 받은 `data.person_id`를 클라이언트에서 꼭 기억하고 있을 것!
 ```
 {
   request: "join",
   response: "success",
-  type: "game",
+  type: "profile",
   data: {
+    affiliation: "소속",
+    name: "이름",
+    is_admin: False,
     room_id: 1,
     person_id: 1
   }
@@ -143,7 +156,7 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
 **quit broadcast**: 퇴장 성공 시 해당 방에 남아있는 모든 사람들(퇴장한 본인 제외)에게 다음 정보 응답
 ```
 {
-  request: "join",
+  request: "quit",
   response: "broadcast",
   type: "game_list",
   data: [
@@ -374,6 +387,66 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 * 프론트엔드에서는 이 응답을 받고 나서 3초 정도 후에 결과 화면을 보여주고, 결과 화면에서 "나가기" 버튼을 눌러 입장 전 화면으로 이동하면 된다.
   * *결과 화면에서는 여기서 받은 "game_list" 정보를 바탕으로 csv 등의 파일로 결과를 export하는 기능이 있으면 좋겠다.*
   * *입장 전 화면에서는 기존에 접속했던 계정(소속 및 이름) 정보가 그대로 입력 필드에 차 있어서 "입장!" 버튼만 누르면 바로 다시 입장할 수 있도록 하면 좋겠다.*
+
+#### 연결 끊김(disconnected)
+disconnected broadcast: 클라이언트에서 연결을 끊는 경우 해당 방에 남아있는 모든 사람들(연결이 끊긴 본인 제외)에게 다음 정보 응답
+```
+{
+  request: "disconnected",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      affiliation: "소속",
+      name: "이름",
+      ...
+    },
+    ...
+  ]
+}
+```
+* 여기서 발생하는 응답의 `request`는 "disconnect`ed`"이다.
+
+#### 기타 오류
+error: JSON 형식이 아닌 데이터를 요청으로 주거나, 요청 데이터에 "request" 키가 없거나, "request" 키의 값이 `["hand", "quit", "start"]` 중에 없는 경우 다음 오류 메시지 응답
+```
+{
+  request: "",
+  response: "error",
+  type: "message",
+  message: "Bad request"
+}
+```
+* 이 경우 연결은 유지되며 다시 새로운 요청을 보낼 수 있다.
+
+error: 서버 DB의 스키마가 변경되었거나 요청을 받는 중 알 수 없는 원인으로 서버 오류가 발생하는 경우 다음 오류 메시지 응답
+```
+{
+  request: "",
+  response: "error",
+  type: "message",
+  message: "Internal server error"
+}
+```
+* 이 경우 해당 개인의 연결이 즉시 끊어지며 바로 아래의 disconnect broadcast도 전송된다.
+
+disconnect broadcast: 요청 데이터에 필요한 정보가 모두 들어있지 않거나(예: `request: "hand"`인데 "hand" 키의 값이 없는 경우) 요청을 처리하는 중 알 수 없는 원인으로 서버 오류가 발생하는 경우 서버에서 해당 개인과의 연결을 즉시 끊고 해당 방에 남아있는 모든 사람들(연결이 끊긴 본인 제외)에게 다음 정보 응답
+```
+{
+  request: "disconnect",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      affiliation: "소속",
+      name: "이름",
+      ...
+    },
+    ...
+  ]
+}
+```
+* 여기서 발생하는 응답의 `request`는 "disconnect"이다.
 
 <!--
 ---

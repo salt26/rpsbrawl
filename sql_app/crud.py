@@ -16,7 +16,7 @@ import random
 # * 시간 제한 넣기 -> 내부에서 Play 시간에만 손 입력을 받도록 했지만, 시간이 종료된 후에 직접 update_room_to_end()을 호출해 주어야 한다.
 # * (해결) Add Hand에서 해당 방에 해당 사람이 없는 경우 오류 발생
 # * (해결) 해당 방에 입장한 사람 수를 얻는 메서드 추가
-# * (해결) 해당 방의 사람들의 순위를 반환하는 메서드 추가 -> 이건 attribute로 들고 있지 않도록 한다.
+# * (해결) 해당 방의 사람들의 순위를 반환하는 메서드 추가 -> 이건 key로 들고 있지 않도록 한다.
 # * (무시) 해당 방의 특정 사람의 순위를 반환하는 메서드 추가?
 
 # 로그인 상태의 사람은 Wait 또는 Play 방에 들어가 있는 사람을 말한다.
@@ -161,6 +161,7 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int):
 
 def update_room_to_quit(db: Session, room_id: int, person_id: int):
     # 해당 방에서 사람 퇴장(로그아웃)
+    # 대기 방인 경우에만 퇴장 가능
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
     if db_room.first() is None:
         return (None, 1)
