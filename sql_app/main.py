@@ -568,6 +568,8 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
             if db_room["state"] == schemas.RoomStateEnum.Wait:
                 room = crud.update_room_to_play(db, room_id=room_id, \
                     time_offset=data["time_offset"], time_duration=data["time_duration"])
+
+                # https://tech.buzzvil.com/blog/asyncio-no-1-coroutine-and-eventloop/
                 asyncio.create_task(manage_time_for_room(room_id, time_offset=data["time_offset"], time_duration=data["time_duration"], db=db))
             else:
                 await ConnectionManager.send_text("start", "error", "Room is not in a wait mode", websocket)
