@@ -6,6 +6,7 @@ import HTTP from "../utils/HTTP";
 import { useParams } from "react-router-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getUserId } from "../utils/User";
+import { CSVLink, CSVDownload } from "react-csv";
 
 export default function GameResultPage() {
   const { room_id } = useParams();
@@ -19,8 +20,10 @@ export default function GameResultPage() {
   return (
     <Row>
       <Button text="나가기" onClick={_quitGame} />
-      <ResultBoard result={state} />
-      <Button text="결과저장" />
+      <ResultBoard result={state} />;
+      <CSVLink data={state}>
+        <Button text="결과저장" />
+      </CSVLink>
     </Row>
   );
 }
