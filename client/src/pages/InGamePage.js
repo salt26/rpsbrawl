@@ -15,6 +15,9 @@ import { useParams } from "react-router-dom";
 export default function InGamePage() {
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
 
+  const [lastHand, setLastHand] = useState(0);
+
+  console.log(lastHand);
   const my_name = getUserName();
   const navigate = useNavigate();
   const my_affiliation = getUserAffiliation();
@@ -38,6 +41,9 @@ export default function InGamePage() {
           if (res.type === "game_list") {
             setMyPlace(_findMyPlace(res.data));
             setFirstPlace(res.data[0]);
+          } else if (res.type === "hand_list") {
+            setLastHand(res.data[0].hand); // 가장 최근에 입력된 손 갱신
+            console.log(res.data[0].hand);
           }
           break;
         case "end": // 게임 종료 신호
@@ -63,7 +69,7 @@ export default function InGamePage() {
     <Container>
       <Left>
         <TimeBar />
-        <RPSSelection />
+        <RPSSelection lastHand={lastHand} />
       </Left>
 
       <Right>

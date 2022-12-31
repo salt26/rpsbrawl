@@ -55,7 +55,7 @@ function LoginBox() {
 
   useEffect(() => {
     if (ready) {
-      if (res?.response == "error") {
+      if (res?.response === "error") {
         alert(res.message);
         return;
       }
