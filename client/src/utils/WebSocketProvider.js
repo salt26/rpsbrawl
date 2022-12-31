@@ -1,7 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { createContext } from "react";
 import { BASE_WEBSOCKET_URL } from "../Config";
-export const WebsocketContext = createContext([false, null, () => {}]);
+export const WebsocketContext = createContext([
+  () => {},
+  false,
+  null,
+  () => {},
+]);
 
 //                                            ready, value, send
 
@@ -42,6 +47,7 @@ export const WebsocketProvider = ({ children }) => {
     createWebSocketConnection,
     isReady,
     res,
+
     ws.current?.send.bind(ws.current),
   ];
 

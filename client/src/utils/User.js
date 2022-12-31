@@ -12,3 +12,9 @@ export const setUserAffiliation = (affiliation) =>
   localStorage.setItem(USER_AFFILIATION, affiliation);
 export const getUserAffiliation = (affiliation) =>
   localStorage.getItem(USER_AFFILIATION);
+
+export const flush = () => {
+  localStorage.removeItem(USER_ID);
+  localStorage.removeItem(USER_NAME);
+  localStorage.removeItem(USER_AFFILIATION);
+};

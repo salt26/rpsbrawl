@@ -10,75 +10,57 @@ import { useNavigate } from "react-router-dom";
 import HTTP from "../utils/HTTP";
 import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
+import { useLocation } from "react-router";
+import {
+  getUserName,
+  getUserId,
+  getUserAffiliation,
+  flush,
+} from "../utils/User";
+import { WebsocketContext } from "../utils/WebSocketProvider";
+import { useContext } from "react";
+
 export default function WatingGamePage() {
   const { room_id } = useParams();
+  const { state } = useLocation();
 
-  const [numberOfUser, setNumberOfUser] = useState(1);
-  const [users, setUsers] = useState([]);
+  const [numberOfUser, setNumberOfUser] = useState(state.length);
+  const [users, setUsers] = useState(state);
+  const isAuthorized = getUserAffiliation() === "STAFF";
 
-  const isAuthorized = sessionStorage.getItem("affiliation") === "STAFF";
-
-  const person_id = sessionStorage.getItem("person_id");
+  const person_id = getUserId();
+  const person_name = getUserName();
   var navigate = useNavigate();
 
+  const [createSocketConnection, ready, res, send] =
+    useContext(WebsocketContext); //전역 소켓 불러오기
+
   useEffect(() => {
-    /*방정보 받아오기 */
-    _fetchRoomInfo();
-  }, []);
+    /*유저목록 갱신하기*/
+    if (ready) {
+      //send("message from client");
+      switch (res.type) {
+        case "game_list":
+          if (res.request === "join") {
+            setUsers(res.data);
+          } else if (res.request === "disconnected") {
+            setUsers(res.data);
+          }
+      }
+    }
+  }, [ready, send, res]); // 메시지가 도착하면
 
-  const _fetchRoomInfo = () => {
-    /*방 인원 정보 받아오기*/
-
-    HTTP.get(`/room/${room_id}/game`)
-      .then((res) => {
-        if (res.status === 200) {
-          setNumberOfUser(res.data.length);
-          setUsers(res.data);
-          console.log(res.data);
-        } else {
-          console.log(res.data.detail);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
-  useInterval(_fetchRoomInfo, 1000);
   const _quitGame = () => {
-    HTTP.delete(`/room/${room_id}?person_id=${person_id}`)
-      .then((res) => {
-        if (res.status === 200) {
-          sessionStorage.removeItem("person_id");
-          sessionStorage.removeItem("person_name");
-          navigate("/");
-        } else {
-          alert(res.data.detail);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    if (ready) {
+      let request = {
+        request: "quit",
+      };
+      send(request);
+      navigate("/");
+    }
   };
 
-  const _startGame = () => {
-    HTTP.put(`/room/${room_id}/play`)
-      .then((res) => {
-        if (res.status === 200) {
-          navigate(`/room/${room_id}/game`);
-        } else {
-          alert("게임 입장에 실패하였습니다. 새로고침 후 다시시도해주세요.");
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-
-        alert(
-          `해당 소속과 이름의 유저는 게임중입니다. 게임을 강제종료했다면 
-    게임이 종료될때까지 기다린 후에 다시 시도해주세요.`
-        );
-      });
-  };
+  const _startGame = () => {};
   return (
     <Container>
       <Medium color="white" size={"60px"}>
