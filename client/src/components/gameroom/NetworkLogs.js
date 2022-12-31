@@ -1,15 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
 import TrophySrc from "../../assets/images/1st_trophy.svg";
 import { Medium } from "../../styles/font";
 import styled from "styled-components";
 import BgBox from "../common/BgBox";
 import { Rock, Paper, Scissor } from "./RPS.js";
 import SizedBox from "../common/SizedBox";
+import useInterval from "../../utils/useInterval";
+import { useParams } from "react-router-dom";
+import HTTP from "../../utils/HTTP";
+import { WebsocketContext } from "../../utils/WebSocketProvider";
+import { useContext, useEffect } from "react";
+
 //1등 점수 정보
-export default function NetworkLogs({ logs }) {
-  const belong = "소속";
-  const name = "내이름";
-  const score = 7;
+export default function NetworkLogs({ hand_list }) {
+  var rpsDic = { 0: "rock", 1: "scissor", 2: "paper" };
+  const [logs, setLogs] = useState(hand_list);
+  const [createSocketConnection, ready, res, send] =
+    useContext(WebsocketContext); //전역 소켓 불러오기
+
+  useEffect(() => {
+    console.log(res);
+    /*손목록 갱신하기*/
+    if (ready) {
+      switch (res.type) {
+        case "hand_list":
+          setLogs(res.data);
+      }
+    }
+  }, [ready, send, res]); // 메시지가 도착하면
   return (
     <div>
       <Medium size={"40px"} color={"white"}>
@@ -17,32 +35,56 @@ export default function NetworkLogs({ logs }) {
       </Medium>
       <SizedBox height={"10px"} />
       <BgBox width={"350px"} height={"300px"}>
-        <Col>
+        <ScrollView>
           {/*네트워크 로그*/}
-          <Log belong="King" name="김서연" rps="rock" score={100} />
-          <Log belong="King" name="김서연" rps="rock" score={100} />
-        </Col>
+          {logs &&
+            logs.map(({ affiliation, name, hand, score }, idx) => (
+              <Log
+                belong={affiliation}
+                key={idx}
+                name={name}
+                rps={rpsDic[hand]}
+                score={score}
+              />
+            ))}
+        </ScrollView>
       </BgBox>
     </div>
   );
 }
 
-function Log({ belong, name, rps }) {
-  var rps = <Rock size="50px" />;
+function Log({ belong, name, rps, score }) {
+  var rpsDic = {
+    rock: <Rock size="50px" />,
+    scissor: <Scissor size="50px" />,
+    paper: <Paper size="50px" />,
+  };
 
   return (
     <Row>
       <Medium size={"30px"}>{belong}</Medium>
       <Medium size={"30px"}>{name}</Medium>
-      {rps}
-
-      <Medium color="var(--mint)" size={"30px"}>
-        +1
-      </Medium>
+      {rpsDic[rps]}
+      {score >= 0 ? (
+        <Medium color="var(--mint)" size={"30px"}>
+          +{score}
+        </Medium>
+      ) : (
+        <Medium color="var(--red)" size={"30px"}>
+          {score}
+        </Medium>
+      )}
     </Row>
   );
 }
-
+const ScrollView = styled.div`
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  border-radius: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+`;
 const Row = styled.div`
   display: flex;
   flex-direction: row;
