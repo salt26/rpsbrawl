@@ -8,15 +8,17 @@ import RPSSelection from "../components/gameroom/RPSSelection";
 import { useLocation } from "react-router-dom";
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useContext, useEffect } from "react";
-
+import { useNavigate } from "react-router-dom";
 import { getUserName, getUserAffiliation } from "../utils/User";
+import { useParams } from "react-router-dom";
 
 export default function InGamePage() {
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
   console.log(state);
   const my_name = getUserName();
+  const navigate = useNavigate();
   const my_affiliation = getUserAffiliation();
-
+  const { room_id } = useParams();
   const [myPlace, setMyPlace] = useState({
     name: my_name,
     affiliation: my_affiliation,
@@ -24,15 +26,19 @@ export default function InGamePage() {
     score: 0,
   });
 
+  const [firstPlace, setFirstPlace] = useState(state.gameList[0]);
+
   const [createSocketConnection, ready, res, send] =
     useContext(WebsocketContext); //전역 소켓 불러오기
 
   useEffect(() => {
     /*전적목록 갱신하기*/
     if (ready) {
-      switch (res.type) {
-        case "game_list":
+      switch (res.requset) {
+        case "hand": // 게임 전적 정보
           setMyPlace(_findMyPlace(res.data));
+          setFirstPlace(res.data[0]);
+          break;
       }
     }
   }, [ready, send, res]); // 메시지가 도착하면
@@ -45,7 +51,7 @@ export default function InGamePage() {
       }
     }
 
-    return { name: "없음", affiliation: "찾을수d없음", rank: 0 };
+    return { name: "없음", affiliation: "찾을수없음", rank: 0 };
   };
   return (
     <Container>
@@ -55,7 +61,7 @@ export default function InGamePage() {
       </Left>
 
       <Right>
-        <FirstPlace place={state.gameList[0]} />
+        <FirstPlace place={firstPlace} />
         <MyPlace place={myPlace} />
         <NetworkLogs hand_list={state.handList} />
       </Right>
