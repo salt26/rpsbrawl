@@ -62,13 +62,14 @@ function LoginBox() {
 
       switch (res?.type) {
         case "profile":
-          // 사용자 정보(이름,소속,저장)를 로컬스토리지에 저장
+          // 사용자 정보(이름,소속,저장,관리자 여부)를 로컬스토리지에 저장
           const { data } = res;
           console.log(data);
           setUserName(data.name);
           setUserAffiliation(data.affiliation);
           setUserId(data.person_id);
           setRoomId(data.room_id); // 할당된 룸 번호 저장
+          localStorage.setItem("is_admin", data.is_admin); // 관리자 여부
 
           break;
 

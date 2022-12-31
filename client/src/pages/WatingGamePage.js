@@ -19,6 +19,7 @@ import {
 } from "../utils/User";
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useContext } from "react";
+import { useRef } from "react";
 
 export default function WatingGamePage() {
   const { room_id } = useParams();
@@ -26,8 +27,12 @@ export default function WatingGamePage() {
 
   const [numberOfUser, setNumberOfUser] = useState(state.length);
   const [users, setUsers] = useState(state);
-  const [start, setStart] = useState(false); //방장이 게임시작했는지 여부
-  const isAuthorized = getUserAffiliation() === "STAFF";
+  const [room, setRoom] = useState(null); //Room정보
+  const handList = useRef(null); //Handlist정보
+  const gameList = useRef(null); //Handlist정보
+
+  // 관리자 여부 -> bool이 아니라 string임에 유의!
+  const isAuthorized = localStorage.getItem("is_admin");
 
   const person_id = getUserId();
   const person_name = getUserName();
@@ -39,44 +44,99 @@ export default function WatingGamePage() {
   useEffect(() => {
     /*유저목록 갱신하기*/
     if (ready) {
-      //send("message from client");
+      console.log(res.type, res.data);
+
+      if (res?.response == "error") {
+        alert(res.message);
+        return;
+      }
+
+      var arr = ["join", "disconnected", "quit"]; // 유저 목록 갱신 request
       switch (res.type) {
         case "game_list":
-          if (res.request === "join") {
+          if (arr.includes(res.request)) {
+            //유저목록 갱신
             setUsers(res.data);
-          } else if (res.request === "disconnected") {
-            setUsers(res.data);
+            setNumberOfUser(res.data.length);
+          } else if (res.request === "start") {
+            navigate(`/room/${room_id}/game`, {
+              state: {
+                handList: [
+                  {
+                    affiliation: "STAFF",
+                    name: "관리자",
+                    hand: 0,
+                    score: 0,
+                    time: "2022-12-31 19:36:51.474589 KST",
+                    room_id: 17,
+                  },
+                ],
+                gameList: res.data,
+              },
+            });
           }
           break;
         case "room": //게임 시작 요청
-          setStart(true);
+          //room 정보도 저장을 해야하나?
+          console.log(res.data);
 
           break;
-        case "hand_list": //해당 방의 손 목록 정보
-          navigate(`/room/${room_id}/game`, { state: res.data });
+        case "hand_list": //게임 시작 요청
+          //setHandList(res.data.handList);
+          console.log(res.data);
+
+          break;
       }
     }
-  }, [ready, send, res]); // 메시지가 도착하면
-
+  }, [ready, send, res]); // 메시지가 바뀔때마다
+  /*
+  useEffect(() => {
+    console.log("useEffect", handList, gameList);
+    if (gameList.current) {
+      // 두 정보가 다 잘 도착하면
+      navigate(`/room/${room_id}/game`, {
+        state: {
+          handList: [
+            {
+              affiliation: "STAFF",
+              name: "관리자",
+              hand: 0,
+              score: 0,
+              time: "2022-12-31 19:36:51.474589 KST",
+              room_id: 17,
+            },
+          ],
+          gameList,
+        },
+      });
+    }
+  }, [handList.current, gameList.current]);
+*/
   const _quitGame = () => {
     if (ready) {
       let request = {
         request: "quit",
       };
-      send(request);
+
+      send(JSON.stringify(request));
       navigate("/");
     }
   };
 
   const _startGame = () => {
+    console.log(ready);
     if (ready) {
       let request = {
         request: "start",
         time_offset: 5, // seconds, 플레이 중인 방으로 전환 후 처음 손을 입력받기까지 기다리는 시간
         time_duration: 60, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
       };
-      send(request);
-      navigate(`/room/${room_id}/game`);
+      // ! send -> navigate가 아니라 send 가 비동기로 실행되어서 문제 발생
+      //
+
+      send(JSON.stringify(request));
+
+      //navigate(`/room/${room_id}/game`);
     }
   };
   return (
@@ -99,7 +159,7 @@ export default function WatingGamePage() {
         </Sector>
         <SizedBox width={"50px"} />
         <Sector>
-          {isAuthorized ? (
+          {isAuthorized === "true" ? (
             <Button text="시작" onClick={_startGame} bgColor="var(--red)" />
           ) : (
             <></>
