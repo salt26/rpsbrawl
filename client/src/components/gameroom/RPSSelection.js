@@ -7,15 +7,13 @@ import HTTP from "../../utils/HTTP";
 import { useParams } from "react-router-dom";
 import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
-export default function RPSSelection({ last }) {
+export default function RPSSelection({ lastHand }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
 
   const { room_id } = useParams();
 
-  const [lastRPS, setLastRPS] = useState(last);
   const [createSocketConnection, ready, res, send] =
     useContext(WebsocketContext); //전역 소켓 불러오기
-  const person_id = sessionStorage.getItem("person_id");
 
   const _addHand = (hand) => {
     let request = {
@@ -26,7 +24,7 @@ export default function RPSSelection({ last }) {
   };
   return (
     <>
-      <img src={rpsDic[last]} width="500px" />
+      <img src={rpsDic[lastHand]} width="500px" />
       <Row>
         <ImgBox>
           <img src={RockSrc} width="100px" onClick={() => _addHand(0)} />
