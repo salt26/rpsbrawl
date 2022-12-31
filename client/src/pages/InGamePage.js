@@ -14,7 +14,7 @@ import { useParams } from "react-router-dom";
 
 export default function InGamePage() {
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
-  console.log(state);
+
   const my_name = getUserName();
   const navigate = useNavigate();
   const my_affiliation = getUserAffiliation();
@@ -32,13 +32,19 @@ export default function InGamePage() {
     useContext(WebsocketContext); //전역 소켓 불러오기
 
   useEffect(() => {
-    /*전적목록 갱신하기*/
     if (ready) {
-      switch (res.requset) {
-        case "hand": // 게임 전적 정보
-          setMyPlace(_findMyPlace(res.data));
-          setFirstPlace(res.data[0]);
+      switch (res.request) {
+        case "hand": // 게임 전적 정보 갱신
+          if (res.type === "game_list") {
+            setMyPlace(_findMyPlace(res.data));
+            setFirstPlace(res.data[0]);
+          }
           break;
+        case "end": // 게임 종료 신호
+          navigate(`/room/${room_id}/result`, {
+            // 결과화면으로 최종 전적정보 전달
+            state: res.data,
+          });
       }
     }
   }, [ready, send, res]); // 메시지가 도착하면
