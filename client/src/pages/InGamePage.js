@@ -5,8 +5,15 @@ import MyPlace from "../components/gameroom/MyPlace";
 import NetworkLogs from "../components/gameroom/NetworkLogs";
 import TimeBar from "../components/gameroom/TimeBar";
 import RPSSelection from "../components/gameroom/RPSSelection";
+import { useLocation } from "react-router-dom";
+import { WebsocketContext } from "../utils/WebSocketProvider";
+import { useContext, useEffect } from "react";
 
 export default function InGamePage() {
+  const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
+
+  console.log(state);
+
   return (
     <Container>
       <Left>
@@ -17,7 +24,7 @@ export default function InGamePage() {
       <Right>
         <FirstPlace />
         <MyPlace />
-        <NetworkLogs />
+        <NetworkLogs hand_list={state.handList} />
       </Right>
     </Container>
   );
