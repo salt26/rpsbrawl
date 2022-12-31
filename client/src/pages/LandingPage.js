@@ -14,6 +14,7 @@ import Button from "../components/common/Button";
 import { Medium } from "../styles/font";
 import { useNavigate } from "react-router-dom";
 import { useRef, createContext, useEffect } from "react";
+
 import { useContext } from "react";
 import HTTP from "../utils/HTTP";
 import {
@@ -54,12 +55,12 @@ function LoginBox() {
 
   useEffect(() => {
     if (ready) {
-      if (res.response == "error") {
+      if (res?.response == "error") {
         alert(res.message);
         return;
       }
-      //console.log(res);
-      switch (res.type) {
+
+      switch (res?.type) {
         case "profile":
           // 사용자 정보(이름,소속,저장)를 로컬스토리지에 저장
           const { data } = res;
@@ -72,12 +73,13 @@ function LoginBox() {
           break;
 
         case "game_list":
+          console.log(res.data);
           if (roomId) {
             navigate(`/room/${roomId}/waiting`, { state: res.data }); // 게임 대기화면 이동 + 해당 방 목록 인원 전달
           }
       }
     }
-  }, [ready, send]); // 소켓연결에 성공했다면
+  }, [ready, send, res]); // 소켓연결에 성공했다면
 
   const _joinGame = () => {
     if (selectedOption === "" || name === "") {
