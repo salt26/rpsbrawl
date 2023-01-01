@@ -174,7 +174,7 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
 
 #### 게임 시작(start)
 
-프론트엔드에서 대기 방 화면에 있는 동안 admin 등의 누군가가 다음을 요청하여 방 상태를 플레이 중인 방으로 변경
+프론트엔드에서 대기 방 화면에 있는 동안 admin 권한을 가진 사람이 다음을 요청하여 방 상태를 플레이 중인 방으로 변경
 ```
 let request = {
   request: "start",
@@ -182,6 +182,16 @@ let request = {
   time_duration: 60  // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
 };
 ws.send(request);
+```
+
+start error: admin 권한이 없는 사람이 게임 시작 요청을 보낸 경우 아래 메시지 응답
+```
+{
+  request: "start",
+  response: "error",
+  type: "message",
+  message: "Forbidden"
+}
 ```
 
 start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 게임을 시작하려 하는 경우 아래 메시지 응답
@@ -256,13 +266,20 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
 }
 ```
 
-**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환된 후에 `time_offset`초가 지나 손 입력을 받기 시작하는 순간이 되면 해당 방의 모든 사람들에게 아래 메시지 응답
+**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환된 후에 `time_offset`초가 지나 손 입력을 받기 시작하는 순간이 되면 해당 방의 모든 사람들에게 백엔드 서버의 `start_time`이 포함된 아래 정보 응답
 ```
 {
   request: "start",
   response: "broadcast",
-  type: "message",
-  message: "Game start"
+  type: "room_start",
+  data: {
+    state: 1,                                     // Play
+    time_offset : 5,
+    time_duration : 60,
+    init_time: "2022-12-25 03:24:00.388157 KST",  // 한국 시간 기준
+    start_time: "2022-12-25 03:24:05.391465 KST", // 이 시간을 기준으로 남은 시간을 프론트엔드에서 표시하면 됨!
+    end_time: ""                                  // 아직 빈 문자열로 반환
+  }
 }
 ```
 
