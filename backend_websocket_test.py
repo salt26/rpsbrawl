@@ -43,10 +43,10 @@ def test_websocket_join_and_start_and_hand(app):
             assert data["request"] == "join" and data["response"] == "broadcast"
             
             # 게임 시작 요청
-            print("@@ send start 5 10")
+            print("@@ send start 3 10")
             websocket.send_json({
                 'request': 'start',
-                'time_offset': 5,
+                'time_offset': 3,
                 'time_duration': 10
             })
             data = websocket.receive_json(mode='text')
@@ -123,6 +123,9 @@ def test_websocket_join_and_start_and_hand(app):
             # 게임이 종료되었다는 응답 -> 자동 퇴장
             data = websocket.receive_json(mode='text')
             print("@@@@@@@@ end response")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_list'
+            data = websocket.receive_json(mode='text')
             print(data)
             assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'game_list'
 
@@ -217,10 +220,10 @@ def test_websocket_forbidden_start(app):
             assert data["request"] == "join" and data["response"] == "broadcast"
             
             # 게임 시작 요청
-            print("@@ send start 5 10")
+            print("@@ send start 3 10")
             websocket.send_json({
                 'request': 'start',
-                'time_offset': 5,
+                'time_offset': 3,
                 'time_duration': 10
             })
             data = websocket.receive_json(mode='text')

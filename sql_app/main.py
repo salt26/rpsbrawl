@@ -496,6 +496,7 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     await task1
     await task2
     crud.update_room_to_end(db, room_id)  # 백엔드 자체에서 시간으로 입력 가능 여부를 판단하면 안 되고, 함수를 호출한 순간 무조건 Ending 페이즈로 변경해야 한다.
+    await manager.broadcast_json("end", "hand_list", read_all_hands(room_id, db), room_id)
     await manager.broadcast_json("end", "game_list", read_game(room_id, db), room_id)
     await manager.close_with_room_id(room_id)
 
