@@ -75,7 +75,8 @@ class ConnectionManager:
         # 한 방 전체의 사람들을 퇴장시킴
         for connection in self.find_all_connections_by_room_id(room_id):
             await connection[0].close()
-            self.active_connections.remove(connection)
+            if connection in self.active_connections:
+                self.active_connections.remove(connection)
 
     """
     async def send_personal_json(self, message: dict, websocket: WebSocket):

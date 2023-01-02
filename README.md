@@ -8,8 +8,9 @@
 
 #### Install
 * React 사용
-* `npm install -g react-scripts`
-* `npm install react react-dom`
+* `cd client`
+* `npm install`
+  * 잘 안 되면 `npm install --force`
 
 #### Run
 * `npm start`
@@ -34,7 +35,7 @@
 * `pip install sqlalchemy`
 * `pip install websockets`
 * `pip install pytz`
-* `pip install httpx` (테스트 용도)
+* `pip install httpx` (테스트 코드에서만 사용)
 
 #### Run
 * `cd {root_of_this_repository}`
