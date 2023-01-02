@@ -75,7 +75,8 @@ class ConnectionManager:
         # 한 방 전체의 사람들을 퇴장시킴
         for connection in self.find_all_connections_by_room_id(room_id):
             await connection[0].close()
-            self.active_connections.remove(connection)
+            if connection in self.active_connections:
+                self.active_connections.remove(connection)
 
     """
     async def send_personal_json(self, message: dict, websocket: WebSocket):
@@ -416,10 +417,17 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
         })
     return ret
 
+@app.get("/profile/{room_id}/{person_id}")
 def read_profile(room_id: int, person_id: int, db: Session = Depends(get_db)):
     # 해당 방의 특정 사람의 {소속, 이름, 관리자 여부, 방 번호, 개인 번호} 반환
     game = crud.get_game(db, room_id=room_id, person_id=person_id)
+    if game is None:
+        return None
+        #raise HTTPException(status_code=404, detail="Game not found")
     person = crud.get_person(db, person_id=person_id)
+    if person is None:
+        return None
+        #raise HTTPException(status_code=404, detail="Person not found")
     return {
         'affiliation': person.affiliation,
         'name': person.name,
@@ -427,6 +435,10 @@ def read_profile(room_id: int, person_id: int, db: Session = Depends(get_db)):
         'room_id': game.room_id,
         'person_id': game.person_id
     }
+
+@app.get("/person/{person_id}")
+def read_person(person_id: int, db: Session = Depends(get_db)):
+    return crud.get_person(db, person_id)
 
 """
 # route 없음
@@ -479,11 +491,12 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     await task4
     
     crud.update_room_to_start(db, room_id)
-    task1 = asyncio.create_task(manager.broadcast_text('start', "Game start", room_id))
+    task1 = asyncio.create_task(manager.broadcast_json("start", "room_start", read_room(room_id, db), room_id))
     task2 = asyncio.create_task(asyncio.sleep(time_duration))
     await task1
     await task2
     crud.update_room_to_end(db, room_id)  # 백엔드 자체에서 시간으로 입력 가능 여부를 판단하면 안 되고, 함수를 호출한 순간 무조건 Ending 페이즈로 변경해야 한다.
+    await manager.broadcast_json("end", "hand_list", read_all_hands(room_id, db), room_id)
     await manager.broadcast_json("end", "game_list", read_game(room_id, db), room_id)
     await manager.close_with_room_id(room_id)
 
@@ -563,13 +576,23 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
 
             # 해당 방의 상태 변경
             # 시작 후 time_offset 초 후부터 time_duration 초 동안 손 입력을 받음
-            db_room = read_room(room_id, db)
-            if db_room is None:
+            room = read_room(room_id, db)
+            if room is None:
                 await ConnectionManager.send_text("start", "error", "Room not found", websocket)
                 #raise HTTPException(status_code=404, detail="Room not found")
+                continue
 
-            if db_room["state"] == schemas.RoomStateEnum.Wait:
-                room = crud.update_room_to_play(db, room_id=room_id, \
+            # 관리자 권한이 있는 사람이 보낸 요청인지 확인
+            db_person = crud.get_person(db, person_id)
+            if db_person is None:
+                await ConnectionManager.send_text("start", "error", "Person not found", websocket)
+                continue
+            elif not db_person.is_admin:
+                await ConnectionManager.send_text("start", "error", "Forbidden", websocket)
+                continue
+
+            if room["state"] == schemas.RoomStateEnum.Wait:
+                crud.update_room_to_play(db, room_id=room_id, \
                     time_offset=data["time_offset"], time_duration=data["time_duration"])
 
                 # https://tech.buzzvil.com/blog/asyncio-no-1-coroutine-and-eventloop/

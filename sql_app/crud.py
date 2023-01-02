@@ -294,7 +294,10 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
 def get_game(db: Session, room_id: int, person_id: int):
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id)).first()
-    return schemas.Game.from_orm(db_game)
+    if db_game is None:
+        return None
+    else:
+        return schemas.Game.from_orm(db_game)
 
 def create_game(db: Session, room_id: int, person_id: int):
     db_game = models.Game(room_id=room_id, person_id=person_id, score=0, \

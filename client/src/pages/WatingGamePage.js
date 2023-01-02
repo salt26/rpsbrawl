@@ -31,7 +31,7 @@ export default function WatingGamePage() {
   const handList = useRef(null); //Handlist정보
   const gameList = useRef(null); //Handlist정보
 
-  // 관리자 여부 -> bool이 아니라 string임에 유의!
+  // ! 관리자 여부 -> bool이 아니라 string임에 유의(js는 "false" 를 true로 판단)!
   const isAuthorized = localStorage.getItem("is_admin");
 
   const person_id = getUserId();
@@ -131,8 +131,6 @@ export default function WatingGamePage() {
         time_offset: 5, // seconds, 플레이 중인 방으로 전환 후 처음 손을 입력받기까지 기다리는 시간
         time_duration: 60, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
       };
-      // ! send -> navigate가 아니라 send 가 비동기로 실행되어서 문제 발생
-      //
 
       send(JSON.stringify(request));
 
