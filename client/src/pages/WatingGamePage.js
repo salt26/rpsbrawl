@@ -59,29 +59,10 @@ export default function WatingGamePage() {
           break;
         case "start":
           // 게임이 시작하면 room -> hand -> game 순으로 전달
-          if (res.type === "room") {
-            setRoom(res.data); //룸정보 저장
-          } else if (res.type === "hand_list") {
-            setHandList(res.data); //왜 실행이 안될까..!? useEffect가 데이터 도착 속도를 못따라가나
-          } else if (res.type === "game_list") {
-            if (room) {
-              navigate(`/room/${room_id}/game`, {
-                state: {
-                  handList: [
-                    {
-                      affiliation: "STAFF",
-                      name: "관리자",
-                      hand: 0,
-                      score: 0,
-                      time: "2022-12-31 19:36:51.474589 KST",
-                      room_id: 0,
-                    },
-                  ],
-                  gameList: res.data,
-                  room: room,
-                },
-              });
-            }
+          if (res.type === "init_data") {
+            navigate(`/room/${room_id}/game`, {
+              state: res.data,
+            });
           }
 
           break;
