@@ -20,6 +20,7 @@ import HTTP from "../utils/HTTP";
 import {
   setUserName,
   getUserName,
+  getUserAffiliation,
   setUserId,
   setUserAffiliation,
 } from "../utils/User";
@@ -45,8 +46,8 @@ function RuleBox() {
 }
 
 function LoginBox() {
-  const [name, setName] = useState("");
-  const [selectedOption, setSelectedOption] = useState(""); //소속
+  const [name, setName] = useState(getUserName());
+  const [selectedOption, setSelectedOption] = useState(getUserAffiliation()); //소속
   const [roomId, setRoomId] = useState();
   var navigate = useNavigate();
 
