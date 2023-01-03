@@ -28,8 +28,8 @@ export default function WatingGamePage() {
   const [numberOfUser, setNumberOfUser] = useState(state.length);
   const [users, setUsers] = useState(state);
   const [room, setRoom] = useState(null); //Room정보
-  const handList = useRef(null); //Handlist정보
-  const gameList = useRef(null); //Handlist정보
+  const [handList, setHandList] = useState(null);
+  const [gameList, setGameList] = useState(null);
 
   // ! 관리자 여부 -> bool이 아니라 string임에 유의(js는 "false" 를 true로 판단)!
   const isAuthorized = localStorage.getItem("is_admin");
@@ -42,7 +42,6 @@ export default function WatingGamePage() {
     useContext(WebsocketContext); //전역 소켓 불러오기
 
   useEffect(() => {
-    /*유저목록 갱신하기*/
     if (ready) {
       console.log(res.type, res.data);
 
@@ -51,67 +50,45 @@ export default function WatingGamePage() {
         return;
       }
 
-      var arr = ["join", "disconnected", "quit"]; // 유저 목록 갱신 request
-      switch (res.type) {
-        case "game_list":
-          if (arr.includes(res.request)) {
-            //유저목록 갱신
-            setUsers(res.data);
-            setNumberOfUser(res.data.length);
-          } else if (res.request === "start") {
-            navigate(`/room/${room_id}/game`, {
-              state: {
-                handList: [
-                  {
-                    affiliation: "STAFF",
-                    name: "관리자",
-                    hand: 0,
-                    score: 0,
-                    time: "2022-12-31 19:36:51.474589 KST",
-                    room_id: 17,
-                  },
-                ],
-                gameList: res.data,
-              },
-            });
+      switch (res.request) {
+        case "join":
+        case "disconnected":
+        case "quit":
+          setUsers(res.data);
+          setNumberOfUser(res.data.length);
+          break;
+        case "start":
+          // 게임이 시작하면 room -> hand -> game 순으로 전달
+          if (res.type === "room") {
+            setRoom(res.data); //룸정보 저장
+          } else if (res.type === "hand_list") {
+            setHandList(res.data); //왜 실행이 안될까..!? useEffect가 데이터 도착 속도를 못따라가나
+          } else if (res.type === "game_list") {
+            if (room) {
+              navigate(`/room/${room_id}/game`, {
+                state: {
+                  handList: [
+                    {
+                      affiliation: "STAFF",
+                      name: "관리자",
+                      hand: 0,
+                      score: 0,
+                      time: "2022-12-31 19:36:51.474589 KST",
+                      room_id: 0,
+                    },
+                  ],
+                  gameList: res.data,
+                  room: room,
+                },
+              });
+            }
           }
-          break;
-        case "room": //게임 시작 요청
-          //room 정보도 저장을 해야하나?
-          console.log(res.data);
-
-          break;
-        case "hand_list": //게임 시작 요청
-          //setHandList(res.data.handList);
-          console.log(res.data);
 
           break;
       }
     }
   }, [ready, send, res]); // 메시지가 바뀔때마다
-  /*
-  useEffect(() => {
-    console.log("useEffect", handList, gameList);
-    if (gameList.current) {
-      // 두 정보가 다 잘 도착하면
-      navigate(`/room/${room_id}/game`, {
-        state: {
-          handList: [
-            {
-              affiliation: "STAFF",
-              name: "관리자",
-              hand: 0,
-              score: 0,
-              time: "2022-12-31 19:36:51.474589 KST",
-              room_id: 17,
-            },
-          ],
-          gameList,
-        },
-      });
-    }
-  }, [handList.current, gameList.current]);
-*/
+
   const _quitGame = () => {
     if (ready) {
       let request = {
@@ -120,6 +97,7 @@ export default function WatingGamePage() {
 
       send(JSON.stringify(request));
       navigate("/");
+      localStorage.removeItem("is_admin");
     }
   };
 
@@ -129,7 +107,7 @@ export default function WatingGamePage() {
       let request = {
         request: "start",
         time_offset: 5, // seconds, 플레이 중인 방으로 전환 후 처음 손을 입력받기까지 기다리는 시간
-        time_duration: 60, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
+        time_duration: 20, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
       };
 
       send(JSON.stringify(request));
