@@ -20,10 +20,15 @@ export default function GameResultPage() {
   return (
     <Row>
       <Button text="나가기" onClick={_quitGame} />
-      <ResultBoard result={state} />;
-      <CSVLink data={state}>
-        <Button text="결과저장" />
-      </CSVLink>
+      <ResultBoard result={state?.gameList} />;
+      <Col>
+        <CSVLink data={state?.handList}>
+          <Button text="손목록저장" />
+        </CSVLink>
+        <CSVLink data={state?.gameList}>
+          <Button text="결과저장" />
+        </CSVLink>
+      </Col>
     </Row>
   );
 }
@@ -34,4 +39,10 @@ const Row = styled.div`
   align-items: flex-end;
   padding-bottom: 50px;
   height: 100%;
+`;
+const Col = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-left: -20%;
 `;
