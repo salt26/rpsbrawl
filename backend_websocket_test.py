@@ -51,13 +51,7 @@ def test_websocket_join_and_start_and_hand(app):
             })
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room'
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'hand_list'
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'game_list'
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
 
             # 게임 시작 후 손 입력을 받기 전에 손 입력 요청 -> 오류 응답
             print("@@@ send hand 0 -> error response")

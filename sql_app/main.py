@@ -263,9 +263,9 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
     if db_room.init_time is not None:
         it = db_room.init_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
     if db_room.start_time is not None:
-        st = db_room.init_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+        st = db_room.start_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
     if db_room.end_time is not None:
-        et = db_room.init_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+        et = db_room.end_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
 
     return {
         'state': db_room.state,
@@ -481,14 +481,15 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     if time_duration < 1:
         time_duration = 1
 
-    task1 = asyncio.create_task(manager.broadcast_json("start", "room", read_room(room_id, db), room_id))
-    task2 = asyncio.create_task(manager.broadcast_json("start", "hand_list", read_all_hands(room_id, db), room_id))
-    task3 = asyncio.create_task(manager.broadcast_json("start", "game_list", read_game(room_id, db), room_id))
-    task4 = asyncio.create_task(asyncio.sleep(time_offset))
+    init_data = {
+        "room": read_room(room_id, db),
+        "hand_list": read_all_hands(room_id, db),
+        "game_list": read_game(room_id, db)
+    }
+    task1 = asyncio.create_task(manager.broadcast_json("start", "init_data", init_data, room_id))
+    task2 = asyncio.create_task(asyncio.sleep(time_offset))
     await task1
     await task2
-    await task3
-    await task4
     
     crud.update_room_to_start(db, room_id)
     task1 = asyncio.create_task(manager.broadcast_json("start", "room_start", read_room(room_id, db), room_id))
