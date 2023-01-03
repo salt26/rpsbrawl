@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import TrophySrc from "../../assets/images/1st_trophy.svg";
 import { Medium } from "../../styles/font";
 import styled from "styled-components";
@@ -18,13 +18,35 @@ export default function NetworkLogs({ hand_list }) {
   const [createSocketConnection, ready, res, send] =
     useContext(WebsocketContext); //전역 소켓 불러오기
 
+  const scrollRef = useRef();
+  useEffect(() => {
+    // 스크롤 위치 하단 고정 -> 좀 부자연스러운 느낌?
+    /*https://velog.io/@matajeu/React-div-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EB%A7%A8-%EB%B0%91%EC%9C%BC%EB%A1%9C-%EB%82%B4%EB%A6%AC%EA%B8%B0-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EC%9C%84%EC%B9%98-%EC%A1%B0%EC%9E%91%ED%95%98%EA%B8%B0*/
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [logs]);
+
+  /*
+  useEffect(() => {
+    const $scroll = document.getElementById("scroll");
+
+    $scroll.scrollTop = $scroll.scrollHeight;
+  }, []);
+*/
   useEffect(() => {
     console.log(res);
+
+    if (res?.response == "error") {
+      alert(res.message);
+      return;
+    }
+
     /*손목록 갱신하기*/
     if (ready) {
-      switch (res.type) {
-        case "hand_list":
-          setLogs(res.data);
+      switch (res.request) {
+        case "hand":
+          if (res.type === "hand_list") {
+            setLogs(res.data.reverse());
+          }
       }
     }
   }, [ready, send, res]); // 메시지가 도착하면
@@ -35,7 +57,7 @@ export default function NetworkLogs({ hand_list }) {
       </Medium>
       <SizedBox height={"10px"} />
       <BgBox width={"350px"} height={"300px"}>
-        <ScrollView>
+        <ScrollView ref={scrollRef}>
           {/*네트워크 로그*/}
           {logs &&
             logs.map(({ affiliation, name, hand, score }, idx) => (
