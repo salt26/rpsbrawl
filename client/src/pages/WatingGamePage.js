@@ -45,7 +45,7 @@ export default function WatingGamePage() {
     if (ready) {
       console.log(res.type, res.data);
 
-      if (res?.response == "error") {
+      if (res?.response === "error") {
         alert(res.message);
         return;
       }

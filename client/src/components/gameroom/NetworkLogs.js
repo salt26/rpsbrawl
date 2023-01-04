@@ -38,7 +38,7 @@ export default function NetworkLogs({ hand_list }) {
   useEffect(() => {
     console.log(res);
 
-    if (res?.response == "error") {
+    if (res?.response === "error") {
       alert(res.message);
       return;
     }
