@@ -48,7 +48,7 @@ export default function NetworkLogs({ hand_list }) {
       switch (res.request) {
         case "hand":
           if (res.type === "hand_list") {
-            setLogs(res.data.reverse());
+            setLogs(res.data.slice().reverse()); // 원본 immutable 하게 변경!
           }
       }
     }
