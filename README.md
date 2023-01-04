@@ -20,6 +20,11 @@
   * ` - options.allowedHosts[0] should be a non-empty string.`
   * 이때는 Wi-Fi 또는 핫스팟을 사용하는 네트워크 환경에서 실행하면 잘 작동한다.
 
+#### Game Start
+* 대기 방에서 게임 시작 권한을 가지려면 아래 두 가지 과정을 거쳐야 한다.
+  1. 입장 전 화면에서 개발자 도구(F12)를 열고 콘솔 탭에서 `localStorage.setItem('password', "unijam2023")` 명령을 실행한다.
+  2. 소속을 "STAFF"로 설정하고 이름은 임의로 설정한 후 방에 입장한다.
+
 ## Backend
 ### How to run
 
@@ -53,7 +58,8 @@ let ws = new WebSocket("ws://localhost:8000/join?affiliation=" + "소속" + "&na
 ```
 
 * 소속(`affiliation`)과 이름(`name`)을 가진 사람을 마지막 대기 방에 입장시킴 (회원가입 겸 로그인)
-* 특별히 `affiliation=STAFF`이고 `name=관리자`인 사람은 admin으로 취급됨
+* 특별히 `affiliation=STAFF`인 사람은 admin으로 취급됨 (이름은 무관)
+  * 다만, 게임 시작 권한을 가지려면 프론트엔드에서 수행해야 하는 별도의 과정이 있음
 
 join error: `affiliation` 또는 `name`이 주어지지 않는 경우 다음 메시지 응답
 ```

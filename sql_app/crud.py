@@ -34,9 +34,10 @@ import random
 def hash_password(password: str):
     return password + "PleaseHashIt" # TODO
 
-def check_admin(affiliation: str, name: str):
+def check_admin(affiliation: str, name: str = "관리자"):
     admin_list = [("STAFF", "관리자")]
-    filtered = [item for item in admin_list if item[0] == affiliation and item[1] == name]
+    #filtered = [item for item in admin_list if item[0] == affiliation and item[1] == name]
+    filtered = [item for item in admin_list if item[0] == affiliation]
     return len(filtered) > 0
 
 def hand_score(my_hand: schemas.HandEnum, prev_hand: schemas.HandEnum):
