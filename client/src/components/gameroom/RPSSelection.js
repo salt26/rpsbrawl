@@ -8,11 +8,10 @@ import { useParams } from "react-router-dom";
 import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import useInterval from "../../utils/useInterval";
-
+import { COOL_TIME } from "../../Config";
 export default function RPSSelection({ lastHand }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
 
-  const COOL_TIME = 3;
   const { room_id } = useParams();
 
   const [coolTime, setCoolTime] = useState(false);
