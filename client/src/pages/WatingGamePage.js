@@ -88,7 +88,7 @@ export default function WatingGamePage() {
       let request = {
         request: "start",
         time_offset: 5, // seconds, 플레이 중인 방으로 전환 후 처음 손을 입력받기까지 기다리는 시간
-        time_duration: 20, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
+        time_duration: 60, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
       };
 
       send(JSON.stringify(request));

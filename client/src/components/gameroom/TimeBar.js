@@ -74,7 +74,7 @@ export default function TimeBar({ duration }) {
         completed={String((sec * 100) / 60)}
         customLabel=" "
         bgColor={sec < 20 ? "var(--red)" : "var(--yellow)"}
-        width="500px"
+        width="550px"
         height="40px"
       />
       <SizedBox width={"10px"} />

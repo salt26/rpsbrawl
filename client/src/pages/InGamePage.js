@@ -85,7 +85,6 @@ export default function InGamePage() {
           if (res.type === "hand_list") {
             setHandList(res.data);
           } else if (res.type === "game_list") {
-            /*
             navigate(`/room/${room_id}/result`, {
               // 결과화면으로 최종 전적정보 전달
               state: {
@@ -93,7 +92,6 @@ export default function InGamePage() {
                 gameList: res.data,
               },
             });
-            */
           }
       }
     }
