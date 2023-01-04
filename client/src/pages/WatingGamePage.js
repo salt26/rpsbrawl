@@ -20,7 +20,8 @@ import {
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useContext } from "react";
 import { useRef } from "react";
-
+import { TIME_DURATION, TIME_OFFSET } from "../Config";
+import { PASSWORD } from "../Config";
 export default function WatingGamePage() {
   const { room_id } = useParams();
   const { state } = useLocation(); // 유저 목록 정보
@@ -32,8 +33,11 @@ export default function WatingGamePage() {
   const [gameList, setGameList] = useState(null);
 
   // ! 관리자 여부 -> bool이 아니라 string임에 유의(js는 "false" 를 true로 판단)!
-  const isAuthorized = localStorage.getItem("is_admin");
+  const isAuthorized =
+    localStorage.getItem("is_admin") === "true" &&
+    localStorage.getItem("password") === PASSWORD;
 
+  console.log(isAuthorized);
   const person_id = getUserId();
   const person_name = getUserName();
   var navigate = useNavigate();
@@ -87,8 +91,8 @@ export default function WatingGamePage() {
     if (ready) {
       let request = {
         request: "start",
-        time_offset: 5, // seconds, 플레이 중인 방으로 전환 후 처음 손을 입력받기까지 기다리는 시간
-        time_duration: 60, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
+        time_offset: TIME_OFFSET, // seconds, 플레이 중인 방으로 전환 후 처음 손을 입력받기까지 기다리는 시간
+        time_duration: TIME_DURATION, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
       };
 
       send(JSON.stringify(request));
@@ -116,7 +120,7 @@ export default function WatingGamePage() {
         </Sector>
         <SizedBox width={"50px"} />
         <Sector>
-          {isAuthorized === "true" ? (
+          {isAuthorized ? (
             <Button text="시작" onClick={_startGame} bgColor="var(--red)" />
           ) : (
             <></>
