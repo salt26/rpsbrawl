@@ -10,6 +10,7 @@ import { useParams } from "react-router-dom";
 import HTTP from "../../utils/HTTP";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useContext, useEffect } from "react";
+import "./networklog.css";
 
 //1등 점수 정보
 export default function NetworkLogs({ hand_list }) {
@@ -22,7 +23,9 @@ export default function NetworkLogs({ hand_list }) {
   useEffect(() => {
     // 스크롤 위치 하단 고정 -> 좀 부자연스러운 느낌?
     /*https://velog.io/@matajeu/React-div-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EB%A7%A8-%EB%B0%91%EC%9C%BC%EB%A1%9C-%EB%82%B4%EB%A6%AC%EA%B8%B0-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EC%9C%84%EC%B9%98-%EC%A1%B0%EC%9E%91%ED%95%98%EA%B8%B0*/
+
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    console.log(scrollRef.current);
   }, [logs]);
 
   /*
@@ -57,8 +60,9 @@ export default function NetworkLogs({ hand_list }) {
       </Medium>
       <SizedBox height={"10px"} />
       <BgBox width={"350px"} height={"300px"}>
-        <ScrollView ref={scrollRef}>
+        <ScrollView ref={scrollRef} id="log_container">
           {/*네트워크 로그*/}
+
           {logs &&
             logs.map(({ affiliation, name, hand, score }, idx) => (
               <Log
@@ -102,10 +106,13 @@ function Log({ belong, name, rps, score }) {
 const ScrollView = styled.div`
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   background-color: white;
   border-radius: 10px;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll;
 `;
 const Row = styled.div`
   display: flex;
