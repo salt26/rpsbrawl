@@ -14,9 +14,9 @@ export default function FirstPlace({ place }) {
       <Row>
         <SvgIcon src={TrophySrc} size={"80px"} />
         <Col>
-          <Medium size="35px">{affiliation}</Medium>
+          <Medium size="25px">{affiliation}</Medium>
 
-          <Medium size="25px">{name}</Medium>
+          <Medium size="35px">{name}</Medium>
         </Col>
         <Medium size="40px">{score >= 0 ? "+" + score : score}</Medium>
       </Row>
@@ -26,7 +26,7 @@ export default function FirstPlace({ place }) {
 const Row = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: space-evenly;
   align-items: center;
   height: 100%;
 `;

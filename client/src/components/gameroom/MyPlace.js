@@ -13,9 +13,9 @@ export default function MyPlace({ place }) {
       <Row>
         <Rank rank={rank} />
         <Col>
-          <Medium size="45px">{affiliation}</Medium>
+          <Medium size="30px">{affiliation}</Medium>
 
-          <Medium size="30px">{name}</Medium>
+          <Medium size="45px">{name}</Medium>
         </Col>
         <Medium>{score >= 0 ? "+" + score : score}</Medium>
       </Row>
@@ -45,14 +45,15 @@ const Row = styled.div`
   display: flex;
   height: 100%;
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: space-evenly;
 
   align-items: center;
 `;
 
 const Col = styled.div`
   display: flex;
-  flex: 0.3;
+  flex: 0.5;
+
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
