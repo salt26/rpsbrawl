@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import styled, { css } from "styled-components";
 import FirstPlace from "../components/gameroom/FirstPlace";
 import MyPlace from "../components/gameroom/MyPlace";
@@ -14,18 +14,18 @@ import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
 
 export default function InGamePage() {
+  console.log("render!");
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
 
-  const [lastHand, setLastHand] = useState(
-    state["hand_list"][state.hand_list.length - 1].hand
-  );
+  const lastHand = useRef(state["hand_list"][state.hand_list.length - 1].hand);
 
-  const [handList, setHandList] = useState(state["hand_list"]);
-  console.log(handList);
+  const handList = useRef(state["hand_list"]);
+
   const [isWaiting, setIsWaiting] = useState(true);
   const [count, setCount] = useState(5); //게임 시작까지 남은 시간
 
-  const _getTimeOffset = (room) => {
+  const _getTimeOffset = useCallback((room) => {
+    // 마운트 시에만 정의
     // init_time 기준으로 카운트다운 sync 맞추기
     // 형식 => 2023-01-03 00:35:41.029853 KST
     const current = new Date();
@@ -38,7 +38,7 @@ export default function InGamePage() {
     } else {
       setCount(room["time_offset"] - parseInt(offset / 1000)); //타이머 초깃값 세팅
     }
-  };
+  }, []);
 
   useInterval(
     () => {
@@ -57,14 +57,14 @@ export default function InGamePage() {
   const navigate = useNavigate();
   const my_affiliation = getUserAffiliation();
   const { room_id } = useParams();
-  const [myPlace, setMyPlace] = useState({
+  const myPlace = useRef({
     name: my_name,
     affiliation: my_affiliation,
     rank: 0,
     score: 0,
   });
 
-  const [firstPlace, setFirstPlace] = useState(state?.game_list[0]);
+  const firstPlace = useRef(state?.game_list[0]);
 
   const [createSocketConnection, ready, res, send] =
     useContext(WebsocketContext); //전역 소켓 불러오기
@@ -78,14 +78,11 @@ export default function InGamePage() {
       switch (res.request) {
         case "hand": // 게임 전적 정보 갱신
           if (res.type === "hand_data") {
-            setMyPlace(_findMyPlace(res.data.game_list));
-            setFirstPlace(res.data.game_list[0]);
-            setHandList(res.data.hand_list);
-
+            myPlace.current = _findMyPlace(res.data.game_list);
+            firstPlace.current = res.data.game_list[0];
+            handList.current = res.data.hand_list;
             const len = res.data.hand_list.length;
-            console.log(res.data.hand_list[len - 1]);
-            setLastHand(res.data.hand_list[len - 1].hand); // 가장 최근에 입력된 손 갱신
-            console.log(res.data.hand_list[len - 1].hand);
+            lastHand.current = res.data.hand_list[len - 1].hand; // 가장 최근에 입력된 손 갱신
           }
           break;
         case "end": // 게임 종료 신호
@@ -118,13 +115,13 @@ export default function InGamePage() {
       <Container>
         <Left>
           <TimeBar duration={state.room["time_duration"]} />
-          <RPSSelection lastHand={lastHand} />
+          <RPSSelection lastHand={lastHand.current} />
         </Left>
 
         <Right>
-          <FirstPlace place={firstPlace} />
-          <MyPlace place={myPlace} />
-          <NetworkLogs logs={handList} />
+          <FirstPlace place={firstPlace.current} />
+          <MyPlace place={myPlace.current} />
+          <NetworkLogs logs={handList.current} />
         </Right>
       </Container>
       <Count isWaiting={isWaiting}>{count}</Count>
