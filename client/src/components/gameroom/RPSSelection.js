@@ -27,10 +27,9 @@ function RPSSelection({ lastHand }) {
     };
     send(JSON.stringify(request));
     console.log(coolTime);
-    //setCoolTime(true);
+    setCoolTime(true);
   }, []);
 
-  /*
   useEffect(() => {
     const id = setTimeout(() => {
       setCoolTime(false); //쿨타임해제
@@ -38,7 +37,7 @@ function RPSSelection({ lastHand }) {
 
     return () => clearInterval(id);
   }, [coolTime]);
-*/
+
   return (
     <>
       <img src={rpsDic[lastHand]} width="500px" />
