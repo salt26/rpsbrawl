@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import styled, { css } from "styled-components";
 import RockSrc from "../../assets/images/rock.png";
 import ScissorSrc from "../../assets/images/scissor.png";
@@ -9,7 +9,8 @@ import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import useInterval from "../../utils/useInterval";
 import { COOL_TIME } from "../../Config";
-export default function RPSSelection({ lastHand }) {
+
+function RPSSelection({ lastHand }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
 
   const { room_id } = useParams();
@@ -19,19 +20,16 @@ export default function RPSSelection({ lastHand }) {
   const [createSocketConnection, ready, res, send] =
     useContext(WebsocketContext); //전역 소켓 불러오기
 
-  const _addHand = (hand) => {
-    console.log("snd");
-
+  const _addHand = useCallback((hand) => {
     let request = {
       request: "hand",
       hand: hand, // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
     };
     send(JSON.stringify(request));
-
+    console.log(coolTime);
     setCoolTime(true);
-  };
+  }, []);
 
-  console.log(coolTime);
   useEffect(() => {
     const id = setTimeout(() => {
       setCoolTime(false); //쿨타임해제
@@ -77,6 +75,12 @@ export default function RPSSelection({ lastHand }) {
     </>
   );
 }
+// 같은 lastHand 값이 들어오면 재렌더링 진행하지 않기
+function areEqual(prevProps, nextProps) {
+  return prevProps === nextProps;
+}
+
+export default React.memo(RPSSelection, areEqual);
 
 const Wrapper = styled.div`
   z-index: 3;

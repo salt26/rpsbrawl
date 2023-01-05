@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ProgressBar from "@ramonak/react-progress-bar";
 import styled from "styled-components";
 import Clock from "./Clock";
@@ -36,7 +36,7 @@ export default function TimeBar({ duration }) {
     isRunning ? 1000 : null
   );
 
-  const _getLeftTime = (targetISOString) => {
+  const _getLeftTime = useCallback((targetISOString) => {
     // start_time이랑 비교해서 남은시간제한 구하기.
     // 형식 => 2023-01-03 00:35:41.029853 KST
     const current = new Date();
@@ -51,7 +51,7 @@ export default function TimeBar({ duration }) {
       setSec(duration - parseInt(offset / 1000)); //타이머 초깃값 세팅
       setIsRunning(true);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (ready) {
