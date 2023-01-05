@@ -13,9 +13,20 @@ import SelectBox from "../components/common/SelectBox";
 import Button from "../components/common/Button";
 import { Medium } from "../styles/font";
 import { useNavigate } from "react-router-dom";
+import { useRef, createContext, useEffect } from "react";
+
+import { useContext } from "react";
 import HTTP from "../utils/HTTP";
+import {
+  setUserName,
+  getUserName,
+  getUserAffiliation,
+  setUserId,
+  setUserAffiliation,
+} from "../utils/User";
 
 import { BASE_WEBSOCKET_URL } from "../Config";
+import { WebsocketContext } from "../utils/WebSocketProvider";
 function RuleBox() {
   return (
     <BgBox width="250px" height="300px" color="white">
@@ -35,44 +46,49 @@ function RuleBox() {
 }
 
 function LoginBox() {
-  const [name, setName] = useState("");
-  const [selectedOption, setSelectedOption] = useState(""); //소속
+  const [name, setName] = useState(getUserName());
+  const [selectedOption, setSelectedOption] = useState(getUserAffiliation()); //소속
+  const [roomId, setRoomId] = useState();
   var navigate = useNavigate();
+
+  const [createWebSocketConnection, ready, res, send] =
+    useContext(WebsocketContext); //전역 소켓 사용
+
+  useEffect(() => {
+    if (ready) {
+      if (res?.response === "error") {
+        alert(res.message);
+        return;
+      }
+
+      switch (res?.type) {
+        case "profile":
+          // 사용자 정보(이름,소속,저장,관리자 여부)를 로컬스토리지에 저장
+          const { data } = res;
+          console.log(data);
+          setUserName(data.name);
+          setUserAffiliation(data.affiliation);
+          setUserId(data.person_id);
+          setRoomId(data.room_id); // 할당된 룸 번호 저장
+          localStorage.setItem("is_admin", data.is_admin); // 관리자 여부
+
+          break;
+
+        case "game_list":
+          console.log(res.data);
+          if (roomId) {
+            navigate(`/room/${roomId}/waiting`, { state: res.data }); // 게임 대기화면 이동 + 해당 방 목록 인원 전달
+          }
+      }
+    }
+  }, [ready, send, res]); // 소켓연결에 성공했다면
 
   const _joinGame = () => {
     if (selectedOption === "" || name === "") {
       alert("소속과 이름을 모두 채워주세요.");
       return;
     }
-
-    try {
-      // 웹소켓 연결
-
-      let ws = new WebSocket(
-        `${BASE_WEBSOCKET_URL}/join?affiliation=${selectedOption}&name=${name}`
-      );
-
-      ws.onopen = (event) => {
-        console.log("Socket open", event);
-
-        // ws.send("Successfully connected to socket"); // 여기에서 오류 발생
-        ws.send(JSON.stringify({request: 'quit'}))      // 이것은 퇴장 요청, 적절히 수정 바람
-      };
-      ws.onerror = (err) => {
-        console.log("err occured", err);
-      };
-      ws.onclose = (event) => {
-        console.log("onclose!", event);
-      };
-      ws.onmessage = function (event) {
-        const data = JSON.parse(event.data); // 전달된 json string을 object로 변환
-
-        console.log("message from the server", data); //응답 정보 출력
-      };
-    } catch (e) {
-      console.log(e);
-      console.log("failed to connect socket");
-    }
+    createWebSocketConnection(selectedOption, name); // Socket Connection 생성
   };
   return (
     <BgBox width="250px" height="300px" color="white">

@@ -10,74 +10,95 @@ import { useNavigate } from "react-router-dom";
 import HTTP from "../utils/HTTP";
 import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
+import { useLocation } from "react-router";
+import {
+  getUserName,
+  getUserId,
+  getUserAffiliation,
+  flush,
+} from "../utils/User";
+import { WebsocketContext } from "../utils/WebSocketProvider";
+import { useContext } from "react";
+import { useRef } from "react";
+import { TIME_DURATION, TIME_OFFSET } from "../Config";
+import { PASSWORD } from "../Config";
 export default function WatingGamePage() {
   const { room_id } = useParams();
+  const { state } = useLocation(); // 유저 목록 정보
 
-  const [numberOfUser, setNumberOfUser] = useState(1);
-  const [users, setUsers] = useState([]);
+  const [numberOfUser, setNumberOfUser] = useState(state.length);
+  const [users, setUsers] = useState(state);
+  const [room, setRoom] = useState(null); //Room정보
+  const [handList, setHandList] = useState(null);
+  const [gameList, setGameList] = useState(null);
 
-  const isAuthorized = sessionStorage.getItem("affiliation") === "STAFF";
+  // ! 관리자 여부 -> bool이 아니라 string임에 유의(js는 "false" 를 true로 판단)!
+  const isAuthorized =
+    localStorage.getItem("is_admin") === "true" &&
+    localStorage.getItem("password") === PASSWORD;
 
-  const person_id = sessionStorage.getItem("person_id");
+  console.log(isAuthorized);
+  const person_id = getUserId();
+  const person_name = getUserName();
   var navigate = useNavigate();
 
+  const [createSocketConnection, ready, res, send] =
+    useContext(WebsocketContext); //전역 소켓 불러오기
+
   useEffect(() => {
-    /*방정보 받아오기 */
-    _fetchRoomInfo();
-  }, []);
+    if (ready) {
+      console.log(res.type, res.data);
 
-  const _fetchRoomInfo = () => {
-    /*방 인원 정보 받아오기*/
+      if (res?.response === "error") {
+        alert(res.message);
+        return;
+      }
 
-    HTTP.get(`/room/${room_id}/game`)
-      .then((res) => {
-        if (res.status === 200) {
-          setNumberOfUser(res.data.length);
+      switch (res.request) {
+        case "join":
+        case "disconnected":
+        case "quit":
           setUsers(res.data);
-          console.log(res.data);
-        } else {
-          console.log(res.data.detail);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+          setNumberOfUser(res.data.length);
+          break;
+        case "start":
+          // 게임이 시작하면 room -> hand -> game 순으로 전달
+          if (res.type === "init_data") {
+            navigate(`/room/${room_id}/game`, {
+              state: res.data,
+            });
+          }
 
-  useInterval(_fetchRoomInfo, 1000);
+          break;
+      }
+    }
+  }, [ready, send, res]); // 메시지가 바뀔때마다
+
   const _quitGame = () => {
-    HTTP.delete(`/room/${room_id}?person_id=${person_id}`)
-      .then((res) => {
-        if (res.status === 200) {
-          sessionStorage.removeItem("person_id");
-          sessionStorage.removeItem("person_name");
-          navigate("/");
-        } else {
-          alert(res.data.detail);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    if (ready) {
+      let request = {
+        request: "quit",
+      };
+
+      send(JSON.stringify(request));
+      navigate("/");
+      localStorage.removeItem("is_admin");
+    }
   };
 
   const _startGame = () => {
-    HTTP.put(`/room/${room_id}/play`)
-      .then((res) => {
-        if (res.status === 200) {
-          navigate(`/room/${room_id}/game`);
-        } else {
-          alert("게임 입장에 실패하였습니다. 새로고침 후 다시시도해주세요.");
-        }
-      })
-      .catch((err) => {
-        console.log(err);
+    console.log(ready);
+    if (ready) {
+      let request = {
+        request: "start",
+        time_offset: TIME_OFFSET, // seconds, 플레이 중인 방으로 전환 후 처음 손을 입력받기까지 기다리는 시간
+        time_duration: TIME_DURATION, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
+      };
 
-        alert(
-          `해당 소속과 이름의 유저는 게임중입니다. 게임을 강제종료했다면 
-    게임이 종료될때까지 기다린 후에 다시 시도해주세요.`
-        );
-      });
+      send(JSON.stringify(request));
+
+      //navigate(`/room/${room_id}/game`);
+    }
   };
   return (
     <Container>

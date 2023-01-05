@@ -8,8 +8,9 @@
 
 #### Install
 * React 사용
-* `npm install -g react-scripts`
-* `npm install react react-dom`
+* `cd client`
+* `npm install`
+  * 잘 안 되면 `npm install --force`
 
 #### Run
 * `npm start`
@@ -18,6 +19,11 @@
   * `Invalid options object. Dev Server has been initialized using an options object that does not match the API schema.`
   * ` - options.allowedHosts[0] should be a non-empty string.`
   * 이때는 Wi-Fi 또는 핫스팟을 사용하는 네트워크 환경에서 실행하면 잘 작동한다.
+
+#### Game Start
+* 대기 방에서 게임 시작 권한을 가지려면 아래 두 가지 과정을 거쳐야 한다.
+  1. 입장 전 화면에서 개발자 도구(F12)를 열고 콘솔 탭에서 `localStorage.setItem('password', "unijam2023")` 명령을 실행한다.
+  2. 소속을 "STAFF"로 설정하고 이름은 임의로 설정한 후 방에 입장한다.
 
 ## Backend
 ### How to run
@@ -34,7 +40,7 @@
 * `pip install sqlalchemy`
 * `pip install websockets`
 * `pip install pytz`
-* `pip install httpx` (테스트 용도)
+* `pip install httpx` (테스트 코드에서만 사용)
 
 #### Run
 * `cd {root_of_this_repository}`
@@ -52,7 +58,18 @@ let ws = new WebSocket("ws://localhost:8000/join?affiliation=" + "소속" + "&na
 ```
 
 * 소속(`affiliation`)과 이름(`name`)을 가진 사람을 마지막 대기 방에 입장시킴 (회원가입 겸 로그인)
-* 특별히 `affiliation=STAFF`이고 `name=관리자`인 사람은 admin으로 취급됨
+* 특별히 `affiliation=STAFF`인 사람은 admin으로 취급됨 (이름은 무관)
+  * 다만, 게임 시작 권한을 가지려면 프론트엔드에서 수행해야 하는 별도의 과정이 있음
+
+join error: `affiliation` 또는 `name`이 주어지지 않는 경우 다음 메시지 응답
+```
+{
+  request: "join",
+  response: "error",
+  type: "message",
+  message: "Both affiliation and name are required"
+}
+```
 
 join error: 입장하려는 대기 방에 같은 사람이 이미 입장해 있는 경우 다음 메시지 응답
 ```
@@ -74,13 +91,16 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
 }
 ```
 
-**join success**: 입장 성공 시 해당 개인에게 `data.room_id`, `data.person_id`가 포함된 다음 정보 응답 > 이때 받은 `data.person_id`를 클라이언트에서 꼭 기억하고 있을 것!
+**join success**: 입장 성공 시 해당 개인에게 `data.room_id`, `data.person_id` 등이 포함된 다음 정보 응답 > 이때 받은 `data.person_id`를 클라이언트에서 꼭 기억하고 있을 것!
 ```
 {
   request: "join",
   response: "success",
-  type: "game",
+  type: "profile",
   data: {
+    affiliation: "소속",
+    name: "이름",
+    is_admin: False,
     room_id: 1,
     person_id: 1
   }
@@ -143,7 +163,7 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
 **quit broadcast**: 퇴장 성공 시 해당 방에 남아있는 모든 사람들(퇴장한 본인 제외)에게 다음 정보 응답
 ```
 {
-  request: "join",
+  request: "quit",
   response: "broadcast",
   type: "game_list",
   data: [
@@ -161,7 +181,7 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
 
 #### 게임 시작(start)
 
-프론트엔드에서 대기 방 화면에 있는 동안 admin 등의 누군가가 다음을 요청하여 방 상태를 플레이 중인 방으로 변경
+프론트엔드에서 대기 방 화면에 있는 동안 admin 권한을 가진 사람이 다음을 요청하여 방 상태를 플레이 중인 방으로 변경
 ```
 let request = {
   request: "start",
@@ -169,6 +189,16 @@ let request = {
   time_duration: 60  // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
 };
 ws.send(request);
+```
+
+start error: admin 권한이 없는 사람이 게임 시작 요청을 보낸 경우 아래 메시지 응답
+```
+{
+  request: "start",
+  response: "error",
+  type: "message",
+  message: "Forbidden"
+}
 ```
 
 start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 게임을 시작하려 하는 경우 아래 메시지 응답
@@ -181,60 +211,65 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
 }
 ```
 
-**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 해당 방에서 손 입력을 받기 시작하는 시간(`start_time`)과 손 입력이 종료되는 시간(`end_time`)이 포함된 아래 정보 응답
+**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 해당 방에서 손 입력을 받기 시작하는 시간(`start_time`)과 손 입력이 종료되는 시간(`end_time`)이 포함된 `room`과, 첫 번째 랜덤 손이 포함된 손 목록(`hand_list`)과, 해당 방에서 플레이하게 되는 사람(전적) 목록(`game_list`)이 포함된 아래 정보 응답
 ```
 {
   request: "start",
   response: "broadcast",
-  type: "room",
+  type: "init_data",
   data: {
-    state: 1,  // Play
-    start_time: "2022-12-25 03:24:05.388157 KST",  // 한국 시간 기준
-    end_time: "2022-12-25 03:25:05.388157 KST"
-  }
+    room: {
+      state: 1,                                     // Play
+      time_offset : 5,                              // 이때는 항상 0 이상의 정수이지만 대기 방에서는 -1
+      time_duration : 60,                           // 이때는 항상 1 이상의 정수이지만 대기 방에서는 -1
+      init_time: "2022-12-25 03:24:00.388157 KST",  // 한국 시간 기준
+      start_time: "",                               // 아직 빈 문자열로 반환
+      end_time: ""                                  // 아직 빈 문자열로 반환
+    }, 
+    hand_list: [
+      {
+        affiliation: "소속",  // 이 방에 입장한 첫 번째 사람 소속
+        name: "이름",         // 이 방에 입장한 첫 번째 사람 이름
+        hand: 0,   // 0(Rock) 또는 1(Scissor) 또는 2(Paper) 중 랜덤으로 부여
+        score: 0,  // 첫 번째 손이므로 항상 비긴(0) 것으로 취급
+        time: "2022-12-25 03:24:00.388157 KST",
+        room_id: 1
+      }
+    ],
+    game_list: [
+      {
+        rank: 1,  // 초기 순위는 이 방에 입장한 첫 번째 사람이 1
+        affiliation: "소속",
+        name: "이름",
+        is_admin: False,
+        score: 0,
+        win: 0,
+        draw: 0,
+        lose: 0,
+        room_id: 1
+      },
+      ...  // 해당 방에서 플레이하는 사람 수만큼 존재
+    ]
 }
 ```
-
-**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 첫 번째 랜덤 손이 포함된 손 목록 정보 응답
-```
-{
-  request: "start",
-  response: "broadcast",
-  type: "hand_list",
-  data: [
-    {
-      affiliation: "소속",  // 이 방에 입장한 첫 번째 사람 소속
-      name: "이름",         // 이 방에 입장한 첫 번째 사람 이름
-      hand: 0,   // 0(Rock) 또는 1(Scissor) 또는 2(Paper) 중 랜덤으로 부여
-      score: 0,  // 첫 번째 손이므로 항상 비긴(0) 것으로 취급
-      time: "2022-12-25 03:24:00.388157 KST",
-      room_id: 1
-    }
-  ]
-}
-```
+* start_time: 실제로 손 입력을 받기 시작할 때(`message: "Game start"`라는 메시지를 서버가 응답할 때) 결정되므로 그 이후에 GET `/room/{room_id}` 하면 확인할 수 있음
+* end_time: 실제로 게임이 종료될 때(`response: "end"`인 정보를 서버가 응답할 때) 결정되므로 그 이후에 GET `/room/{room_id}` 하면 확인할 수 있음
 * 첫 번째 랜덤 손은 이 방에 입장한 첫 번째 사람 명의로 표시되지만, 이 사람의 전적(score, win, draw, lose)에는 영향을 주지 않는다.
 
-**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환되면 해당 방에서 플레이하게 되는 사람(전적) 목록 정보 응답
+**start broadcast**: 방이 성공적으로 플레이 중인 상태로 전환된 후에 `time_offset`초가 지나 손 입력을 받기 시작하는 순간이 되면 해당 방의 모든 사람들에게 백엔드 서버의 `start_time`이 포함된 아래 정보 응답
 ```
 {
   request: "start",
   response: "broadcast",
-  type: "game_list",
-  data: [
-    {
-      rank: 1,  // 초기 순위는 이 방에 입장한 첫 번째 사람이 1
-      affiliation: "소속",
-      name: "이름",
-      is_admin: False,
-      score: 0,
-      win: 0,
-      draw: 0,
-      lose: 0,
-      room_id: 1
-    },
-    ...  // 해당 방에서 플레이하는 사람 수만큼 존재
-  ]
+  type: "room_start",
+  data: {
+    state: 1,                                     // Play
+    time_offset : 5,
+    time_duration : 60,
+    init_time: "2022-12-25 03:24:00.388157 KST",  // 한국 시간 기준
+    start_time: "2022-12-25 03:24:05.391465 KST", // 이 시간을 기준으로 남은 시간을 프론트엔드에서 표시하면 됨!
+    end_time: ""                                  // 아직 빈 문자열로 반환
+  }
 }
 ```
 
@@ -332,7 +367,30 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 
 #### 게임 종료(end)
 
-* **end broadcast**: 프론트엔드에서 요청하지 않아도, 플레이 중인 방에서 손 입력 시간이 종료되는 경우 서버에서 먼저 해당 방의 모든 사람들에게 다음 정보 응답
+* **end broadcast**: 프론트엔드에서 요청하지 않아도, 플레이 중인 방에서 손 입력 시간이 종료되는 경우 서버에서 먼저 해당 방의 모든 사람들에게 다음의 손 목록 정보 응답
+```
+{
+  request: "end",
+  response: "broadcast",
+  type: "hand_list",
+  data: [
+    {
+      affiliation: "소속",
+      name: "이름",
+      hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
+      score: 1,   // 1(이김) 또는 0(비김) 또는 -1(짐)
+      time: "2022-12-25 03:25:04.510891 KST",
+      room_id: 1
+    },
+    ...  // 해당 방에서 입력된 손 개수만큼 존재
+  ]
+}
+```
+* 가장 마지막에 입력된 손이 목록의 인덱스 0번에 위치한다.
+* *결과 화면에, 여기서 받은 "hand_list" 정보를 바탕으로 csv 등의 파일로 결과를 export하는 기능도 추가되면 좋겠다.*
+  * *"game_list"를 csv로 export하는 버튼 바로 위에 새 버튼을 만들어 "hand_list"를 csv로 export하도록 하면 되겠다.*
+
+* **end broadcast**: 프론트엔드에서 요청하지 않아도, 플레이 중인 방에서 손 입력 시간이 종료되는 경우 서버에서 먼저 해당 방의 모든 사람들에게 다음의 전적 정보 응답
 ```
 {
   request: "end",
@@ -357,8 +415,67 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 * 가장 순위가 높은 사람(1)이 목록의 인덱스 0번에 위치한다.
 * 이 응답을 받은 이후에는 손 입력을 받지 않고, 해당 방에서의 게임이 종료된다.
 * 프론트엔드에서는 이 응답을 받고 나서 3초 정도 후에 결과 화면을 보여주고, 결과 화면에서 "나가기" 버튼을 눌러 입장 전 화면으로 이동하면 된다.
-  * *결과 화면에서는 여기서 받은 "game_list" 정보를 바탕으로 csv 등의 파일로 결과를 export하는 기능이 있으면 좋겠다.*
   * *입장 전 화면에서는 기존에 접속했던 계정(소속 및 이름) 정보가 그대로 입력 필드에 차 있어서 "입장!" 버튼만 누르면 바로 다시 입장할 수 있도록 하면 좋겠다.*
+
+#### 연결 끊김(disconnected)
+disconnected broadcast: 클라이언트에서 연결을 끊는 경우 해당 방에 남아있는 모든 사람들(연결이 끊긴 본인 제외)에게 다음 정보 응답
+```
+{
+  request: "disconnected",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      affiliation: "소속",
+      name: "이름",
+      ...
+    },
+    ...
+  ]
+}
+```
+* 여기서 발생하는 응답의 `request`는 "disconnect`ed`"이다.
+
+#### 기타 오류
+error: JSON 형식이 아닌 데이터를 요청으로 주거나, 요청 데이터에 "request" 키가 없거나, "request" 키의 값이 `["hand", "quit", "start"]` 중에 없는 경우 다음 오류 메시지 응답
+```
+{
+  request: "",
+  response: "error",
+  type: "message",
+  message: "Bad request"
+}
+```
+* 이 경우 연결은 유지되며 다시 새로운 요청을 보낼 수 있다.
+
+error: 서버 DB의 스키마가 변경되었거나 요청을 받는 중 알 수 없는 원인으로 서버 오류가 발생하는 경우 다음 오류 메시지 응답
+```
+{
+  request: "",
+  response: "error",
+  type: "message",
+  message: "Internal server error"
+}
+```
+* 이 경우 해당 개인의 연결이 즉시 끊어지며 바로 아래의 disconnect broadcast도 전송된다.
+
+disconnect broadcast: 요청 데이터에 필요한 정보가 모두 들어있지 않거나(예: `request: "hand"`인데 "hand" 키의 값이 없는 경우) 요청을 처리하는 중 알 수 없는 원인으로 서버 오류가 발생하는 경우 서버에서 해당 개인과의 연결을 즉시 끊고 해당 방에 남아있는 모든 사람들(연결이 끊긴 본인 제외)에게 다음 정보 응답
+```
+{
+  request: "disconnect",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      affiliation: "소속",
+      name: "이름",
+      ...
+    },
+    ...
+  ]
+}
+```
+* 여기서 발생하는 응답의 `request`는 "disconnect"이다.
 
 <!--
 ---
@@ -449,9 +566,94 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 * `python ./backend_websocket_test.py`
 
 #### 현재 테스트한 항목
+##### Test 1
 * join을 통한 웹 소켓 연결: 성공
 * quit 요청을 통해 대기 방에서 나가기: 성공
+  
+##### Test 2
 * start 요청을 통해 대기 방에서 플레이 중인 방으로 전환하기: 성공
 * start 직후에 hand 요청을 날리고 오류 메시지 받기: 성공
-* start 후 6초 후에 hand 요청을 날리고 반영된 결과 받기: 성공
-* start 후 게임이 종료될 시간 이후에 end 응답 받기: **실패**
+* start 후 3초 후에 손 입력을 받기 시작한다는 메시지 받기: 성공
+* 손 입력을 받기 시작한 후 2초 후에 hand 요청을 날리고 반영된 결과 받기: 성공
+* 손 입력을 받기 시작한 후 5초 후에 hand 요청을 날리고 반영된 결과 받기: 성공
+* 손 입력을 받기 시작한 후 7초 후에 hand 요청을 날리고 반영된 결과 받기: 성공
+* 손 입력을 받기 시작한 후 10초 후(게임이 종료될 시간)에 end 응답 받기: 성공
+* 게임 종료 이후 손 입력을 요청하는 경우 이미 연결이 끊긴 상황이라 오류 발생: 확인
+  
+##### Test 3
+* 요청 양식(JSON)에 맞지 않는 요청을 날리고 오류 메시지 받기: 성공
+* 대기 방에서 quit 요청 없이 임의로 연결을 종료해도 이후에 같은 소속과 이름의 계정으로 새로운 방에 들어갈 수 있음: 확인
+* 대기 방에서 start 요청을 `time_offset`과 `time_duration` 없이 날리고 서버에 의해 연결 끊기기: 성공
+* 서버에 의해 연결이 끊겨도 이후에 같은 소속과 이름의 계정으로 새로운 방에 들어갈 수 있음: 확인
+
+##### Test 4
+* 관리자 권한이 없는 계정으로 입장한 후 start 요청을 날리고 "Forbidden" 오류 응답 받기: 성공
+
+#### 테스트하지 않은 항목
+* 여러 명이 동시에 한 방에 들어가고 나가고 연결이 끊기는 상황
+* 여러 방에서 동시에 게임이 돌아가는 상황 -> 당장은 고려하지 않을 것
+* 플레이 중인 방에서 연결이 끊겼을 때 다시 입장하려는 상황 -> 아직 구현이 안 되어 있지만 기존의 방이 아직 플레이 중인 상태라면 그 방으로 재입장하도록 구현할 예정
+
+#### 테스트 로그
+* `cd {root_of_this_repository}`
+* `./sql_app/Scripts/Activate.ps1` (가상환경 실행)
+* `python ./backend_websocket_test.py`
+
+```
+----------------- Test 1: join and quit -----------------
+@ send join
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test', 'is_admin': False, 'room_id': 8, 'person_id': 1}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}]}
+@@ send quit
+{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+------------ Test 2: join and start and hand ------------
+@ send join
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'room_id': 8, 'person_id': 2}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}]}
+@@ send start 3 10
+{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-03 17:52:37.710706 KST', 'start_time': '', 'end_time': ''}, 'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}]}}
+@@@ send hand 0 -> error response
+{'request': 'hand', 'response': 'error', 'type': 'message', 'message': 'Game not started yet'}
+@@@@ start response
+{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-03 17:52:37.710706 KST', 'start_time': '2023-01-03 17:52:42.125950 KST', 'end_time': ''}}
+@@@@@ send hand 0
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_list', 'data': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:44.141414 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}]}
+{'request': 'hand', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 8}]}
+@@@@@@ send hand 1 -> lose
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_list', 'data': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-03 17:52:47.176208 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:44.141414 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}]}
+{'request': 'hand', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 0, 'draw': 1, 'lose': 1, 'room_id': 8}]}
+@@@@@@@ send hand 0 -> win
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_list', 'data': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-03 17:52:49.217979 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-03 17:52:47.176208 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:44.141414 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': ' 관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}]}
+{'request': 'hand', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 1, 'draw': 1, 'lose': 1, 'room_id': 8}]}
+@@@@@@@@ end response
+{'request': 'end', 'response': 'broadcast', 'type': 'hand_list', 'data': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-03 17:52:49.217979 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-03 17:52:47.176208 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리 자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:44.141414 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': ' 관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}]}
+{'request': 'end', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': ' 관리자', 'is_admin': True, 'score': 0, 'win': 1, 'draw': 1, 'lose': 1, 'room_id': 8}]}
+@@@@@@@@@ send hand 0 -> not connected
+
+--------- Test 3: join and error and disconnect ---------
+@ send join
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 9, 'person_id': 3}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}
+@@ send plain text (not a JSON)
+{'request': '', 'response': 'error', 'type': 'message', 'message': 'Bad request'}
+@@@ disconnected (without sending quit)
+@@@@ send join
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 9, 'person_id': 3}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}
+@@@@@ send start (without required keyword arguments) -> disconnect
+{'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': ''}
+@@@@@@ send join
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 9, 'person_id': 3}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}
+@@@@@@@ disconnected (without sending quit)
+
+---------------- Test 4: forbidden start ----------------
+@ send join
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'UPnL', 'name': '아무개', 'is_admin': False, 'room_id': 9, 'person_id': 4}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'UPnL', 'name': ' 아무개', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}
+@@ send start 3 10
+{'request': 'start', 'response': 'error', 'type': 'message', 'message': 'Forbidden'}
+@@@ send quit
+{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+```

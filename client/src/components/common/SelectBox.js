@@ -27,6 +27,7 @@ export default function SelectBox({ selectedOption, setSelectedOption }) {
     <ComboBox
       options={options}
       placeholder="선택"
+      defaultValue={selectedOption}
       defaultIndex={0}
       optionsListMaxHeight={200}
       style={{

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ClockSrc from "../../assets/images/clock.png";
 import { Medium } from "../../styles/font";
 import SvgIcon from "../common/SvgIcon";
@@ -8,8 +8,36 @@ import GoldSrc from "../../assets/images/1st.svg";
 import SilverSrc from "../../assets/images/2nd.svg";
 import BronzeSrc from "../../assets/images/3rd.svg";
 import SizedBox from "../common/SizedBox";
+import { getUserName, getUserAffiliation } from "../../utils/User";
+export default function ResultBoard({ result }) {
+  console.log(result);
+  const [myPlace, setMyPlace] = useState({
+    name: "이름",
+    affiliation: "소속",
+    rank: 0,
+    score: 0,
+  });
+  const my_name = getUserName();
+  const my_affiliation = getUserAffiliation();
+  const _findMyPlace = () => {
+    for (var place of result) {
+      if (place.name == my_name && place.affiliation == my_affiliation) {
+        // 소속, 이름이 같으면
+        return place;
+      }
+    }
+    return {
+      name: "이름",
+      affiliation: "소속",
+      rank: 0,
+      score: 0,
+    };
+  };
 
-export default function ResultBoard() {
+  useEffect(() => {
+    setMyPlace(_findMyPlace());
+  }, []);
+
   return (
     <BgBox width="30%" height="90%" bgColor={"var(--light-purple)"}>
       <Col>
@@ -20,23 +48,25 @@ export default function ResultBoard() {
         <SizedBox height={10} />
         <BgBox width="90%" height="10%" bgColor={"white"}>
           <Center>
-            <Place rank={1} belong="King" name="김서연" score={100} />
+            <Place
+              rank={myPlace?.rank}
+              belong={myPlace?.affiliation}
+              name={myPlace?.name}
+              score={myPlace?.score}
+            />
           </Center>
         </BgBox>
 
         <ScrollView>
-          <Place rank={1} belong="King" name="김서연" score={100} />
-          <Place rank={2} belong="King" name="김서연" score={80} />
-          <Place rank={3} belong="King" name="김서연" score={70} />
-          <Place rank={4} belong="King" name="김서연" score={60} />
-          <Place rank={4} belong="King" name="김서연" score={60} />
-          <Place rank={4} belong="King" name="김서연" score={60} />
-          <Place rank={4} belong="King" name="김서연" score={60} />
-          <Place rank={4} belong="King" name="김서연" score={60} />
-          <Place rank={4} belong="King" name="김서연" score={60} />
-          <Place rank={4} belong="King" name="김서연" score={60} />
-          <Place rank={4} belong="King" name="김서연" score={60} />
-          <Place rank={4} belong="King" name="김서연" score={60} />
+          {result.map(({ affiliation, rank, name, score }, idx) => (
+            <Place
+              key={idx}
+              rank={rank}
+              belong={affiliation}
+              name={name}
+              score={score}
+            />
+          ))}
         </ScrollView>
 
         <SizedBox height={10} />
@@ -80,7 +110,7 @@ function Place({ rank, belong, name, score }) {
       </Sector>
       <Sector>
         <Medium color="var(--mint)" size={"30px"}>
-          + {score}
+          {score >= 0 ? "+" + score : score}
         </Medium>
       </Sector>
     </Row>

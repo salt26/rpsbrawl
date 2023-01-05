@@ -27,6 +27,9 @@ class Room(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     state = Column(Enum(RoomStateEnum), default=RoomStateEnum.Wait)
+    time_offset = Column(Integer, nullable=True)
+    time_duration = Column(Integer, nullable=True)
+    init_time = Column(DateTime(timezone=True), nullable=True)
     start_time = Column(DateTime(timezone=True), nullable=True)
     end_time = Column(DateTime(timezone=True), nullable=True)
 

@@ -73,10 +73,13 @@ class RoomCreate(RoomBase):
 
 class Room(RoomBase):
     id: int
+    time_offset: Union[int, None] = None
+    time_duration: Union[int, None] = None
+    init_time: Union[datetime, None] = None
     start_time: Union[datetime, None] = None
     end_time: Union[datetime, None] = None
     persons: List[Game] = []
-    #games: List[Game] = []
+    games: List[Game] = []
 
     class Config:
         orm_mode = True

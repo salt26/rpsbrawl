@@ -1,9 +1,10 @@
 import React from "react";
 import { NameTag, AdminTag, MyNameTag } from "./NameTags";
 import styled from "styled-components";
+import { getUserName } from "../../utils/User";
 
 export default function UserList({ users }) {
-  const my_name = sessionStorage.getItem("person_name");
+  const my_name = getUserName();
   return (
     <Container>
       {users.map(({ affiliation, name }, idx) => {

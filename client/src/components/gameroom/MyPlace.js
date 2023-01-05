@@ -3,21 +3,21 @@ import TrophySrc from "../../assets/images/1st_trophy.svg";
 import { Medium } from "../../styles/font";
 import styled from "styled-components";
 import BgBox from "../common/BgBox";
-//1등 점수 정보
-export default function MyPlace({}) {
-  const belong = "소속";
-  const name = "내이름";
-  const score = 7;
+
+//내 점수 정보
+export default function MyPlace({ place }) {
+  const { affiliation, score, name, rank } = place;
+
   return (
     <BgBox width={"350px"} height={"130px"}>
       <Row>
-        <Rank rank={5} />
+        <Rank rank={rank} />
         <Col>
-          <Medium size="45px">{belong}</Medium>
+          <Medium size="30px">{affiliation}</Medium>
 
-          <Medium size="30px">{name}</Medium>
+          <Medium size="45px">{name}</Medium>
         </Col>
-        <Medium>{score > 0 ? "+" + score : "-" + score}</Medium>
+        <Medium>{score >= 0 ? "+" + score : score}</Medium>
       </Row>
     </BgBox>
   );
@@ -45,13 +45,15 @@ const Row = styled.div`
   display: flex;
   height: 100%;
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: space-evenly;
 
   align-items: center;
 `;
 
 const Col = styled.div`
   display: flex;
+  flex: 0.5;
+
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
