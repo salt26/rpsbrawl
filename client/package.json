@@ -1,7 +1,6 @@
 {
   "name": "network_rps_front",
   "version": "0.1.0",
-  "homepage": "https://salt26.github.io/rock-scissor-paper-brawl",
   "private": true,
   "proxy": "http://localhost:8000",
   "dependencies": {
