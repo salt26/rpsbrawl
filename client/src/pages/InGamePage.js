@@ -14,7 +14,6 @@ import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
 
 export default function InGamePage() {
-  console.log("render!");
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
 
   const lastHand = useRef(state["hand_list"][state.hand_list.length - 1].hand);
@@ -23,6 +22,7 @@ export default function InGamePage() {
 
   const [isWaiting, setIsWaiting] = useState(true);
   const [count, setCount] = useState(5); //게임 시작까지 남은 시간
+  const [check, setCheck] = useState(true);
 
   const _getTimeOffset = useCallback((room) => {
     // 마운트 시에만 정의
@@ -83,6 +83,7 @@ export default function InGamePage() {
             handList.current = res.data.hand_list;
             const len = res.data.hand_list.length;
             lastHand.current = res.data.hand_list[len - 1].hand; // 가장 최근에 입력된 손 갱신
+            setCheck(!check);
           }
           break;
         case "end": // 게임 종료 신호
