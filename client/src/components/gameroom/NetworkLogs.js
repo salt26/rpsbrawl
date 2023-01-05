@@ -13,11 +13,9 @@ import { useContext, useEffect } from "react";
 import "./networklog.css";
 
 //1등 점수 정보
-export default function NetworkLogs({ hand_list }) {
+export default function NetworkLogs({ logs }) {
+  console.log(logs);
   var rpsDic = { 0: "rock", 1: "scissor", 2: "paper" };
-  const [logs, setLogs] = useState(hand_list);
-  const [createSocketConnection, ready, res, send] =
-    useContext(WebsocketContext); //전역 소켓 불러오기
 
   const scrollRef = useRef();
   useEffect(() => {
@@ -35,24 +33,7 @@ export default function NetworkLogs({ hand_list }) {
     $scroll.scrollTop = $scroll.scrollHeight;
   }, []);
 */
-  useEffect(() => {
-    console.log(res);
 
-    if (res?.response === "error") {
-      alert(res.message);
-      return;
-    }
-
-    /*손목록 갱신하기*/
-    if (ready) {
-      switch (res.request) {
-        case "hand":
-          if (res.type === "hand_list") {
-            setLogs(res.data.slice().reverse()); // 원본 immutable 하게 변경!
-          }
-      }
-    }
-  }, [ready, send, res]); // 메시지가 도착하면
   return (
     <div>
       <Medium size={"40px"} color={"white"}>

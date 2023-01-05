@@ -16,8 +16,12 @@ import useInterval from "../utils/useInterval";
 export default function InGamePage() {
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
 
-  const [lastHand, setLastHand] = useState(state["hand_list"][0].hand);
+  const [lastHand, setLastHand] = useState(
+    state["hand_list"][state.hand_list.length - 1].hand
+  );
 
+  const [handList, setHandList] = useState(state["hand_list"]);
+  console.log(handList);
   const [isWaiting, setIsWaiting] = useState(true);
   const [count, setCount] = useState(5); //게임 시작까지 남은 시간
 
@@ -61,7 +65,7 @@ export default function InGamePage() {
   });
 
   const [firstPlace, setFirstPlace] = useState(state?.game_list[0]);
-  const [handList, setHandList] = useState([]);
+
   const [createSocketConnection, ready, res, send] =
     useContext(WebsocketContext); //전역 소켓 불러오기
 
@@ -73,29 +77,30 @@ export default function InGamePage() {
     if (ready) {
       switch (res.request) {
         case "hand": // 게임 전적 정보 갱신
-          if (res.type === "game_list") {
-            setMyPlace(_findMyPlace(res.data));
-            setFirstPlace(res.data[0]);
-          } else if (res.type === "hand_list") {
-            setLastHand(res.data[0].hand); // 가장 최근에 입력된 손 갱신
-            console.log(res.data[0].hand);
+          if (res.type === "hand_data") {
+            setMyPlace(_findMyPlace(res.data.game_list));
+            setFirstPlace(res.data.game_list[0]);
+            setHandList(res.data.hand_list);
+
+            const len = res.data.hand_list.length;
+            console.log(res.data.hand_list[len - 1]);
+            setLastHand(res.data.hand_list[len - 1].hand); // 가장 최근에 입력된 손 갱신
+            console.log(res.data.hand_list[len - 1].hand);
           }
           break;
         case "end": // 게임 종료 신호
-          if (res.type === "hand_list") {
-            setHandList(res.data);
-          } else if (res.type === "game_list") {
+          if (res.type === "hand_data") {
             navigate(`/room/${room_id}/result`, {
               // 결과화면으로 최종 전적정보 전달
               state: {
-                handList: handList,
-                gameList: res.data,
+                handList: res.data.hand_list,
+                gameList: res.data.game_list,
               },
             });
           }
       }
     }
-  }, [ready, send, res]); // 메시지가 도착하면
+  }, [res]); // 메시지가 도착하면
 
   const _findMyPlace = (gameList) => {
     for (var user of gameList) {
@@ -119,7 +124,7 @@ export default function InGamePage() {
         <Right>
           <FirstPlace place={firstPlace} />
           <MyPlace place={myPlace} />
-          <NetworkLogs hand_list={state?.hand_list} />
+          <NetworkLogs logs={handList} />
         </Right>
       </Container>
       <Count isWaiting={isWaiting}>{count}</Count>

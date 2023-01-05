@@ -28,10 +28,11 @@ export default function RPSSelection({ lastHand }) {
     };
     send(JSON.stringify(request));
 
-    setCoolTime(true);
+    //setCoolTime(true);
   };
 
   console.log(coolTime);
+  /*
   useEffect(() => {
     const id = setTimeout(() => {
       setCoolTime(false); //쿨타임해제
@@ -39,7 +40,7 @@ export default function RPSSelection({ lastHand }) {
 
     return () => clearInterval(id);
   }, [coolTime]);
-
+*/
   return (
     <>
       <img src={rpsDic[lastHand]} width="500px" />

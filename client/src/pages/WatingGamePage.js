@@ -72,7 +72,7 @@ export default function WatingGamePage() {
           break;
       }
     }
-  }, [ready, send, res]); // 메시지가 바뀔때마다
+  }, [res]); // 메시지가 바뀔때마다
 
   const _quitGame = () => {
     if (ready) {
