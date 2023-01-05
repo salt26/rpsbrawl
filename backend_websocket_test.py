@@ -224,6 +224,155 @@ def test_websocket_forbidden_start(app):
         except AssertionError:
             pass
 
+def test_websocket_many_hands(app):
+    client = TestClient(app)
+    print("------------------- Test 5: many hands ------------------")
+    # 입장 요청
+    print("@ send join")
+    with client.websocket_connect("/join?affiliation=STAFF&name=관리자") as websocket:
+        try:
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "join" and data["response"] == "success"
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "join" and data["response"] == "broadcast"
+            
+            # 게임 시작 요청
+            print("@@ send start 3 10")
+            websocket.send_json({
+                'request': 'start',
+                'time_offset': 3,
+                'time_duration': 10
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
+
+            # 손 입력을 받기 시작한다는 응답
+            data = websocket.receive_json(mode='text')
+            print("@@@ start response")
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room_start'
+
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청
+            print("@@@@ send hand 0")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (지는 손)
+            print("@@@@@ send hand 1 -> lose")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 1
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (이기는 손)
+            print("@@@@@@ send hand 0 -> win")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+            
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (비기는 손)
+            print("@@@@@@@ send hand 0 -> draw")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+            
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (비기는 손)
+            print("@@@@@@@@ send hand 0 -> draw")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+            
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (비기는 손)
+            print("@@@@@@@@@ send hand 0 -> draw")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+            
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (비기는 손, 7개 중 마지막 6개만 표시)
+            print("@@@@@@@@@@ send hand 0 -> draw")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+            
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (비기는 손, 8개 중 마지막 6개만 표시)
+            print("@@@@@@@@@@@ send hand 0 -> draw")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+            
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (이기는 손, 9개 중 마지막 6개만 표시)
+            print("@@@@@@@@@@@@ send hand 2 -> win")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 2
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+
+            # 게임이 종료되었다는 응답 -> 자동 퇴장
+            data = websocket.receive_json(mode='text')
+            print("@@@@@@@@@@@@@ end response")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+
+            # 9개 손 전부 표시
+        
+        except AssertionError:
+            pass
 
 # 프로젝트 루트 폴더(sql_app 폴더의 상위 폴더)에서 실행할 것!
 if __name__ == '__main__':
@@ -242,4 +391,6 @@ if __name__ == '__main__':
     test_websocket_join_and_error_and_disconnect(app)
     print()
     test_websocket_forbidden_start(app)
+    print()
+    test_websocket_many_hands(app)
     print()

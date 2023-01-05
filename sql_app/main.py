@@ -241,8 +241,26 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
     }
 
 @app.get("/room/{room_id}/hand")
+def read_hands(room_id: int, limit: int = 6, db: Session = Depends(get_db)):
+    # 해당 방에서 사람들이 낸 손 목록 limit개 반환 (마지막으로 낸 손이 마지막 인덱스)
+    hands = crud.get_hands_from_last(db, room_id=room_id, limit=limit)
+    ret = []
+    for hand in hands:
+        person = crud.get_person(db, person_id=hand.person_id)
+        ret.append({
+            'affiliation': person.affiliation,
+            'name': person.name,
+            'hand': hand.hand,
+            'score': hand.score,
+            'time': hand.time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z"),
+            'room_id': hand.room_id,
+            #'person_id': hand.person_id
+        })
+    return ret
+
+@app.get("/room/{room_id}/hand/list")
 def read_all_hands(room_id: int, db: Session = Depends(get_db)):
-    # 해당 방에서 사람들이 낸 손 목록 모두 반환 (마지막으로 낸 손이 [0]번째 인덱스)
+    # 해당 방에서 사람들이 낸 손 목록 모두 반환 (가장 먼저 낸 손이 [0]번째 인덱스, 마지막으로 낸 손이 마지막 인덱스)
     hands = crud.get_hands(db, room_id=room_id)
     ret = []
     for hand in hands:
@@ -387,7 +405,7 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
             _, error_code = crud.create_hand(db, room_id=room_id, person_id=person_id, hand=data["hand"])
             if error_code == 0:
                 hand_data = {
-                    "hand_list": read_all_hands(room_id, db),
+                    "hand_list": read_hands(room_id, 6, db),
                     "game_list": read_game(room_id, db)
                 }
                 await manager.broadcast_json("hand", "hand_data", hand_data, room_id)

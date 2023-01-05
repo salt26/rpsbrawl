@@ -246,6 +246,18 @@ def get_hands(db: Session, room_id: int):
     return parse_obj_as(schemas.List[schemas.Hand], db_hands)
     # 가장 오래 전에 입력된 손이 [0]번째 인덱스
 
+def get_hands_from_last(db: Session, room_id: int, limit: int = 6):
+    if limit <= 0:
+        limit = 1
+    db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
+    if len(db_hands) <= 0:
+        return None
+    db_hands.sort(key=lambda e: e.time)
+    n = len(db_hands) - limit
+    if n < 0:
+        n = 0
+    return parse_obj_as(schemas.List[schemas.Hand], db_hands[n:])
+
 def get_hands_by_person(db: Session, room_id: int, person_id: int):
     db_hands = db.query(models.Hand).filter(and_(models.Hand.room_id == room_id, \
         models.Hand.person_id == person_id)).all()
