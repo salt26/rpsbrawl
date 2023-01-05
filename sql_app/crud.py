@@ -243,18 +243,8 @@ def update_room_to_end(db: Session, room_id: int):
 def get_hands(db: Session, room_id: int):
     db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
     db_hands.sort(key=lambda e: e.time)
-    return parse_obj_as(schemas.List[schemas.Hand], db_hands[::-1])
-    # 가장 마지막의 손이 [0]번째 인덱스
-
-def get_hands_from_last(db: Session, room_id: int, limit: int = 15):
-    if limit <= 0:
-        limit = 1
-    db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
-    if len(db_hands) <= 0:
-        return None
-    db_hands.sort(key=lambda e: e.time)
-    return parse_obj_as(schemas.List[schemas.Hand], db_hands[:-limit-1:-1])
-    # 가장 마지막의 손이 [0]번째 인덱스
+    return parse_obj_as(schemas.List[schemas.Hand], db_hands)
+    # 가장 오래 전에 입력된 손이 [0]번째 인덱스
 
 def get_hands_by_person(db: Session, room_id: int, person_id: int):
     db_hands = db.query(models.Hand).filter(and_(models.Hand.room_id == room_id, \
@@ -278,11 +268,11 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
     if db_game.first() is None:
         return (None, 3)
 
-    db_last_hand = get_hands_from_last(db, room_id, limit=1)
-    if db_last_hand is None or len(db_last_hand) <= 0:
+    db_hand = get_hands(db, room_id)
+    if db_hand is None or len(db_hand) <= 0:
         return (None, 4)
     
-    score = hand_score(hand, db_last_hand[0].hand)
+    score = hand_score(hand, db_hand[-1].hand)
     db_hand = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)
     db.add(db_hand)
     db.commit()

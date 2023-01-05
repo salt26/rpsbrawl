@@ -78,16 +78,6 @@ class ConnectionManager:
             if connection in self.active_connections:
                 self.active_connections.remove(connection)
 
-    """
-    async def send_personal_json(self, message: dict, websocket: WebSocket):
-        await websocket.send_json(message)
-
-    async def send_personal_json_with_person_id(self, message: dict, person_id: int):
-        connection = self.find_connection_by_person_id(person_id)
-        if connection:
-            await connection[0].send_json(message)
-    """
-
     async def send_text(request: str, response: str, message: str, websocket: WebSocket):
         obj = {}
         obj["request"] = request
@@ -147,20 +137,16 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
             await ConnectionManager.send_text("join", "error", "Person already exists in the Room", websocket)
             await websocket.close()
             return
-            #raise HTTPException(status_code=400, detail="Person already exists in the Room")
         else:
             await websocket.accept()
             await ConnectionManager.send_text("join", "error", e.__cause__, websocket)
             await websocket.close()
             return
-            #raise e
     if room is None:
         await websocket.accept()
         await ConnectionManager.send_text("join", "error", "Person has already entered in non-end Room", websocket)
         await websocket.close()
         return
-        #raise HTTPException(status_code=400, detail="Person has already entered in non-end Room")
-    #game = crud.get_game(db, room.id, person.id)
 
     connection = manager.find_connection_by_person_id(person.id)
     if connection:
@@ -221,28 +207,6 @@ def read_or_create_wait_room(db: Session = Depends(get_db)):
     room = crud.get_last_wait_room(db)
     return room
 
-"""
-@app.post("/room", response_model=schemas.Game)
-def add_person_to_room(affiliation: str, name: str, db: Session = Depends(get_db)):
-    # 회원가입, 로그인, 방 입장을 동시에 처리
-    # 대기 중인 방일 경우에, Person 추가하고 해당 방의 인원 수 업데이트
-    person = crud.get_person_by_affiliation_and_name(db, affiliation=affiliation, name=name)
-    if person is None:
-        person = crud.create_person(db, affiliation=affiliation, name=name)
-    try:
-        room = crud.update_last_wait_room_to_enter(db, person.id)
-    except Exception as e:
-        if str(e.__cause__).find("UNIQUE constraint failed") != -1:
-            raise HTTPException(status_code=400, detail="Person already exists in the Room")
-        else:
-            raise e
-    if room is None:
-        raise HTTPException(status_code=400, detail="Person has already entered in non-end Room")
-    game = crud.get_game(db, room.id, person.id)
-
-    return game
-"""
-
 @app.get("/room/{room_id}")
 def read_room(room_id: int, db: Session = Depends(get_db)):
     # 해당 방 반환
@@ -276,106 +240,7 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
         'end_time': et
     }
 
-"""
-@app.delete("/room/{room_id}")
-def delete_person_from_room(room_id: int, person_id: int, db: Session = Depends(get_db)):
-    # 대기 중인 방일 경우에, 해당 방에 해당 사람이 있으면 제거
-    db_room, error_code = crud.update_room_to_quit(db, room_id, person_id)
-    if error_code == 0:
-        return db_room
-    elif error_code == 1:
-        raise HTTPException(status_code=404, detail="Room not found")
-    elif error_code == 2:
-        raise HTTPException(status_code=403, detail="Cannot quit from non-wait Room")
-    elif error_code == 3:
-        raise HTTPException(status_code=404, detail="Person not found")
-    elif error_code == 4:
-        raise HTTPException(status_code=404, detail="Person does not exist in the Room")
-"""
-"""
-@app.get("/room/{room_id}/persons")
-def read_number_of_persons(room_id: int, db: Session = Depends(get_db)):
-    # 해당 방의 사람 수(int) 반환
-    db_room = crud.get_room(db, room_id)
-    if db_room is None:
-        raise HTTPException(status_code=404, detail="Room not found")
-    
-    return len(db_room.persons)
-"""
-"""
-@app.put("/room/{room_id}/play")
-def update_room_to_play(room_id: int, time_offset: int = 5, \
-    time_duration: int = 60, db: Session = Depends(get_db)):
-    # 해당 방의 상태 변경
-    # 시작 후 time_offset 초 후부터 time_duration 초 동안 손 입력을 받음
-    db_room = crud.get_room(db, room_id)
-    if db_room is None:
-        raise HTTPException(status_code=404, detail="Room not found")
-
-    if db_room.state == schemas.RoomStateEnum.Wait:
-        room = crud.update_room_to_play(db, room_id=room_id, \
-            time_offset=time_offset, time_duration=time_duration)
-    else:
-        raise HTTPException(status_code=400, detail="Room is not in a wait mode")
-    return room
-
-
-@app.put("/room/{room_id}/end")
-def update_room_to_end(room_id: int, db: Session = Depends(get_db)):
-    # 해당 방의 상태 변경
-    # 안에 있는 사람들은 로그아웃 상태(다른 방에 새로 입장할 수 있는 상태)가 됨
-    db_room = crud.get_room(db, room_id)
-    if db_room is None:
-        raise HTTPException(status_code=404, detail="Room not found")
-
-    if db_room.state == schemas.RoomStateEnum.Play:
-        room = crud.update_room_to_end(db, room_id)
-        if room is None:
-            raise HTTPException(status_code=403, detail="Game not ended yet")
-        else:
-            return room
-    else:
-        raise HTTPException(status_code=400, detail="Room is not in a play mode")
-
-@app.post("/room/{room_id}/hand")
-def add_hand(room_id: int, person_id: int, hand: schemas.HandEnum, db: Session = Depends(get_db)):
-    # 해당 방에 새로운 손 추가
-    db_hand, error_code = crud.create_hand(db, room_id=room_id, person_id=person_id, hand=hand)
-    if error_code == 0:
-        return db_hand
-    elif error_code == 1 or error_code == 11:
-        raise HTTPException(status_code=400, detail="Room is not in a play mode")
-    elif error_code == 2 or error_code == 12:
-        raise HTTPException(status_code=403, detail="Game not started yet")
-    elif error_code == 3 or error_code == 13:
-        raise HTTPException(status_code=404, detail="Person not found")
-    elif error_code == 4:
-        raise HTTPException(status_code=500, detail="Initial hand not found")
-    elif error_code == 5 or error_code == 15:
-        raise HTTPException(status_code=404, detail="Room not found")
-    elif error_code == 6 or error_code == 16:
-        raise HTTPException(status_code=403, detail="Game has ended")
-"""
-
 @app.get("/room/{room_id}/hand")
-def read_hands(room_id: int, limit: int = 15, db: Session = Depends(get_db)):
-    # 해당 방에서 사람들이 낸 손 목록 limit개 반환 (마지막으로 낸 손이 [0]번째 인덱스)
-    hands = crud.get_hands_from_last(db, room_id=room_id, limit=limit)
-    ret = []
-    for hand in hands:
-        person = crud.get_person(db, person_id=hand.person_id)
-        ret.append({
-            'affiliation': person.affiliation,
-            'name': person.name,
-            'hand': hand.hand,
-            'score': hand.score,
-            'time': hand.time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z"),
-            'room_id': hand.room_id,
-            #'person_id': hand.person_id
-        })
-    return ret
-
-@app.get("/room/{room_id}/hand/list")
 def read_all_hands(room_id: int, db: Session = Depends(get_db)):
     # 해당 방에서 사람들이 낸 손 목록 모두 반환 (마지막으로 낸 손이 [0]번째 인덱스)
     hands = crud.get_hands(db, room_id=room_id)
@@ -441,18 +306,6 @@ def read_person(person_id: int, db: Session = Depends(get_db)):
     return crud.get_person(db, person_id)
 
 """
-# route 없음
-def add_person(affiliation: str, name: str, \
-    # hashed_password: str,
-    db: Session = Depends(get_db)):
-    # 회원가입 겸 로그인: 가입한 사람 목록에 Person 추가
-    person = crud.get_person_by_affiliation_and_name(db, affiliation=affiliation, name=name)
-    if person is None:
-        person = crud.create_person(db, affiliation=affiliation, name=name, \
-            #hashed_password=hashed_password,
-        )
-    return person
-
 @app.get("/person/list")
 def read_persons(db: Session = Depends(get_db)):
     # (디버깅 용도)
@@ -496,9 +349,13 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     task2 = asyncio.create_task(asyncio.sleep(time_duration))
     await task1
     await task2
+
     crud.update_room_to_end(db, room_id)  # 백엔드 자체에서 시간으로 입력 가능 여부를 판단하면 안 되고, 함수를 호출한 순간 무조건 Ending 페이즈로 변경해야 한다.
-    await manager.broadcast_json("end", "hand_list", read_all_hands(room_id, db), room_id)
-    await manager.broadcast_json("end", "game_list", read_game(room_id, db), room_id)
+    hand_data = {
+        "hand_list": read_all_hands(room_id, db),
+        "game_list": read_game(room_id, db)
+    }
+    await manager.broadcast_json("end", "hand_data", hand_data, room_id)
     await manager.close_with_room_id(room_id)
 
 async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Session = Depends(get_db)):
@@ -529,8 +386,11 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
             # 해당 방에 새로운 손 추가
             _, error_code = crud.create_hand(db, room_id=room_id, person_id=person_id, hand=data["hand"])
             if error_code == 0:
-                await manager.broadcast_json("hand", "hand_list", read_all_hands(room_id, db), room_id)
-                await manager.broadcast_json("hand", "game_list", read_game(room_id, db), room_id)
+                hand_data = {
+                    "hand_list": read_all_hands(room_id, db),
+                    "game_list": read_game(room_id, db)
+                }
+                await manager.broadcast_json("hand", "hand_data", hand_data, room_id)
             elif error_code == 1 or error_code == 11:
                 await ConnectionManager.send_text("hand", "error", "Room is not in a play mode", websocket)
                 #raise HTTPException(status_code=400, detail="Room is not in a play mode")

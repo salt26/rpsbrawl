@@ -79,10 +79,7 @@ def test_websocket_join_and_start_and_hand(app):
             })
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_list'
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'game_list'
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
 
             time.sleep(3)
 
@@ -94,10 +91,7 @@ def test_websocket_join_and_start_and_hand(app):
             })
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_list'
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'game_list'
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
 
             time.sleep(2)
 
@@ -109,19 +103,13 @@ def test_websocket_join_and_start_and_hand(app):
             })
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_list'
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'game_list'
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
 
             # 게임이 종료되었다는 응답 -> 자동 퇴장
             data = websocket.receive_json(mode='text')
             print("@@@@@@@@ end response")
             print(data)
-            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_list'
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'game_list'
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data'
 
             print("@@@@@@@@@ send hand 0 -> not connected")
             try:

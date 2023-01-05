@@ -316,49 +316,42 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 }
 ```
 
-**hand broadcast**: 손 입력 성공 시 해당 방의 모든 사람들에게 업데이트된 손 목록 정보 응답
+**hand broadcast**: 손 입력 성공 시 해당 방의 모든 사람들에게 업데이트된 손 목록과 전적 정보 응답
 ```
 {
   request: "hand",
   response: "broadcast",
-  type: "hand_list",
-  data: [
-    {
-      affiliation: "소속",
-      name: "이름",
-      hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
-      score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
-      time: "2022-12-25 03:24:12.388157 KST",
-      room_id: 1
-    },
-    ...  // 해당 방에서 입력된 손 개수만큼 존재
-  ]
+  type: "hand_data",
+  data: {
+    hand_list: [
+      ...,
+      {
+        affiliation: "소속",
+        name: "이름",
+        hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
+        score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
+        time: "2022-12-25 03:24:12.388157 KST",
+        room_id: 1
+      }  // 해당 방에서 입력된 손 개수만큼 존재
+    ],
+    game_list: [
+      {
+        rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
+        affiliation: "소속",
+        name: "이름",
+        is_admin: False,
+        score: 13,
+        win: 18,
+        draw: 4,
+        lose: 5,
+        room_id: 1
+      },
+      ...  // 해당 방에서 플레이하는 사람 수만큼 존재
+    ]
+  }
 }
 ```
-* 가장 최근에 입력된 손이 목록의 인덱스 0번에 위치한다.
-
-**hand broadcast**: 손 입력 성공 시 해당 방의 모든 사람들에게 다음 정보 응답
-```
-{
-  request: "hand",
-  response: "broadcast",
-  type: "game_list",
-  data: [
-    {
-      rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
-      affiliation: "소속",
-      name: "이름",
-      is_admin: False,
-      score: 13,
-      win: 18,
-      draw: 4,
-      lose: 5,
-      room_id: 1
-    },
-    ...  // 해당 방에서 플레이하는 사람 수만큼 존재
-  ]
-}
-```
+* 가장 최근에 입력된 손이 목록의 마지막 인덱스에 위치한다.
 * 점수(`score` = `win - lose`)가 같다면 `win` 수가 많을수록 순위가 높고, `win` 수도 같다면 `draw` 수가 많을수록 순위가 높다.
 * 가장 순위가 높은 사람(1)이 목록의 인덱스 0번에 위치한다.
 * 누군가가 손을 입력하면 모든 사람들에게 새로운 손 목록(hand_list)과 전적 목록(game_list)이 전송되므로 이를 바탕으로 화면을 표시하면 된다.
@@ -367,55 +360,45 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 
 #### 게임 종료(end)
 
-* **end broadcast**: 프론트엔드에서 요청하지 않아도, 플레이 중인 방에서 손 입력 시간이 종료되는 경우 서버에서 먼저 해당 방의 모든 사람들에게 다음의 손 목록 정보 응답
+* **end broadcast**: 프론트엔드에서 요청하지 않아도, 플레이 중인 방에서 손 입력 시간이 종료되는 경우 서버에서 먼저 해당 방의 모든 사람들에게 다음의 손 목록 및 전적 정보 응답
 ```
 {
   request: "end",
   response: "broadcast",
-  type: "hand_list",
-  data: [
-    {
-      affiliation: "소속",
-      name: "이름",
-      hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
-      score: 1,   // 1(이김) 또는 0(비김) 또는 -1(짐)
-      time: "2022-12-25 03:25:04.510891 KST",
-      room_id: 1
-    },
-    ...  // 해당 방에서 입력된 손 개수만큼 존재
-  ]
+  type: "hand_data",
+  data: {
+    hand_list: [
+      ...,
+      {
+        affiliation: "소속",
+        name: "이름",
+        hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
+        score: 1,   // 1(이김) 또는 0(비김) 또는 -1(짐)
+        time: "2022-12-25 03:25:04.510891 KST",
+        room_id: 1
+      }  // 해당 방에서 입력된 손 개수만큼 존재
+    ],
+    game_list: [
+      {
+        rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
+        affiliation: "소속",
+        name: "이름",
+        is_admin: False,
+        score: 17,
+        win: 23,
+        draw: 6,
+        lose: 6,
+        room_id: 1
+      },
+      ...  // 해당 방에서 플레이하는 사람 수만큼 존재
+    ]
+  }
 }
 ```
-* 가장 마지막에 입력된 손이 목록의 인덱스 0번에 위치한다.
-* *결과 화면에, 여기서 받은 "hand_list" 정보를 바탕으로 csv 등의 파일로 결과를 export하는 기능도 추가되면 좋겠다.*
-  * *"game_list"를 csv로 export하는 버튼 바로 위에 새 버튼을 만들어 "hand_list"를 csv로 export하도록 하면 되겠다.*
-
-* **end broadcast**: 프론트엔드에서 요청하지 않아도, 플레이 중인 방에서 손 입력 시간이 종료되는 경우 서버에서 먼저 해당 방의 모든 사람들에게 다음의 전적 정보 응답
-```
-{
-  request: "end",
-  response: "broadcast",
-  type: "game_list",
-  data: [
-    {
-      rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
-      affiliation: "소속",
-      name: "이름",
-      is_admin: False,
-      score: 17,
-      win: 23,
-      draw: 6,
-      lose: 6,
-      room_id: 1
-    },
-    ...  // 해당 방에서 플레이하는 사람 수만큼 존재
-  ]
-}
-```
+* 가장 마지막에 입력된 손이 목록의 마지막 인덱스에 위치한다.
 * 가장 순위가 높은 사람(1)이 목록의 인덱스 0번에 위치한다.
 * 이 응답을 받은 이후에는 손 입력을 받지 않고, 해당 방에서의 게임이 종료된다.
-* 프론트엔드에서는 이 응답을 받고 나서 3초 정도 후에 결과 화면을 보여주고, 결과 화면에서 "나가기" 버튼을 눌러 입장 전 화면으로 이동하면 된다.
-  * *입장 전 화면에서는 기존에 접속했던 계정(소속 및 이름) 정보가 그대로 입력 필드에 차 있어서 "입장!" 버튼만 누르면 바로 다시 입장할 수 있도록 하면 좋겠다.*
+* 프론트엔드에서는 이 응답을 받고 나서 결과 화면을 보여주고, 결과 화면에서 "나가기" 버튼을 눌러 입장 전 화면으로 이동하면 된다.
 
 #### 연결 끊김(disconnected)
 disconnected broadcast: 클라이언트에서 연결을 끊는 경우 해당 방에 남아있는 모든 사람들(연결이 끊긴 본인 제외)에게 다음 정보 응답
@@ -602,56 +585,52 @@ disconnect broadcast: 요청 데이터에 필요한 정보가 모두 들어있�
 ```
 ----------------- Test 1: join and quit -----------------
 @ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test', 'is_admin': False, 'room_id': 8, 'person_id': 1}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}]}
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test', 'is_admin': False, 'room_id': 18, 'person_id': 1}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 18}]}
 @@ send quit
 {'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
 
 ------------ Test 2: join and start and hand ------------
 @ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'room_id': 8, 'person_id': 2}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}]}
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'room_id': 18, 'person_id': 2}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 18}]}
 @@ send start 3 10
-{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-03 17:52:37.710706 KST', 'start_time': '', 'end_time': ''}, 'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}]}}
+{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-05 15:44:21.344631 KST', 'start_time': '', 'end_time': ''}, 'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 15:44:21.344631 KST', 'room_id': 18}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 18}]}}
 @@@ send hand 0 -> error response
 {'request': 'hand', 'response': 'error', 'type': 'message', 'message': 'Game not started yet'}
 @@@@ start response
-{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-03 17:52:37.710706 KST', 'start_time': '2023-01-03 17:52:42.125950 KST', 'end_time': ''}}
+{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-05 15:44:21.344631 KST', 'start_time': '2023-01-05 15:44:25.642563 KST', 'end_time': ''}}
 @@@@@ send hand 0
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_list', 'data': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:44.141414 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}]}
-{'request': 'hand', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 8}]}
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 15:44:21.344631 KST', 'room_id': 18}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 15:44:27.665716 KST', 'room_id': 18}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 0, 'draw': 0, 'lose': 1, 'room_id': 18}]}}
 @@@@@@ send hand 1 -> lose
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_list', 'data': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-03 17:52:47.176208 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:44.141414 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}]}
-{'request': 'hand', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 0, 'draw': 1, 'lose': 1, 'room_id': 8}]}
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 15:44:21.344631 KST', 'room_id': 18}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 15:44:27.665716 KST', 'room_id': 18}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 15:44:30.705133 KST', 'room_id': 18}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -2, 'win': 0, 'draw': 0, 'lose': 2, 'room_id': 18}]}}
 @@@@@@@ send hand 0 -> win
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_list', 'data': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-03 17:52:49.217979 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-03 17:52:47.176208 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:44.141414 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': ' 관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}]}
-{'request': 'hand', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 1, 'draw': 1, 'lose': 1, 'room_id': 8}]}
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 15:44:21.344631 KST', 'room_id': 18}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 15:44:27.665716 KST', 'room_id': 18}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 15:44:30.705133 KST', 'room_id': 18}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 15:44:32.736380 KST', 'room_id': 18}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 1, 'draw': 0, 'lose': 2, 'room_id': 18}]}}
 @@@@@@@@ end response
-{'request': 'end', 'response': 'broadcast', 'type': 'hand_list', 'data': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-03 17:52:49.217979 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-03 17:52:47.176208 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': '관리 자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:44.141414 KST', 'room_id': 8}, {'affiliation': 'STAFF', 'name': ' 관리자', 'hand': 0, 'score': 0, 'time': '2023-01-03 17:52:37.710706 KST', 'room_id': 8}]}
-{'request': 'end', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': ' 관리자', 'is_admin': True, 'score': 0, 'win': 1, 'draw': 1, 'lose': 1, 'room_id': 8}]}
+{'request': 'end', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 15:44:21.344631 KST', 'room_id': 18}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 15:44:27.665716 KST', 'room_id': 18}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 15:44:30.705133 KST', 'room_id': 18}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 15:44:32.736380 KST', 'room_id': 18}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 1, 'draw': 0, 'lose': 2, 'room_id': 18}]}}
 @@@@@@@@@ send hand 0 -> not connected
 
 --------- Test 3: join and error and disconnect ---------
 @ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 9, 'person_id': 3}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 19, 'person_id': 3}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 19}]}
 @@ send plain text (not a JSON)
 {'request': '', 'response': 'error', 'type': 'message', 'message': 'Bad request'}
 @@@ disconnected (without sending quit)
 @@@@ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 9, 'person_id': 3}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 19, 'person_id': 3}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 19}]}
 @@@@@ send start (without required keyword arguments) -> disconnect
 {'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': ''}
 @@@@@@ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 9, 'person_id': 3}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 19, 'person_id': 3}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 19}]}
 @@@@@@@ disconnected (without sending quit)
 
 ---------------- Test 4: forbidden start ----------------
 @ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'UPnL', 'name': '아무개', 'is_admin': False, 'room_id': 9, 'person_id': 4}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'UPnL', 'name': ' 아무개', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}
+{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'UPnL', 'name': '아무개', 'is_admin': False, 'room_id': 19, 'person_id': 4}}
+{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'UPnL', 'name': '아무개', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 19}]}
 @@ send start 3 10
 {'request': 'start', 'response': 'error', 'type': 'message', 'message': 'Forbidden'}
 @@@ send quit
