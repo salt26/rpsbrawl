@@ -34,11 +34,13 @@ import random
 def hash_password(password: str):
     return password + "PleaseHashIt" # TODO
 
+"""
 def check_admin(affiliation: str, name: str = "관리자"):
     admin_list = [("STAFF", "관리자")]
     #filtered = [item for item in admin_list if item[0] == affiliation and item[1] == name]
     filtered = [item for item in admin_list if item[0] == affiliation]
     return len(filtered) > 0
+"""
 
 def hand_score(my_hand: schemas.HandEnum, prev_hand: schemas.HandEnum):
     if my_hand == prev_hand:
@@ -62,21 +64,16 @@ def get_person(db: Session, person_id: int):
     else:
         return schemas.Person.from_orm(person)
 
-def get_person_by_affiliation_and_name(db: Session, affiliation: str, name: str):
-    person = db.query(models.Person).filter(and_(models.Person.affiliation == affiliation, \
-        models.Person.name == name)).first()
+def get_person_by_name(db: Session, name: str):
+    person = db.query(models.Person).filter(models.Person.name == name).first()
     if person is None:
         return None
     else:
         return schemas.Person.from_orm(person)
 
-def create_person(db: Session, affiliation: str, name: str, \
-    #hashed_password: str, 
-    ):
+def create_person(db: Session, name: str):
     # 회원 가입
-    db_person = models.Person(affiliation=affiliation, name=name, \
-        #hashed_password=hash_password(hashed_password),
-        is_admin=check_admin(affiliation, name))
+    db_person = models.Person(name=name)
     db.add(db_person)
     db.commit()
     db.refresh(db_person)
@@ -103,6 +100,7 @@ def get_room(db: Session, room_id: int):
     else:
         return schemas.Room.from_orm(db_room)
 
+"""
 def get_last_wait_room(db: Session):
     # 마지막 대기 방 반환 (없으면 생성해서 반환)
     db_room = db.query(models.Room).filter(models.Room.state == schemas.RoomStateEnum.Wait).all()
@@ -110,6 +108,7 @@ def get_last_wait_room(db: Session):
         return schemas.Room.from_orm(db_room[-1])
     else:
         return create_room(db)
+"""
 
 def create_room(db: Session):
     # 새 대기 방 생성 (이거 대신 get_last_wait_room()을 사용할 것)
@@ -119,6 +118,7 @@ def create_room(db: Session):
     db.refresh(db_room)
     return schemas.Room.from_orm(db_room)
 
+"""
 def update_last_wait_room_to_enter(db: Session, person_id: int):
     # 마지막 대기 방에 사람 입장
     room_id = get_last_wait_room(db).id
@@ -138,11 +138,11 @@ def update_last_wait_room_to_enter(db: Session, person_id: int):
     db.refresh(db_person.first())
     db.refresh(db_room.first())
     return schemas.Room.from_orm(db_room.first())
-
 """
+
 def update_room_to_enter(db: Session, room_id: int, person_id: int):
     # 해당 방에 사람 입장 (이거 대신 update_last_wait_room_to_enter()를 사용할 것)
-    db_room = db.query(models.Room).filter(_and(models.Room.id == room_id, models.Room.state is schemas.RoomStateEnum.Wait))
+    db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state is schemas.RoomStateEnum.Wait))
     db_person = db.query(models.Person).filter(models.Person.id == person_id).first()
     if db_person is None:
         return None
@@ -156,7 +156,7 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int):
     db.refresh(db_person)
     db.refresh(db_room)
     return db_room
-"""
+
 
 # https://stackoverflow.com/questions/9667138/how-to-update-sqlalchemy-row-entry
 

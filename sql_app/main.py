@@ -116,21 +116,22 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@app.websocket("/join")
-async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, db: Session = Depends(get_db)):
-    if affiliation is None or name is None or affiliation == "" or name == "":
+@app.websocket("/signin")
+async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depends(get_db)):
+    if name is None or name == "":
         await websocket.accept()
-        await ConnectionManager.send_text("join", "error", "Both affiliation and name are required", websocket)
+        await ConnectionManager.send_text("signin", "error", "Name is required", websocket)
         await websocket.close()
         return
     
     # 웹소켓 연결 시작
     # 한 번 연결하면 연결을 끊거나 끊어질 때까지 while True:로 모든 데이터를 다 받아야 하나?
-    person = crud.get_person_by_affiliation_and_name(db, affiliation=affiliation, name=name)
+    person = crud.get_person_by_name(db, name=name)
     if person is None:
-        person = crud.create_person(db, affiliation=affiliation, name=name)
+        person = crud.create_person(db, name=name)
     try:
-        room = crud.update_last_wait_room_to_enter(db, person.id)
+        #room = crud.update_last_wait_room_to_enter(db, person.id)  # TODO @@@@@@@@@@@@@ 바꿀 것 @@@@@@@@@@@@@@@
+        pass
     except Exception as e:
         if str(e.__cause__).find("UNIQUE constraint failed") != -1:
             await websocket.accept()
@@ -155,7 +156,7 @@ async def websocket_endpoint(websocket: WebSocket, affiliation: str, name: str, 
         
     await manager.connect(websocket, person.id, room.id)
     try:
-        # 개인에게 프로필('affiliation', 'name', 'is_admin', 'room_id', 'person_id'가 포함된 JSON) 반환 응답
+        # 개인에게 프로필('team', 'name', 'is_host', 'room_id', 'person_id'가 포함된 JSON) 반환 응답
         await ConnectionManager.send_json("join", "success", "profile", read_profile(room.id, person.id, db), websocket)
         # 해당 방 전체에게 전적(사람) 목록 반환 응답
         await manager.broadcast_json("join", 'game_list', read_game(room.id, db), room.id)
@@ -200,12 +201,14 @@ def read_all_room(db: Session = Depends(get_db)):
     rooms = crud.get_rooms(db)
     return rooms
 
+"""
 @app.get("/room", response_model=schemas.Room)
 def read_or_create_wait_room(db: Session = Depends(get_db)):
     # 대기 중인 방이 있다면 그 방을 반환
     # 없다면 새 대기 방을 만들어 그 방을 반환 (디버깅 용도)
     room = crud.get_last_wait_room(db)
     return room
+"""
 
 @app.get("/room/{room_id}")
 def read_room(room_id: int, db: Session = Depends(get_db)):
@@ -237,7 +240,13 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
         "time_duration" : td,
         'init_time': it,
         'start_time': st,
-        'end_time': et
+        'end_time': et,
+        'name': db_room.name,
+        'mode': db_room.mode,
+        'bot_skilled': db_room.bot_skilled,
+        'bot_dumb': db_room.bot_dumb,
+        'max_persons': db_room.max_persons,
+        'num_persons': len(db_room.persons) + db_room.bot_skilled + db_room.bot_dumb
     }
 
 @app.get("/room/{room_id}/hand")
@@ -247,8 +256,9 @@ def read_hands(room_id: int, limit: int = 6, db: Session = Depends(get_db)):
     ret = []
     for hand in hands:
         person = crud.get_person(db, person_id=hand.person_id)
+        game = crud.get_game(db, room_id, person.id)
         ret.append({
-            'affiliation': person.affiliation,
+            'team': game.team,
             'name': person.name,
             'hand': hand.hand,
             'score': hand.score,
@@ -265,8 +275,9 @@ def read_all_hands(room_id: int, db: Session = Depends(get_db)):
     ret = []
     for hand in hands:
         person = crud.get_person(db, person_id=hand.person_id)
+        game = crud.get_game(db, room_id, person.id)
         ret.append({
-            'affiliation': person.affiliation,
+            'team': game.team,
             'name': person.name,
             'hand': hand.hand,
             'score': hand.score,
@@ -278,7 +289,7 @@ def read_all_hands(room_id: int, db: Session = Depends(get_db)):
 
 @app.get("/room/{room_id}/game")
 def read_game(room_id: int, db: Session = Depends(get_db)):
-    # 해당 방의 사람들의 {순위, 소속, 이름, 관리자 여부, 점수, win, draw, lose, 방 번호} 반환
+    # 해당 방의 사람들의 {순위, 팀 번호, 이름, 방장 여부, 점수, win, draw, lose, 방 번호} 반환
     games = crud.get_games_in_room(db, room_id=room_id)
     # 점수가 같다면 이긴 횟수가 많을수록 높은 순위, 이긴 횟수도 같다면 비긴 횟수가 많을수록 높은 순위
     # (많이 낼수록 유리)
@@ -288,9 +299,9 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
         person = crud.get_person(db, person_id=game.person_id)
         ret.append({
             'rank': index + 1, # 순위는 점수가 가장 높은 사람이 1
-            'affiliation': person.affiliation,
+            'team': game.team,
             'name': person.name,
-            'is_admin': person.is_admin,
+            'is_host': game.is_host,
             'score': game.score,
             'win': game.win,
             'draw': game.draw,
@@ -302,7 +313,7 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
 
 @app.get("/profile/{room_id}/{person_id}")
 def read_profile(room_id: int, person_id: int, db: Session = Depends(get_db)):
-    # 해당 방의 특정 사람의 {소속, 이름, 관리자 여부, 방 번호, 개인 번호} 반환
+    # 해당 방의 특정 사람의 {팀 번호, 이름, 방장 여부, 방 번호, 개인 번호} 반환
     game = crud.get_game(db, room_id=room_id, person_id=person_id)
     if game is None:
         return None
@@ -312,9 +323,9 @@ def read_profile(room_id: int, person_id: int, db: Session = Depends(get_db)):
         return None
         #raise HTTPException(status_code=404, detail="Person not found")
     return {
-        'affiliation': person.affiliation,
+        'team': game.team,
         'name': person.name,
-        'is_admin': person.is_admin,
+        'is_host': game.is_host,
         'room_id': game.room_id,
         'person_id': game.person_id
     }
@@ -466,7 +477,12 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
             if db_person is None:
                 await ConnectionManager.send_text("start", "error", "Person not found", websocket)
                 continue
-            elif not db_person.is_admin:
+
+            game = crud.get_game(db, room_id, person_id)
+            if game is None:
+                await ConnectionManager.send_text("start", "error", "Game not found", websocket)
+                continue
+            elif not game.is_host:
                 await ConnectionManager.send_text("start", "error", "Forbidden", websocket)
                 continue
 
