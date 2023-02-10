@@ -31,6 +31,8 @@ import random
 # db_room.update({"state" : schemas.RoomStateEnum.Play})
 # print(db_room.first())  # None 이 출력된다!
 
+END_WAITING_TIME = 10
+
 def hash_password(password: str):
     return password + "PleaseHashIt" # TODO
 
@@ -79,6 +81,15 @@ def create_person(db: Session, name: str):
     db.refresh(db_person)
     return schemas.Person.from_orm(db_person)
 
+def check_person_playing(db: Session, person_id: int):
+    update_expired_rooms_to_end(db)
+    playing_rooms = db.query(models.Room).filter(models.Room.state == schemas.RoomStateEnum.Play).all()
+    for room in playing_rooms:
+        for game in room.persons:
+            if game.person_id == person_id:
+                return room.id
+    return -1
+
 """
 def delete_person(db: Session, person: schemas.PersonCreate):
     # 회원 탈퇴 (아마 안 쓸 것)
@@ -95,6 +106,13 @@ def get_rooms(db: Session):
 
 def get_room(db: Session, room_id: int):
     db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if db_room is None:
+        return None
+    else:
+        return schemas.Room.from_orm(db_room)
+
+def get_non_end_rooms(db: Session):
+    db_room = db.query(models.Room).filter(models.Room.state != schemas.RoomStateEnum.End).all()
     if db_room is None:
         return None
     else:
@@ -221,9 +239,24 @@ def update_room_to_start(db: Session, room_id: int):
     db.refresh(db_room.first())
     return schemas.Room.from_orm(db_room.first())
 
-def update_room_to_end(db: Session, room_id: int):
-    # 게임 종료 (Hand 입력 불가능)
+def update_room_end_time(db: Session, room_id: int):
+    # 게임 종료 (Hand 입력 불가능, 결과 창 표시)
     # 플레이 시간이 다 된 방에서 명시적으로 함수를 호출해 주어야 함
+    db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.end_time is None, models.Room.state == schemas.RoomStateEnum.Play))
+    if db_room.first() is None:
+        return None
+    db_room.update({
+        "end_time" : datetime.now()
+    })
+    db.commit()
+    db_room = db.query(models.Room).filter(models.Room.id == room_id)
+    db.refresh(db_room.first())
+    return schemas.Room.from_orm(db_room.first())
+
+def update_room_to_end(db: Session, room_id: int):
+    # 게임 종료 (결과 창 표시 후 방 소멸)
+    # 플레이 시간과 결과 창 표시 시간(END_WAITING_TIME)이 모두 다 된 방에서 명시적으로 함수를 호출해 주어야 함
+    # 이 함수를 호출하기 전에 update_room_end_time()을 먼저 호출하고, 그로부터 END_WAITING_TIME이 지난 시각에 이 함수를 호출하기 바람
     db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play))
     if db_room.first() is None:
         return None
@@ -233,12 +266,19 @@ def update_room_to_end(db: Session, room_id: int):
     })
     db_room.update({
         "state" : schemas.RoomStateEnum.End,
-        "end_time" : datetime.now()
     })
     db.commit()
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
     db.refresh(db_room.first())
     return schemas.Room.from_orm(db_room.first())
+
+def update_expired_rooms_to_end(db: Session):
+    playing_rooms = db.query(models.Room).filter(and_(models.Room.state == schemas.RoomStateEnum.Play, \
+        or_(and_(models.Room.end_time is not None, models.Room.end_time + timedelta(seconds=END_WAITING_TIME + 5) < datetime.now()),\
+            and_(models.Room.start_time is not None, models.Room.time_duration is not None, models.Room.start_time + timedelta(seconds=models.Room.time_duration + END_WAITING_TIME + 5) < datetime.now()),\
+            and_(models.Room.init_time is not None, models.Room.time_offset is not None, models.Room.time_duration is not None, models.Room.init_time + timedelta(seconds=models.Room.time_offset + models.Room.time_duration + END_WAITING_TIME + 5) < datetime.now())))).all()
+    for room in playing_rooms:
+        update_room_to_end(db, room.id)  # 이렇게 garbage collection된 방은 모두 End 상태가 되지만 그 중 일부의 end_time이 None일 수 있음
 
 def get_hands(db: Session, room_id: int):
     db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()

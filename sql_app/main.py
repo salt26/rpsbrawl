@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Union
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 #from fastapi.security import OAuth2PasswordBearer
@@ -42,8 +42,9 @@ def get_db():
 
 class ConnectionManager:
     def __init__(self):
-        # Tuple[WebSocket, int, int]: (연결된 웹소켓 클래스, person_id, room_id)
-        self.active_connections: List[Tuple[WebSocket, int, int]] = []
+        # List[WebSocket, int, int]: [연결된 웹소켓 클래스, person_id, room_id]
+        # 방에 입장하지 않은 사람은 room_id = -1
+        self.active_connections: List[List[Union[WebSocket, int]]] = []
 
     def find_connection_by_websocket(self, websocket: WebSocket):
         return next((x for x in self.active_connections if x[0] == websocket), None)
@@ -54,9 +55,17 @@ class ConnectionManager:
     def find_all_connections_by_room_id(self, room_id: int):
         return list(filter(lambda x: x[2] == room_id, self.active_connections))
 
-    async def connect(self, websocket: WebSocket, person_id: int, room_id: int):
+    def change_room_id(self, person_id: int, new_room_id: int):
+        connection = self.find_connection_by_person_id(person_id)
+        connection[2] = new_room_id
+
+    def get_room_id(self, person_id: int):
+        connection = self.find_connection_by_person_id(person_id)
+        return connection[2]
+
+    async def connect(self, websocket: WebSocket, person_id: int, room_id: int = -1):
         await websocket.accept()
-        self.active_connections.append((websocket, person_id, room_id))
+        self.active_connections.append([websocket, person_id, room_id])
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections = list(filter(lambda x: x[0] != websocket, self.active_connections))
@@ -124,11 +133,75 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         await websocket.close()
         return
     
-    # 웹소켓 연결 시작
-    # 한 번 연결하면 연결을 끊거나 끊어질 때까지 while True:로 모든 데이터를 다 받아야 하나?
     person = crud.get_person_by_name(db, name=name)
     if person is None:
         person = crud.create_person(db, name=name)
+
+    
+    connection = manager.find_connection_by_person_id(person.id)
+    if connection:
+        # 같은 이름의 사람이 현재 접속 중이고 그 사람이 대기 방 또는 플레이 중인 방에 있는 경우에는 로그인할 수 없음
+        if connection[2] != -1:
+            await websocket.accept()
+            await ConnectionManager.send_text("signin", "error", "The same person has already entered in non-end Room", websocket)
+            await websocket.close()
+            return
+
+        # 같은 이름으로 중복 접속하는 경우, 기존의 사람이 방 목록 화면에 있었다면 그 사람을 강제로 로그아웃시킴
+        await manager.close_with_person_id(person.id)
+        
+    # 웹소켓 연결 시작
+    await manager.connect(websocket, person.id)
+    try:
+        # 재접속(Play 중인 방에서 연결이 끊겼다가 다시 접속하는 경우)인지 확인
+        # 이때 방 garbage collection(종료 시간이 넘었는데 여전히 Play 상태인 방들을 End 상태로 변경)도 일어남
+        recon_room_id = crud.check_person_playing(db, person.id)
+        if recon_room_id == -1:
+            profile_and_room_list = {
+                'name': person.name,
+                'person_id': person.id,
+                'rooms': read_non_end_rooms(db)
+            }
+            # 개인에게 프로필과 방 목록이 포함된 정보 응답
+            await ConnectionManager.send_json("signin", "success", "profile_and_room_list", profile_and_room_list, websocket)
+
+        else:
+            # 재접속 시도
+            manager.change_room_id(person.id, recon_room_id)
+            recon_data = {
+                'name': person.name,
+                'person_id': person.id,
+                'room': read_room(recon_room_id, db),
+                'hand_list': read_hands(recon_room_id, 6, db),
+                'game_list': read_game(recon_room_id, db)
+            }
+            await ConnectionManager.send_json("signin", 'reconnected', "recon_data", recon_data, websocket)
+
+        # 무한 루프를 돌면서 클라이언트에게 요청을 받고 처리하고 응답
+        await after_signin(websocket, person.id, db)
+
+    except WebSocketDisconnect:
+        room_id = manager.find_connection_by_websocket(websocket)[2]
+        manager.disconnect(websocket)
+
+        # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
+        crud.update_room_to_quit(db, room_id, person.id)
+        await manager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id) # disconnect`ed`
+    except:
+        room_id = manager.find_connection_by_websocket(websocket)[2]
+        if websocket.state == 1:
+            # CONNECTED
+            await manager.close(websocket)
+        else:
+            # DISCONNECTED or CONNECTING
+            manager.disconnect(websocket)
+
+        # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
+        crud.update_room_to_quit(db, room_id, person.id)
+        await manager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
+    
+
+"""
     try:
         #room = crud.update_last_wait_room_to_enter(db, person.id)  # TODO @@@@@@@@@@@@@ 바꿀 것 @@@@@@@@@@@@@@@
         pass
@@ -162,7 +235,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         await manager.broadcast_json("join", 'game_list', read_game(room.id, db), room.id)
 
         # 무한 루프를 돌면서 클라이언트에게 요청을 받고 처리하고 응답
-        await after_join(websocket, person.id, room.id, db)
+        await after_signin(websocket, person.id, room.id, db)
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -181,6 +254,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
         crud.update_room_to_quit(db, room.id, person.id)
         await manager.broadcast_json("disconnect", "game_list", read_game(room.id, db), room.id)   # disconnect
+"""
 
 @app.get("/")
 def read_root():
@@ -248,6 +322,50 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
         'max_persons': db_room.max_persons,
         'num_persons': len(db_room.persons) + db_room.bot_skilled + db_room.bot_dumb
     }
+
+
+@app.get("/room/non-end/list")
+def read_non_end_rooms(db: Session = Depends(get_db)):
+    # 해당 방 반환
+    db_rooms = crud.get_non_end_rooms(db)
+    if db_rooms is None:
+        return None
+        #raise HTTPException(status_code=404, detail="Room not found")
+    
+    rooms = []
+    for room in db_rooms:
+        to = -1
+        td = -1
+        it = ""
+        st = ""
+        et = ""
+        if room.time_offset is not None:
+            to = room.time_offset
+        if room.time_duration is not None:
+            td = room.time_duration
+        if room.init_time is not None:
+            it = room.init_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+        if room.start_time is not None:
+            st = room.start_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+        if room.end_time is not None:
+            et = room.end_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+
+        rooms.append({
+            'state': room.state,
+            "time_offset" : to,
+            "time_duration" : td,
+            'init_time': it,
+            'start_time': st,
+            'end_time': et,
+            'name': room.name,
+            'mode': room.mode,
+            'bot_skilled': room.bot_skilled,
+            'bot_dumb': room.bot_dumb,
+            'max_persons': room.max_persons,
+            'num_persons': len(room.persons) + room.bot_skilled + room.bot_dumb
+        })
+    
+    return rooms
 
 @app.get("/room/{room_id}/hand")
 def read_hands(room_id: int, limit: int = 6, db: Session = Depends(get_db)):
@@ -379,16 +497,23 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     await task1
     await task2
 
-    crud.update_room_to_end(db, room_id)  # 백엔드 자체에서 시간으로 입력 가능 여부를 판단하면 안 되고, 함수를 호출한 순간 무조건 Ending 페이즈로 변경해야 한다.
+    crud.update_room_end_time(db, room_id)  # 백엔드 자체에서 시간으로 입력 가능 여부를 판단하면 안 되고, 함수를 호출한 순간 무조건 결과 창 표시 상태로 변경해야 한다.
     hand_data = {
         "hand_list": read_all_hands(room_id, db),
         "game_list": read_game(room_id, db)
     }
-    await manager.broadcast_json("end", "hand_data", hand_data, room_id)
+    task1 = asyncio.create_task(manager.broadcast_json("end", "hand_data", hand_data, room_id))
+    task2 = asyncio.create_task(asyncio.sleep(crud.END_WAITING_TIME))
+    await task1
+    await task2
+
+    crud.update_room_to_end(db, room_id)    # 방을 End 페이즈로 바꾸고 모든 인원 퇴장
     await manager.close_with_room_id(room_id)
 
-async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Session = Depends(get_db)):
+async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depends(get_db)):
     while True:
+        room_id = manager.get_room_id(person_id)
+
         # 클라이언트의 요청 대기
         try:
             data = await websocket.receive_json(mode=JSON_RECEIVING_MODE)
@@ -403,12 +528,27 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
             continue
         except WebSocketDisconnect:
             raise
-        except:
+        except TypeError:
             # TypeError의 경우 데이터 스키마가 변경된 경우에 발생하는 것으로 알려져 있음
+            await ConnectionManager.send_text("", "error", "Internal server error", websocket)
+            traceback.print_exc()
+            print("Data migration required!")
+            raise
+        except:
             await ConnectionManager.send_text("", "error", "Internal server error", websocket)
             traceback.print_exc()
             print("Internal server error")
             raise
+
+        if request == "refresh":
+            # 방 목록 화면에서 방 목록 새로고침 요청
+            # 연결이 끊긴 상태가 아니라면...
+            await ConnectionManager.send_json("refresh", "success", "room_list", read_non_end_rooms, websocket)
+
+        if request == "join":
+            # 방 입장 요청
+            # 곧 구현하겠지...?
+            pass
 
         if request == "hand":
             # 손 입력 요청
@@ -460,7 +600,10 @@ async def after_join(websocket: WebSocket, person_id: int, room_id: int, db: Ses
             elif error_code == 4:
                 await ConnectionManager.send_text("quit", "error", "Person does not exist in the Room", websocket)
                 #raise HTTPException(status_code=404, detail="Person does not exist in the Room")
-            
+        
+        elif request == "signout":
+            pass
+
         elif request == "start":
             # 게임 시작 요청
 
