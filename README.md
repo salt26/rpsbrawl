@@ -140,8 +140,10 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
     game_list: [
       {
         rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
+        team: 0,  // 0 이상 7 이하, 봇의 경우 -1
         name: "이름",
         is_admin: False,
+        is_human: True,
         score: 13,
         win: 18,
         draw: 4,
@@ -279,6 +281,7 @@ join error: 해당 방에 비밀번호가 있고 이를 입력하지 않았거�
       team: 0,        // 0 이상 7 이하, 해당 방에서 현재 가장 인원이 적은 팀 번호 부여
       name: "이름",
       is_host: False,
+      is_human: True,
       ...             // 전적 정보가 담겨 있지만 게임 시작 전이라 무의미
     },
     ...             // 해당 방에 입장해 있는 사람 수만큼 존재
@@ -334,6 +337,7 @@ create error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 
       team: 0,        // 0 이상 7 이하, 해당 방에서 현재 가장 인원이 적은 팀 번호 부여
       name: "이름",
       is_host: True,
+      is_human: True,
       ...             // 전적 정보가 담겨 있지만 게임 시작 전이라 무의미
     }
   ]
@@ -390,13 +394,19 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
   type: "game_list",
   data: [
     {
+      team: 0,        // 0 이상 7 이하
       name: "이름",
-      ...
+      is_host: True,
+      is_human: True,
+      ...             // 전적 정보가 담겨 있지만 게임 시작 전이라 무의미
     },
     ...
   ]
 }
 ```
+
+* 만약 퇴장 후 해당 방에 사람이 아무도 남아있지 않게 되면 방이 제거됨
+* 만약 퇴장하는 사람이 방장이었고 다른 사람이 해당 방에 남아있다면, 남은 사람 중 한 명이 방장이 됨
 
 ---
 
@@ -469,8 +479,10 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
     game_list: [
       {
         rank: 1,  // 초기 순위는 이 방에 입장한 첫 번째 사람이 1
+        team: 0,
         name: "이름",
         is_host: False,
+        is_human: True,
         score: 0,
         win: 0,
         draw: 0,
@@ -575,8 +587,10 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
     game_list: [
       {
         rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
+        team: 0,
         name: "이름",
         is_host: False,
+        is_human: True,
         score: 13,
         win: 18,
         draw: 4,
@@ -617,8 +631,10 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
     game_list: [
       {
         rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
+        team: 0,
         name: "이름",
         is_host: False,
+        is_human: True,
         score: 17,
         win: 23,
         draw: 6,
@@ -704,8 +720,11 @@ disconnect broadcast: 요청 데이터에 필요한 정보가 모두 들어있�
   type: "game_list",
   data: [
     {
+      team: 0,        // 0 이상 7 이하
       name: "이름",
-      ...
+      is_host: True,
+      is_human: True,
+      ...             // 전적 정보가 담겨 있지만 게임 시작 전이라 무의미
     },
     ...
   ]

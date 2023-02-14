@@ -49,6 +49,7 @@ class Game(GameBase):
     lose: int
     team: int
     is_host: bool
+    is_human: bool = True
     #hands: List[Hand] = []
 
     class Config:

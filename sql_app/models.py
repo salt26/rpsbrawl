@@ -69,6 +69,7 @@ class Game(Base):
 
     team = Column(Integer, index=True)
     is_host = Column(Boolean)
+    is_human = Column(Boolean, default=True)
 
     room = relationship("Room", back_populates="persons")
     person = relationship("Person", back_populates="rooms")

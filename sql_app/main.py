@@ -415,7 +415,7 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
     # 해당 방의 사람들의 {순위, 팀 번호, 이름, 방장 여부, 점수, win, draw, lose, 방 번호} 반환
     # person_id가 -1이 아닌 값으로 주어지는 경우, 해당 사람이 있으면 그 사람은 항상 목록의 0번째 인덱스에 정렬
 
-    games = crud.get_games_in_room(db, room_id=room_id)
+    games = crud.get_games_in_room(db, room_id=room_id, only_human=False)
     # 점수가 같다면 이긴 횟수가 많을수록 높은 순위, 이긴 횟수도 같다면 비긴 횟수가 많을수록 높은 순위
     # (많이 낼수록 유리)
         
@@ -428,6 +428,7 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
             'team': game.team,
             'name': person.name,
             'is_host': game.is_host,
+            'is_human': game.is_human,
             'score': game.score,
             'win': game.win,
             'draw': game.draw,

@@ -200,6 +200,7 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int, password: st
 def update_room_to_quit(db: Session, room_id: int, person_id: int):
     # 해당 방에서 사람 퇴장
     # 대기 방인 경우에만 퇴장 가능
+    print("update room to quit (DEBUG)")
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
     if db_room.first() is None:
         return (None, 1)
@@ -211,11 +212,29 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, models.Game.person_id == person_id))
     if db_game.first() is None:
         return (None, 4)
-    
+
+    games_human = get_games_in_room(db, room_id, only_human=True)
+    was_host = False
+    if len(games_human) <= 1:
+        # 만약 퇴장 후 사람이 아무도 남지 않는 경우 방 제거
+        print("delete room")
+        db.delete(db_room.first())
+    elif db_game.first().is_host:
+        # 만약 퇴장하는 사람이 방장일 경우, 해당 방에 남아있는 다른 사람 중 한 명을 방장으로 만듦
+        was_host = True
+        for next_host_id in [g.person_id for g in games_human if g.person_id != person_id][:1]:
+            print("next_host_id: " + str(next_host_id))
+            db_game2 = db.query(models.Game).filter(and_(models.Game.room_id == room_id, models.Game.person_id == next_host_id))
+            db_game2.update({
+                "is_host" : True
+            })
     db.delete(db_game.first())
     db.commit()
     db.refresh(db_person.first())
     db.refresh(db_room.first())
+    if was_host:
+        db.refresh(db_game2.first())
+        print("refresh next_host_id")
     return (schemas.Room.from_orm(db_room.first()), 0)
 
 def update_room_to_play(db: Session, room_id: int, time_offset: int = 5, time_duration: int = 60):
@@ -418,8 +437,11 @@ def get_games(db: Session):
     db_game = db.query(models.Game).all()
     return parse_obj_as(schemas.List[schemas.Game], db_game)
 
-def get_games_in_room(db: Session, room_id: int):
-    db_game = db.query(models.Game).filter(models.Game.room_id == room_id).all()
+def get_games_in_room(db: Session, room_id: int, only_human: bool):
+    if only_human:
+        db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, models.Game.is_human)).all()
+    else:
+        db_game = db.query(models.Game).filter(models.Game.room_id == room_id).all()
     return parse_obj_as(schemas.List[schemas.Game], db_game)
 
 def get_expired_rooms(db: Session):
