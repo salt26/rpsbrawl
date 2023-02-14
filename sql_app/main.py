@@ -80,12 +80,14 @@ class ConnectionManager:
             await connection[0].close()
             self.active_connections.remove(connection)
 
+    """
     async def close_with_room_id(self, room_id: int):
-        # 한 방 전체의 사람들을 퇴장시킴
+        # 한 방 전체의 사람들을 로그아웃시킴
         for connection in self.find_all_connections_by_room_id(room_id):
             await connection[0].close()
             if connection in self.active_connections:
                 self.active_connections.remove(connection)
+    """
 
     async def send_text(request: str, response: str, message: str, websocket: WebSocket):
         obj = {}
@@ -203,7 +205,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
 
 """
     try:
-        #room = crud.update_last_wait_room_to_enter(db, person.id)  # TODO @@@@@@@@@@@@@ 바꿀 것 @@@@@@@@@@@@@@@
+        #room = crud.update_last_wait_room_to_enter(db, person.id)
         pass
     except Exception as e:
         if str(e.__cause__).find("UNIQUE constraint failed") != -1:
@@ -411,9 +413,12 @@ def read_all_hands(room_id: int, db: Session = Depends(get_db)):
 @app.get("/room/{room_id}/game")
 def read_game(room_id: int, db: Session = Depends(get_db)):
     # 해당 방의 사람들의 {순위, 팀 번호, 이름, 방장 여부, 점수, win, draw, lose, 방 번호} 반환
+    # person_id가 -1이 아닌 값으로 주어지는 경우, 해당 사람이 있으면 그 사람은 항상 목록의 0번째 인덱스에 정렬
+
     games = crud.get_games_in_room(db, room_id=room_id)
     # 점수가 같다면 이긴 횟수가 많을수록 높은 순위, 이긴 횟수도 같다면 비긴 횟수가 많을수록 높은 순위
     # (많이 낼수록 유리)
+        
     games.sort(key=lambda e: (e.score, e.win, e.draw), reverse=True)
     ret = []
     for index, game in enumerate(games):
@@ -510,8 +515,9 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     await task1
     await task2
 
-    crud.update_room_to_end(db, room_id)    # 방을 End 페이즈로 바꾸고 모든 인원 퇴장
-    await manager.close_with_room_id(room_id)
+    crud.update_room_to_end(db, room_id)    # 방을 End 페이즈로 바꾸고 모든 인원 퇴장 (로그아웃 아님!)
+    for connection in manager.find_all_connections_by_room_id(room_id):
+        manager.change_room_id(connection[1], -1)
 
 async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depends(get_db)):
     while True:
@@ -583,8 +589,10 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             elif error_code == 3:
                 await ConnectionManager.send_text("join", "error", "Person not found", websocket)
             elif error_code == 4:
-                await ConnectionManager.send_text("join", "error", "Wrong password", websocket)
-                await ConnectionManager.send_json("join", "error_refresh", "room_list", read_room(data["room_id"], db), websocket)
+                # 비밀번호 불일치
+                await ConnectionManager.send_json("join", "error_refresh", "room", read_room(data["room_id"], db), websocket)
+            elif error_code == 5:
+                await ConnectionManager.send_text("join", "error", "The same person has already entered in non-end room", websocket)
 
 
         if request == "create":
@@ -592,8 +600,16 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             if old_room_id != -1:
                 await ConnectionManager.send_text("create", "error", "You are already in the other room", websocket)
                 continue
-            # TODO 여기 구현하기 @@@@@@@@@@@@@@@@@
-            pass
+
+            room, error_code = crud.create_room_and_enter(db, person_id, data["room_name"], data["mode"], data["password"])
+            if error_code == 0:
+                manager.change_room_id(person_id, room.id)
+                # 해당 방 전체에게 전적(사람) 목록 반환 응답
+                await ConnectionManager.send_json("create", "success", "game_list", read_game(room.id, db), websocket)
+            elif error_code == 3:
+                await ConnectionManager.send_text("create", "error", "Person not found", websocket)
+            elif error_code == 5:
+                await ConnectionManager.send_text("create", "error", "The same person has already entered in non-end room", websocket)
 
         if request == "hand":
             # 손 입력 요청
@@ -611,22 +627,16 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await manager.broadcast_json("hand", "hand_data", hand_data, old_room_id)
             elif error_code == 1 or error_code == 11:
                 await ConnectionManager.send_text("hand", "error", "Room is not in a play mode", websocket)
-                #raise HTTPException(status_code=400, detail="Room is not in a play mode")
             elif error_code == 2 or error_code == 12:
                 await ConnectionManager.send_text("hand", "error", "Game not started yet", websocket)
-                #raise HTTPException(status_code=403, detail="Game not started yet")
             elif error_code == 3 or error_code == 13:
                 await ConnectionManager.send_text("hand", "error", "Person not found", websocket)
-                #raise HTTPException(status_code=404, detail="Person not found")
             elif error_code == 4:
                 await ConnectionManager.send_text("hand", "error", "Initial hand not found", websocket)
-                #raise HTTPException(status_code=500, detail="Initial hand not found")
             elif error_code == 5 or error_code == 15:
                 await ConnectionManager.send_text("hand", "error", "Room not found", websocket)
-                #raise HTTPException(status_code=404, detail="Room not found")
             elif error_code == 6 or error_code == 16:
                 await ConnectionManager.send_text("hand", "error", "Game has ended", websocket)
-                #raise HTTPException(status_code=403, detail="Game has ended")
                 
         elif request == "quit":
             # 나가기 요청

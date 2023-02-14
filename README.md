@@ -240,26 +240,35 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
   request: "join",
   response: "error",
   type: "message",
-  message: "Person has already entered in non-end room"
+  message: "The same person has already entered in non-end room"
 }
 ```
 
-**join success**: 입장 성공 시 해당 개인에게 `data.room_id`, `data.person_id` 등이 포함된 다음 정보 응답 > 이때 받은 `data.person_id`를 클라이언트에서 꼭 기억하고 있을 것!
+join error: 해당 방에 비밀번호가 있고 이를 입력하지 않았거나 틀린 경우 해당 방의 최신 정보가 포함된 다음 메시지 응답
 ```
 {
   request: "join",
-  response: "success",
-  type: "profile",
+  response: "error_refresh",
+  type: "room",
   data: {
-    name: "이름",
-    is_host: False,
-    room_id: 1,
-    person_id: 1
+    state: 0,                                     // Wait
+    time_offset : -1,                             // 대기 방에서는 -1
+    time_duration : -1,                           // 대기 방에서는 -1
+    init_time: "",                                // 대기 방에서는 빈 문자열로 반환
+    start_time: "",                               // 대기 방에서는 빈 문자열로 반환
+    end_time: "",                                 // 대기 방에서는 빈 문자열로 반환
+    name: "Welcome!",
+    mode: 0,                                      // Normal
+    has_password: True,
+    bot_skilled: 2,
+    bot_dumb: 3,
+    max_person: 30,
+    num_person: 7                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
   }
 }
 ```
 
-**join broadcast**: 누군가가 방에 입장 성공 시(본인 포함) 해당 방의 모든 사람들에게 다음 정보 응답
+**join broadcast**: 누군가가 방에 입장 성공 시(본인 포함) 해당 방의 모든 사람들에게 해당 방에 입장해 있는 사람들의 목록인 다음 정보 응답
 ```
 {
   request: "join",
@@ -267,14 +276,17 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
   type: "game_list",
   data: [
     {
+      team: 0,        // 0 이상 7 이하, 해당 방에서 현재 가장 인원이 적은 팀 번호 부여
       name: "이름",
       is_host: False,
-      ...
+      ...             // 전적 정보가 담겨 있지만 게임 시작 전이라 무의미
     },
-    ...
+    ...             // 해당 방에 입장해 있는 사람 수만큼 존재
   ]
 }
 ```
+
+* 목록 안에서 본인 정보는 name을 비교하여 직접 찾아야 함
 
 ---
 
@@ -284,6 +296,9 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
 ```
 let request = {
   request: "create",
+  room_name: "방 이름", // 이름은 다른 방과 겹쳐도 무관
+  mode: 0,             // 0은 일반 모드, 1은 연속해서 같은 손을 입력할 수 없는 모드
+  password: "비밀번호"  // 비밀번호가 없는 경우 ""(빈 문자열) 전송
 };
 ws.send(request);
 ```
@@ -298,39 +313,32 @@ create error: 해당 사람이 다른 대기 방 또는 플레이 방에 이미 
 }
 ```
 
-**create success**: 
+create error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 입장해 있는 경우 다음 메시지 응답
+```
+{
+  request: "create",
+  response: "error",
+  type: "message",
+  message: "The same person has already entered in non-end room"
+}
+```
+
+**create success**: 방 생성 시 해당 방에 입장해 있는 사람들의 목록(현재는 혼자)인 다음 정보 응답
 ```
 {
   request: "create",
   response: "success",
-  type: "profile",
-  data: {
-    name: "이름",
-    is_host: False,
-    room_id: 1,
-    person_id: 1
-  }
-}
-```
-
-**create broadcast**: 
-```
-{
-  request: "create",
-  response: "broadcast",
   type: "game_list",
   data: [
     {
+      team: 0,        // 0 이상 7 이하, 해당 방에서 현재 가장 인원이 적은 팀 번호 부여
       name: "이름",
-      is_host: False,
-      ...
-    },
-    ...
+      is_host: True,
+      ...             // 전적 정보가 담겨 있지만 게임 시작 전이라 무의미
+    }
   ]
 }
 ```
-
-* 입장에 성공하면 그 이후로 연결이 종료될 때까지 소켓 통신을 통해 실시간으로 다른 요청들을 보내고 응답을 받을 수 있다.
 
 ---
 

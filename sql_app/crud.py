@@ -64,6 +64,15 @@ def check_person_playing(db: Session, person_id: int):
                 return room.id
     return -1
 
+def check_person_waiting_or_playing(db: Session, person_id: int):
+    update_expired_rooms_to_end(db)
+    waiting_or_playing_rooms = db.query(models.Room).filter(models.Room.state != schemas.RoomStateEnum.End).all()
+    for room in waiting_or_playing_rooms:
+        for game in room.persons:
+            if game.person_id == person_id:
+                return room.id
+    return -1
+
 """
 def delete_person(db: Session, person: schemas.PersonCreate):
     # 회원 탈퇴 (아마 안 쓸 것)
@@ -102,13 +111,30 @@ def get_last_wait_room(db: Session):
         return create_room(db)
 """
 
-def create_room(db: Session):
-    # 새 대기 방 생성 (이거 대신 get_last_wait_room()을 사용할 것)
-    db_room = models.Room(state=models.RoomStateEnum.Wait)
-    db.add(db_room)
+def create_room_and_enter(db: Session, person_id: int, name: str, mode: schemas.RoomModeEnum, password: str or None = None):
+    # 새 대기 방 생성 후 입장
+    db_person = db.query(models.Person).filter(models.Person.id == person_id)
+    if db_person.first() is None:
+        return (None, 3)
+        
+    if check_person_waiting_or_playing(db, person_id) != -1:
+        # 이 과정에서 게임 시간이 끝났지만 아직 Play 상태인 방들이 garbage collection된다.
+        return (None, 5)
+
+    if password is None or password == "":
+        password = None
+    room = models.Room(state=models.RoomStateEnum.Wait, name=name, mode=mode, password=password)
+    db.add(room)
+    game = models.Game(person=db_person.first(), room=room, team=0, is_host=True)
+    db.add(game)
+    room.persons.append(game)
+    db_person.first().rooms.append(game)
     db.commit()
-    db.refresh(db_room)
-    return schemas.Room.from_orm(db_room)
+    db.refresh(game)
+    db.refresh(db_person.first())
+    db.refresh(room)
+
+    return schemas.Room.from_orm(room)
 
 """
 def update_last_wait_room_to_enter(db: Session, person_id: int):
@@ -134,6 +160,15 @@ def update_last_wait_room_to_enter(db: Session, person_id: int):
 
 def update_room_to_enter(db: Session, room_id: int, person_id: int, password: str or None = None):
     # 해당 방에 사람 입장
+    
+    db_person = db.query(models.Person).filter(models.Person.id == person_id)
+    if db_person.first() is None:
+        return (None, 3)
+
+    if check_person_waiting_or_playing(db, person_id) != -1:
+        # 이 과정에서 게임 시간이 끝났지만 아직 Play 상태인 방들이 garbage collection된다.
+        return (None, 5)
+
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
     if db_room.first() is None:
         return (None, 1)
@@ -141,11 +176,15 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int, password: st
         return (None, 2)
     elif db_room.first().password is not None and db_room.first().password != password:
         return (None, 4)
-    db_person = db.query(models.Person).filter(models.Person.id == person_id)
-    if db_person.first() is None:
-        return (None, 3)
     
-    game = models.Game(person=db_person.first(), room=db_room.first())
+    # 팀 번호는 0 ~ 7 중 가장 인원이 적은 팀으로 배정
+    games = get_games_in_room(db, room_id)
+    teams = [0, 0, 0, 0, 0, 0, 0, 0]
+    for g in games:
+        if g.team >= 0 and g.team <= 7:
+            teams[g.team] += 1
+    f = lambda i: teams[i]
+    game = models.Game(person=db_person.first(), room=db_room.first(), team=min(range(len(teams)), key=f), is_host=False)
     db.add(game)
     db_room.first().persons.append(game)
     db_person.first().rooms.append(game)
@@ -237,7 +276,8 @@ def update_room_to_end(db: Session, room_id: int):
     db_room = db.query(models.Room).filter(and_(models.Room.id == room_id, models.Room.state == schemas.RoomStateEnum.Play))
     if db_room.first() is None:
         return None
-    db_persons = db.query(models.Person).filter(models.Person.id.in_(list(map(lambda p: p.person_id, db_room.first().persons))))
+
+    #db_persons = db.query(models.Person).filter(models.Person.id.in_(list(map(lambda p: p.person_id, db_room.first().persons))))
 
     db_room.update({
         "state" : schemas.RoomStateEnum.End,
@@ -317,6 +357,7 @@ def get_game(db: Session, room_id: int, person_id: int):
     else:
         return schemas.Game.from_orm(db_game)
 
+"""
 def create_game(db: Session, room_id: int, person_id: int):
     db_game = models.Game(room_id=room_id, person_id=person_id, score=0, \
         win=0, draw=0, lose=0, hands=[])
@@ -324,6 +365,7 @@ def create_game(db: Session, room_id: int, person_id: int):
     db.commit()
     db.refresh(db_game)
     return schemas.Game.from_orm(db_game)
+"""
 
 """
 def create_game_for_all(db: Session, room_id: int, person_ids: list):
