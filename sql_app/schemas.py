@@ -65,7 +65,7 @@ class PersonCreate(PersonBase):
 
 class Person(PersonBase):
     id: int
-    is_active: bool
+    #is_active: bool
     rooms: List[Game] = []
 
     class Config:

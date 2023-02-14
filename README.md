@@ -62,6 +62,16 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
 }
 ```
 
+signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
+```
+{
+  request: "signin",
+  response: "error",
+  type: "message",
+  message: "The same person has already entered in non-end room"
+}
+```
+
 **signin success**: 로그인에 성공하였고 플레이 중인 방에 재접속하는 경우가 아닐 때 해당 개인에게 `data.person_id`와 방 목록이 포함된 다음 정보 응답
 ```
 {
@@ -81,6 +91,7 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
         end_time: "",
         name: "Welcome!",
         mode: 0,           // Normal
+        has_password: True,
         bot_skilled: 2,
         bot_dumb: 3,
         max_persons: 30,
@@ -110,6 +121,7 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
       end_time: "",                                 // 아직 빈 문자열로 반환
       name: "Welcome!",
       mode: 0,                                      // Normal
+      has_password: True,                           // 비밀번호 유무에 관계 없이 바로 재접속 가능
       bot_skilled: 2,
       bot_dumb: 3,
       max_person: 30,
@@ -118,7 +130,6 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
     hand_list: [
       ...,
       {
-        affiliation: "소속",
         name: "이름",
         hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
         score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
@@ -129,7 +140,6 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
     game_list: [
       {
         rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
-        affiliation: "소속",
         name: "이름",
         is_admin: False,
         score: 13,
@@ -143,9 +153,19 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
 }
 ```
 
+* 로그인 혹은 재접속에 성공하면 그 이후로 연결이 종료될 때까지 소켓 통신을 통해 실시간으로 다른 요청들을 보내고 응답을 받을 수 있다.
+* 같은 이름의 사람이 대기 방 혹은 플레이 중인 방에 접속해 있으면 해당 이름으로는 로그인할 수 없다.
+* 같은 이름의 사람이 방 목록 화면에 접속해 있으면 접속해 있던 사람의 접속을 끊고 같은 이름으로 새로 접속하게 된다.
+
 #### 방 목록 새로고침(refresh)
 
-방 목록 표시 화면에서 방 목록 정보를 새로 받을 때 요청
+프론트엔드에서 방 목록 화면에 있는 동안 다음을 요청하여 방 목록 정보를 새로 받음
+```
+let request = {
+  request: "refresh"
+};
+ws.send(request);
+```
 
 **refresh success**: 새로고침 성공 시 대기 방 및 플레이 중인 방 목록이 포함된 다음 정보 응답
 ```
@@ -163,6 +183,7 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
       end_time: "",                                 // 대기 방에서는 빈 문자열로 반환
       name: "Welcome!",
       mode: 0,                                      // Normal
+      has_password: True,
       bot_skilled: 2,
       bot_dumb: 3,
       max_person: 30,
@@ -175,18 +196,41 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
 
 #### 입장(join)
 
-프론트엔드의 방 목록 화면에서 입장하고 싶은 대기 방을 하나 선택하여 입장
+프론트엔드에서 방 목록 화면에 있는 동안 다음을 요청하여 선택한 방에 입장
+```
+let request = {
+  request: "join",
+  room_id: 1,       // 입장하려는 방의 번호
+  password: null    // null 또는 문자열
+};
+ws.send(request);
+```
 
-* 이름(`name`)을 가진 사람을 선택한 대기 방에 입장시킴
-* 게임 시작 권한을 가지려면 방장이 되어야 함
+* 방 비밀번호는 다음과 같이 처리한다.
+  1. 사용자가 입장할 방 선택
+  2. 프론트엔드에서 비밀번호가 포함되지 않은 정보로 방 입장 요청 (그 방이 비밀 방이더라도)
+  3. 백엔드에서 해당 방의 최신 정보와 비교하여, 비밀번호가 필요 없는 방이면 입장 성공 응답, 비밀번호가 필요한 방이면 해당 방의 최신 정보와 함께 입장 실패 응답
+  4. 프론트엔드에서 비밀번호 입력 창을 표시하고 사용자가 비밀번호 입력
+  5. 프론트엔드에서 비밀번호가 포함된 정보로 방 입장 재요청
+  6. 백엔드에서 해당 방의 최신 정보와 비교하여, 비밀번호가 필요 없는 방이거나 비밀번호가 필요한 방이지만 비밀번호가 같은 경우 입장 성공 응답, 비밀번호가 필요한 방이고 비밀번호가 틀린 경우 입장 실패 응답
 
-join error: 입장하려는 대기 방에 같은 사람이 이미 입장해 있는 경우 다음 메시지 응답
+join error: 입장하려는 대기 방이 대기 방이 아닌(아니게 된) 경우 다음 메시지 응답
 ```
 {
   request: "join",
   response: "error",
   type: "message",
-  message: "Person already exists in the Room"
+  message: "Cannot join in non-wait room"
+}
+```
+
+join error: 해당 사람이 다른 대기 방 또는 플레이 방에 이미 입장해 있는 경우 다음 메시지 응답
+```
+{
+  request: "join",
+  response: "error",
+  type: "message",
+  message: "You are already in the other room"
 }
 ```
 
@@ -196,7 +240,7 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
   request: "join",
   response: "error",
   type: "message",
-  message: "Person has already entered in non-end Room"
+  message: "Person has already entered in non-end room"
 }
 ```
 
@@ -207,7 +251,6 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
   response: "success",
   type: "profile",
   data: {
-    affiliation: "소속",
     name: "이름",
     is_host: False,
     room_id: 1,
@@ -224,7 +267,60 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
   type: "game_list",
   data: [
     {
-      affiliation: "소속",
+      name: "이름",
+      is_host: False,
+      ...
+    },
+    ...
+  ]
+}
+```
+
+---
+
+#### 생성(create)
+
+프론트엔드에서 방 목록 화면에 있는 동안 다음을 요청하여 새로운 방 생성
+```
+let request = {
+  request: "create",
+};
+ws.send(request);
+```
+
+create error: 해당 사람이 다른 대기 방 또는 플레이 방에 이미 입장해 있는 경우 다음 메시지 응답
+```
+{
+  request: "create",
+  response: "error",
+  type: "message",
+  message: "You are already in the other room"
+}
+```
+
+**create success**: 
+```
+{
+  request: "create",
+  response: "success",
+  type: "profile",
+  data: {
+    name: "이름",
+    is_host: False,
+    room_id: 1,
+    person_id: 1
+  }
+}
+```
+
+**create broadcast**: 
+```
+{
+  request: "create",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
       name: "이름",
       is_host: False,
       ...
@@ -248,6 +344,16 @@ let request = {
 ws.send(request);
 ```
 
+quit error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 응답
+```
+{
+  request: "quit",
+  response: "error",
+  type: "message",
+  message: "You are not in any room"
+}
+```
+
 quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가려고 하는 경우 다음 메시지 응답
 ```
 {
@@ -264,10 +370,9 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
   request: "quit",
   response: "success",
   type: "message",
-  message: "Successfully signed out"
+  message: "Successfully left the room"
 }
 ```
-* 퇴장하면 소켓 통신이 종료되어 재입장할 때까지 다른 요청을 보낼 수 없다.
 
 **quit broadcast**: 퇴장 성공 시 해당 방에 남아있는 모든 사람들(퇴장한 본인 제외)에게 다음 정보 응답
 ```
@@ -277,7 +382,6 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
   type: "game_list",
   data: [
     {
-      affiliation: "소속",
       name: "이름",
       ...
     },
@@ -298,6 +402,16 @@ let request = {
   time_duration: 60  // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
 };
 ws.send(request);
+```
+
+start error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 응답
+```
+{
+  request: "start",
+  response: "error",
+  type: "message",
+  message: "You are not in any room"
+}
 ```
 
 start error: 방장이 아닌 사람이 게임 시작 요청을 보낸 경우 아래 메시지 응답
@@ -337,7 +451,6 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
     }, 
     hand_list: [
       {
-        affiliation: "소속",  // 이 방에 입장한 첫 번째 사람 소속
         name: "이름",         // 이 방에 입장한 첫 번째 사람 이름
         hand: 0,   // 0(Rock) 또는 1(Scissor) 또는 2(Paper) 중 랜덤으로 부여
         score: 0,  // 첫 번째 손이므로 항상 비긴(0) 것으로 취급
@@ -348,7 +461,6 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
     game_list: [
       {
         rank: 1,  // 초기 순위는 이 방에 입장한 첫 번째 사람이 1
-        affiliation: "소속",
         name: "이름",
         is_host: False,
         score: 0,
@@ -395,6 +507,16 @@ let request = {
 ws.send(request);
 ```
 
+hand error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 응답
+```
+{
+  request: "hand",
+  response: "error",
+  type: "message",
+  message: "You are not in any room"
+}
+```
+
 hand error: 방이 플레이 중인 방이 아니라서 손 입력 실패 시 다음 메시지 응답
 ```
 {
@@ -435,7 +557,6 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
     hand_list: [
       ...,
       {
-        affiliation: "소속",
         name: "이름",
         hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
         score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
@@ -446,7 +567,6 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
     game_list: [
       {
         rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
-        affiliation: "소속",
         name: "이름",
         is_host: False,
         score: 13,
@@ -479,7 +599,6 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
     hand_list: [
       ...,
       {
-        affiliation: "소속",
         name: "이름",
         hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
         score: 1,   // 1(이김) 또는 0(비김) 또는 -1(짐)
@@ -490,7 +609,6 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
     game_list: [
       {
         rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
-        affiliation: "소속",
         name: "이름",
         is_host: False,
         score: 17,
@@ -509,6 +627,26 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
 * 이 응답을 받은 이후에는 손 입력을 받지 않고, 해당 방에서의 게임이 종료된다.
 * 프론트엔드에서는 이 응답을 받고 나서 결과 화면을 보여주고, 결과 화면에서 "나가기" 버튼을 눌러 입장 전 화면으로 이동하면 된다.
 
+#### 로그아웃(signout)
+
+프론트엔드에서 다음을 요청하여 접속 종료
+```
+let request = {
+  request: "signout",
+};
+ws.send(request);
+```
+
+**signout success**: 성공적으로 로그아웃된 경우 다음 메시지 응답
+```
+{
+  request: "signout",
+  response: "success",
+  type: "message",
+  message: "Successfully signed out"
+}
+```
+
 #### 연결 끊김(disconnected)
 disconnected broadcast: 클라이언트에서 연결을 끊는 경우 해당 방에 남아있는 모든 사람들(연결이 끊긴 본인 제외)에게 다음 정보 응답
 ```
@@ -518,7 +656,6 @@ disconnected broadcast: 클라이언트에서 연결을 끊는 경우 해당 방
   type: "game_list",
   data: [
     {
-      affiliation: "소속",
       name: "이름",
       ...
     },
@@ -559,7 +696,6 @@ disconnect broadcast: 요청 데이터에 필요한 정보가 모두 들어있�
   type: "game_list",
   data: [
     {
-      affiliation: "소속",
       name: "이름",
       ...
     },

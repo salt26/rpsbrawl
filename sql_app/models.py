@@ -46,11 +46,11 @@ class Person(Base):
     __tablename__ = "persons"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    #affiliation = Column(String, index=True)  # 삭제되었음에 유의!
+    #affiliation = Column(String, index=True)   # 삭제되었음에 유의!
     name = Column(String, index=True)
     #is_admin = Column(Boolean, default=False)  # 삭제되었음에 유의!
     #hashed_password = Column(String)
-    is_active = Column(Boolean, default=False)
+    #is_active = Column(Boolean, default=False) # 삭제되었음에 유의!
 
     rooms = relationship("Game", back_populates="person", cascade="all, delete-orphan")
 
