@@ -595,7 +595,6 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             elif error_code == 5:
                 await ConnectionManager.send_text("join", "error", "The same person has already entered in non-end room", websocket)
 
-
         if request == "create":
             # 방 생성 요청
             if old_room_id != -1:
@@ -612,11 +611,19 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             elif error_code == 5:
                 await ConnectionManager.send_text("create", "error", "The same person has already entered in non-end room", websocket)
 
+        if request == "setting":
+            # 방 설정 변경 요청
+            pass
+
+        if request == "team":
+            # 팀 변경 요청
+            pass
+
         if request == "hand":
             # 손 입력 요청
             # 해당 방에 새로운 손 추가
             if old_room_id == -1:
-                await ConnectionManager.send_text("create", "error", "You are not in any room", websocket)
+                await ConnectionManager.send_text("hand", "error", "You are not in any room", websocket)
                 continue
 
             _, error_code = crud.create_hand(db, room_id=old_room_id, person_id=person_id, hand=data["hand"])
@@ -643,7 +650,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             # 나가기 요청
             # 대기 중인 방일 경우에, 해당 방에 해당 사람이 있으면 제거
             if old_room_id == -1:
-                await ConnectionManager.send_text("create", "error", "You are not in any room", websocket)
+                await ConnectionManager.send_text("quit", "error", "You are not in any room", websocket)
                 continue
 
             _, error_code = crud.update_room_to_quit(db, old_room_id, person_id)
@@ -670,7 +677,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             # 게임 시작 요청
 
             if old_room_id == -1:
-                await ConnectionManager.send_text("create", "error", "You are not in any room", websocket)
+                await ConnectionManager.send_text("start", "error", "You are not in any room", websocket)
                 continue
 
             # 해당 방의 상태 변경
@@ -678,7 +685,6 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             room = read_room(old_room_id, db)
             if room is None:
                 await ConnectionManager.send_text("start", "error", "Room not found", websocket)
-                #raise HTTPException(status_code=404, detail="Room not found")
                 continue
 
             # 관리자 권한이 있는 사람이 보낸 요청인지 확인
@@ -689,7 +695,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
 
             game = crud.get_game(db, old_room_id, person_id)
             if game is None:
-                await ConnectionManager.send_text("start", "error", "Game not found", websocket)
+                await ConnectionManager.send_text("start", "error", "You are not in that room", websocket)
                 continue
             elif not game.is_host:
                 await ConnectionManager.send_text("start", "error", "Forbidden", websocket)

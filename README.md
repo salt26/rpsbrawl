@@ -412,7 +412,7 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
 
 #### 게임 시작(start)
 
-프론트엔드에서 대기 방 화면에 있는 동안 admin 권한을 가진 사람이 다음을 요청하여 방 상태를 플레이 중인 방으로 변경
+프론트엔드에서 방 화면에 있는 동안 방장이 다음을 요청하여 방 상태를 플레이 중인 방으로 변경
 ```
 let request = {
   request: "start",
@@ -465,10 +465,18 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
       time_duration : 60,                           // 이때는 항상 1 이상의 정수이지만 대기 방에서는 -1
       init_time: "2022-12-25 03:24:00.388157 KST",  // 한국 시간 기준
       start_time: "",                               // 아직 빈 문자열로 반환
-      end_time: ""                                  // 아직 빈 문자열로 반환
+      end_time: "",                                 // 아직 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0,                                      // Normal
+      has_password: True,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_person: 30,
+      num_person: 9                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
     }, 
     hand_list: [
       {
+        team: 0,
         name: "이름",         // 이 방에 입장한 첫 번째 사람 이름
         hand: 0,   // 0(Rock) 또는 1(Scissor) 또는 2(Paper) 중 랜덤으로 부여
         score: 0,  // 첫 번째 손이므로 항상 비긴(0) 것으로 취급
@@ -509,7 +517,14 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
     time_duration : 60,
     init_time: "2022-12-25 03:24:00.388157 KST",  // 한국 시간 기준
     start_time: "2022-12-25 03:24:05.391465 KST", // 이 시간을 기준으로 남은 시간을 프론트엔드에서 표시하면 됨!
-    end_time: ""                                  // 아직 빈 문자열로 반환
+    end_time: "",                                 // 아직 빈 문자열로 반환
+    name: "Welcome!",
+    mode: 0,                                      // Normal
+    has_password: True,
+    bot_skilled: 2,
+    bot_dumb: 3,
+    max_person: 30,
+    num_person: 9                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
   }
 }
 ```
@@ -577,6 +592,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
     hand_list: [
       ...,
       {
+        team: 0,
         name: "이름",
         hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
         score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
@@ -621,6 +637,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
     hand_list: [
       ...,
       {
+        team: 0,
         name: "이름",
         hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
         score: 1,   // 1(이김) 또는 0(비김) 또는 -1(짐)
