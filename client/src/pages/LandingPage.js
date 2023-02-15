@@ -11,11 +11,11 @@ import SvgIcon from "../components/common/SvgIcon";
 import SizedBox from "../components/common/SizedBox";
 import SelectBox from "../components/common/SelectBox";
 import Button from "../components/common/Button";
-import { Medium } from "../styles/font";
+import { useContext } from "react";
+import { Medium, MediumOutline } from "../styles/font";
 import { useNavigate } from "react-router-dom";
 import { useRef, createContext, useEffect } from "react";
-
-import { useContext } from "react";
+import { LanguageContext } from "../utils/LanguageProvider";
 import HTTP from "../utils/HTTP";
 import {
   setUserName,
@@ -24,21 +24,24 @@ import {
   setUserId,
   setUserAffiliation,
 } from "../utils/User";
-
+import { Language } from "../db/Language";
 import { BASE_WEBSOCKET_URL } from "../Config";
 import { WebsocketContext } from "../utils/WebSocketProvider";
+
 function RuleBox() {
+  const mode = useContext(LanguageContext);
   return (
     <BgBox width="250px" height="300px" color="white">
       <Col>
         <Row>
           {" "}
-          <Medium>규칙</Medium>
+          <MediumOutline size="30px" color="var(--purple)">
+            {Language[mode].rule}
+          </MediumOutline>
         </Row>
-        <SizedBox height={"20px"} />
-        <Medium size="25px">
-          가장 마지막에 낸 사람의 손이 화면에 크게 보입니다. 이 손을 이기면
-          +1점! 지면 -1점! 60초 안에 가장 많은 점수를 획득하세요!
+        <SizedBox height={"50px"} />
+        <Medium size="23px" color="var(--purple)">
+          {Language[mode].explanation}
         </Medium>
       </Col>
     </BgBox>
@@ -50,7 +53,7 @@ function LoginBox() {
   const [selectedOption, setSelectedOption] = useState(getUserAffiliation()); //소속
   const [roomId, setRoomId] = useState();
   var navigate = useNavigate();
-
+  const mode = useContext(LanguageContext);
   const [createWebSocketConnection, ready, res, send] =
     useContext(WebsocketContext); //전역 소켓 사용
 
@@ -74,49 +77,46 @@ function LoginBox() {
 
           break;
 
-        case "game_list":
+        case "game_list": // 방목록으로 이동
           console.log(res.data);
           if (roomId) {
-            navigate(`/room/${roomId}/waiting`, { state: res.data }); // 게임 대기화면 이동 + 해당 방 목록 인원 전달
+            navigate(`/rooms`, { state: res.data }); // 게임 대기화면 이동 + 해당 방 목록 인원 전달
           }
       }
     }
   }, [ready, send, res]); // 소켓연결에 성공했다면
 
   const _joinGame = () => {
-    if (selectedOption === "" || name === "") {
-      alert("소속과 이름을 모두 채워주세요.");
+    if (name === "") {
+      alert("fill in the blank");
       return;
     }
-    createWebSocketConnection(selectedOption, name); // Socket Connection 생성
+    navigate("./rooms");
+    //createWebSocketConnection(selectedOption, name); // Socket Connection 생성
   };
   return (
     <BgBox width="250px" height="300px" color="white">
       <Col>
         <Row>
-          {" "}
-          <Medium>입장</Medium>
+          <MediumOutline size="30px" color="var(--purple)">
+            {Language[mode].entrance}
+          </MediumOutline>
         </Row>
         <SizedBox height={"20px"} />
-        <Row>
-          <Medium size="30px">소속</Medium>
-          <SelectBox
-            selectedOption={selectedOption}
-            setSelectedOption={setSelectedOption}
-          />
-        </Row>
 
-        <SizedBox height={"20px"} />
+        <SizedBox height={"40px"} />
         <Row>
           {" "}
-          <Medium size="30px">이름</Medium>
+          <Medium size="25px" color="var(--purple)">
+            {Language[mode].name}
+          </Medium>
           <input
             type={"text"}
             value={name}
             onChange={(e) => setName(e.target.value)}
             style={{
               borderRadius: "5px",
-              width: "150px",
+              width: "130px",
               marginLeft: "10px",
               height: "30px",
               borderColor: "var(--border)",
@@ -124,22 +124,42 @@ function LoginBox() {
           />
         </Row>
         <SizedBox height={"50px"} />
-        <Button width="100px" height="40px" text="입장" onClick={_joinGame} />
+        <Button
+          width="100px"
+          height="40px"
+          text={Language[mode].join}
+          onClick={_joinGame}
+        />
       </Col>
     </BgBox>
   );
 }
 
 export default function LandingPage() {
+  const mode = useContext(LanguageContext);
+
   return (
     <Container>
-      <Logo />
-      <Row>
-        <SvgIcon src={ScissorSrc} size="200px" />
-        <SvgIcon src={RockSrc} size="200px" />
-        <SvgIcon src={PaperSrc} size="200px" />
-      </Row>
-      <SizedBox height={"50px"} />
+      <SizedBox height={"20px"} />
+
+      <Anim2 delay={5}>
+        <Logo />
+      </Anim2>
+
+      <RPSBox delay={5}>
+        <Anim delay={1}>
+          <SvgIcon src={ScissorSrc} size="100px" />
+        </Anim>
+
+        <Anim delay={2}>
+          <SvgIcon src={RockSrc} size="100px" />
+        </Anim>
+        <Anim delay={3}>
+          <SvgIcon src={PaperSrc} size="100px" />
+        </Anim>
+      </RPSBox>
+
+      <SizedBox height={"20px"} />
       <Row>
         <RuleBox />
         <SizedBox width={"150px"} />
@@ -150,6 +170,49 @@ export default function LandingPage() {
   );
 }
 
+/*
+https://apes0113.postype.com/post/2620
+linear | ease | ease-in | ease-out | ease-in-out | step-start | step-end | steps(int,start|end) | cubic-bezier(n,n,n,n)
+*/
+const Anim = styled.div`
+  animation: anim1 5s infinite ease-in-out;
+  animation-delay: ${({ delay }) => delay}s;
+  @keyframes anim1 {
+    0% {
+      transform: translate(0);
+    }
+    8% {
+      transform: translateY(-10px);
+    }
+
+    16% {
+      transform: translate(0);
+    }
+    100% {
+      transform: translate(0);
+    }
+  }
+`;
+
+const Anim2 = styled.div`
+  animation: anim2 5s infinite ease-in-out;
+  animation-delay: ${({ delay }) => delay}s;
+  @keyframes anim2 {
+    0% {
+      transform: scale(1);
+    }
+
+    80% {
+      transform: scale(1);
+    }
+    90% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+`;
 const Container = styled.div`
   height: 100vh;
   display: flex;
@@ -161,9 +224,35 @@ const Container = styled.div`
 
 const Row = styled.div`
   display: flex;
+
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
+`;
+const RPSBox = styled.div`
+  display: flex;
+  width: 30%;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+
+  animation: anim2 5s infinite ease-in-out;
+  animation-delay: ${({ delay }) => delay}s;
+  @keyframes anim2 {
+    0% {
+      transform: scale(1);
+    }
+
+    80% {
+      transform: scale(1);
+    }
+    90% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
 `;
 
 const Col = styled.div`
@@ -171,6 +260,6 @@ const Col = styled.div`
   flex-direction: column;
   height: 100%;
   align-items: center;
-
-  padding: 20px;
+  justify-content: space-between;
+  padding: 30px;
 `;

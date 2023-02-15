@@ -6,5 +6,9 @@ const BgBox = styled.div`
   height: ${({ height }) => (height ? height : "120px")};
   background-color: ${({ bgColor }) => (bgColor ? bgColor : "white")};
   border-radius: 10px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 export default BgBox;
