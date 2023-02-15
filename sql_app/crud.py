@@ -123,6 +123,8 @@ def create_room_and_enter(db: Session, person_id: int, name: str, mode: schemas.
 
     if password is None or password == "":
         password = None
+    if name is None or name == "" or len(name) > 32 or mode is None or (password is not None and len(password) > 20):
+        return (None, 2)
     room = models.Room(state=models.RoomStateEnum.Wait, name=name, mode=mode, password=password)
     db.add(room)
     game = models.Game(person=db_person.first(), room=room, team=0, is_host=True)
@@ -134,7 +136,7 @@ def create_room_and_enter(db: Session, person_id: int, name: str, mode: schemas.
     db.refresh(db_person.first())
     db.refresh(room)
 
-    return schemas.Room.from_orm(room)
+    return (schemas.Room.from_orm(room), 0)
 
 """
 def update_last_wait_room_to_enter(db: Session, person_id: int):
@@ -236,6 +238,68 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
         db.refresh(db_game2.first())
         print("refresh next_host_id")
     return (schemas.Room.from_orm(db_room.first()), 0)
+
+def update_room_setting(db: Session, room_id: int, name: str or None = None, mode: schemas.RoomModeEnum or None = None, \
+    password: str or None = None, bot_skilled: int or None = None, bot_dumb: int or None = None, max_person: int or None = None):
+    db_room = db.query(models.Room).filter(models.Room.id == room_id)
+    if db_room.first() is None:
+        return (None, 1)
+    elif db_room.first().state != schemas.RoomStateEnum.Wait:
+        return (None, 2)
+
+    if name is not None:
+        if name == "" or len(name) > 32:
+            return (None, 3)
+        else:
+            db_room.update({
+                "name": name
+            })
+    if mode is not None:
+        db_room.update({
+            "mode": mode
+        })
+    if password is not None:
+        if len(password) > 20:
+            return (None, 13)
+        elif password == "":
+            db_room.update({
+                "password": None
+            })
+        else:
+            db_room.update({
+                "password": password
+            })
+    if max_person is not None:
+        if max_person < 1 or max_person > 30:
+            return (None, 23)
+        else:
+            db_room.update({
+                "max_person": max_person
+            })
+    if bot_skilled is not None:
+        if bot_skilled < 0 or bot_skilled > 10:
+            return (None, 33)
+        else:
+            db_room.update({
+                "bot_skilled": bot_skilled
+            })
+    if bot_dumb is not None:
+        if bot_dumb < 0 or bot_dumb > 10:
+            return (None, 43)
+        else:
+            db_room.update({
+                "bot_dumb": bot_dumb
+            })
+            
+    print("db_room.first().bot_skilled + db_room.first().bot_dumb + 1 = " + str(db_room.first().bot_skilled + db_room.first().bot_dumb + 1))
+    print("db_room.first().max_person = " + str(db_room.first().max_person))
+    if db_room.first().bot_skilled + db_room.first().bot_dumb + 1 > db_room.first().max_person:
+        return (None, 53)
+
+    db.commit()
+    db.refresh(db_room.first())
+    return (schemas.Room.from_orm(db_room.first()), 0)
+    
 
 def update_room_to_play(db: Session, room_id: int, time_offset: int = 5, time_duration: int = 60):
     # 게임 시작(사람 입장 불가, 시작 후 time_offset 초 이후부터 time_duration 초 동안 Hand 입력 가능)

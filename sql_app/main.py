@@ -578,7 +578,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("join", "error", "You are already in the other room", websocket)
                 continue
 
-            _, error_code = crud.update_room_to_enter(db, data["room_id"], person_id, data["password"])
+            _, error_code = crud.update_room_to_enter(db, data.get("room_id", -1), person_id, data.get("password"))
             if error_code == 0:
                 manager.change_room_id(person_id, data["room_id"])
                 # 해당 방 전체에게 전적(사람) 목록 반환 응답
@@ -601,11 +601,14 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("create", "error", "You are already in the other room", websocket)
                 continue
 
-            room, error_code = crud.create_room_and_enter(db, person_id, data["room_name"], data["mode"], data["password"])
+            room, error_code = crud.create_room_and_enter(db, person_id, data.get("room_name"), data.get("mode", schemas.RoomModeEnum.Normal), data.get("password"))
             if error_code == 0:
                 manager.change_room_id(person_id, room.id)
                 # 해당 방 전체에게 전적(사람) 목록 반환 응답
-                await ConnectionManager.send_json("create", "success", "game_list", read_game(room.id, db), websocket)
+                created_data = {"room": read_room(room.id, db), "game_list": read_game(room.id, db)}
+                await ConnectionManager.send_json("create", "success", "created_data", created_data, websocket)
+            elif error_code == 2:
+                await ConnectionManager.send_text("create", "error", "Bad request", websocket)
             elif error_code == 3:
                 await ConnectionManager.send_text("create", "error", "Person not found", websocket)
             elif error_code == 5:
@@ -613,10 +616,51 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
 
         if request == "setting":
             # 방 설정 변경 요청
-            pass
+            if old_room_id == -1:
+                await ConnectionManager.send_text("setting", "error", "You are not in any room", websocket)
+                continue
+
+            # 관리자 권한이 있는 사람이 보낸 요청인지 확인
+            db_person = crud.get_person(db, person_id)
+            if db_person is None:
+                await ConnectionManager.send_text("setting", "error", "Person not found", websocket)
+                continue
+
+            game = crud.get_game(db, old_room_id, person_id)
+            if game is None:
+                await ConnectionManager.send_text("setting", "error", "You are not in that room", websocket)
+                continue
+            elif not game.is_host:
+                await ConnectionManager.send_text("setting", "error", "Forbidden", websocket)
+                continue
+
+            room, error_code = crud.update_room_setting(db, old_room_id, name=data.get("name"), mode=data.get("mode"), \
+                password=data.get("password"), bot_skilled=data.get("bot_skilled"), bot_dumb=data.get("bot_dumb"), max_person=data.get("max_person"))
+            if error_code == 0:
+                await manager.broadcast_json("setting", "room", read_room(room.id, db), room.id)
+            elif error_code == 1:
+                await ConnectionManager.send_text("setting", "error", "Room not found", websocket)
+            elif error_code == 2:
+                await ConnectionManager.send_text("setting", "error", "Cannot change the settings of the non-wait room", websocket)
+            elif error_code == 3:
+                await ConnectionManager.send_text("setting", "error", "Bad request: name", websocket)
+            elif error_code == 13:
+                await ConnectionManager.send_text("setting", "error", "Bad request: password", websocket)
+            elif error_code == 23:
+                await ConnectionManager.send_text("setting", "error", "Bad request: max_person", websocket)
+            elif error_code == 33:
+                await ConnectionManager.send_text("setting", "error", "Bad request: bot_skilled", websocket)
+            elif error_code == 43:
+                await ConnectionManager.send_text("setting", "error", "Bad request: bot_dumb", websocket)
+            elif error_code == 53:
+                await ConnectionManager.send_text("setting", "error", "Bad request: exceed max_person by bots", websocket)
+            
 
         if request == "team":
             # 팀 변경 요청
+            if old_room_id == -1:
+                await ConnectionManager.send_text("team", "error", "You are not in any room", websocket)
+                continue
             pass
 
         if request == "hand":
@@ -626,7 +670,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("hand", "error", "You are not in any room", websocket)
                 continue
 
-            _, error_code = crud.create_hand(db, room_id=old_room_id, person_id=person_id, hand=data["hand"])
+            _, error_code = crud.create_hand(db, room_id=old_room_id, person_id=person_id, hand=data.get("hand"))
             if error_code == 0:
                 hand_data = {
                     "hand_list": read_hands(old_room_id, 6, db),
@@ -703,10 +747,10 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
 
             if room["state"] == schemas.RoomStateEnum.Wait:
                 crud.update_room_to_play(db, room_id=old_room_id, \
-                    time_offset=data["time_offset"], time_duration=data["time_duration"])
+                    time_offset=data.get("time_offset", 5), time_duration=data.get("time_duration", 60))
 
                 # https://tech.buzzvil.com/blog/asyncio-no-1-coroutine-and-eventloop/
-                asyncio.create_task(manage_time_for_room(old_room_id, time_offset=data["time_offset"], time_duration=data["time_duration"], db=db))
+                asyncio.create_task(manage_time_for_room(old_room_id, time_offset=data.get("time_offset", 5), time_duration=data.get("time_duration", 60), db=db))
             else:
                 await ConnectionManager.send_text("start", "error", "Room is not in a wait mode", websocket)
 

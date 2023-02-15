@@ -326,21 +326,160 @@ create error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 
 }
 ```
 
-**create success**: 방 생성 시 해당 방에 입장해 있는 사람들의 목록(현재는 혼자)인 다음 정보 응답
+create error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
+```
+{
+  request: "create",
+  response: "error",
+  type: "message",
+  message: "Bad request"
+}
+```
+
+* 잘못된 설정 변경 요청의 예
+  * `name`이 `""`(빈 문자열)인 경우
+  * `name`의 길이가 32를 초과하는 경우
+  * `mode`가 0 또는 1이 아닌 경우
+  * `password`의 길이가 20을 초과하는 경우
+
+**create success**: 방 생성 시 개인에게 해당 방에 입장해 있는 사람들의 목록(현재는 혼자)인 다음 정보 응답
 ```
 {
   request: "create",
   response: "success",
-  type: "game_list",
-  data: [
-    {
-      team: 0,        // 0 이상 7 이하, 해당 방에서 현재 가장 인원이 적은 팀 번호 부여
-      name: "이름",
-      is_host: True,
-      is_human: True,
-      ...             // 전적 정보가 담겨 있지만 게임 시작 전이라 무의미
-    }
-  ]
+  type: "created_data",
+  data: {
+    room: {
+      state: 0,                                     // Wait
+      time_offset : -1,                             // 대기 방에서는 -1
+      time_duration : -1,                           // 대기 방에서는 -1
+      init_time: "",                                // 대기 방에서는 빈 문자열로 반환
+      start_time: "",                               // 대기 방에서는 빈 문자열로 반환
+      end_time: "",                                 // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0,                                      // Normal
+      has_password: True,
+      bot_skilled: 0,
+      bot_dumb: 0,
+      max_person: 30,
+      num_person: 1                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    game_list: [
+      {
+        team: 0,        // 0 이상 7 이하, 해당 방에서 현재 가장 인원이 적은 팀 번호 부여
+        name: "이름",
+        is_host: True,
+        is_human: True,
+        ...             // 전적 정보가 담겨 있지만 게임 시작 전이라 무의미
+      }
+    ]
+  }
+}
+```
+
+---
+
+#### 방 설정 변경(setting)
+
+프론트엔드에서 대기 방 화면에 있는 동안 방장이 다음을 요청하여 방 설정 변경
+```
+let request = {
+  request: "setting",
+  name: "새 방 이름",
+  mode: 1,                 // 0은 일반 모드, 1은 연속해서 같은 손을 입력할 수 없는 모드
+  password: "새 비밀번호",  // 비밀번호를 없애는 경우 ""(빈 문자열) 전송
+  bot_skilled: 1,
+  bot_dumb: 1,
+  max_person: 25
+};
+ws.send(request);
+```
+
+* 위의 예처럼 여러 설정을 동시에 변경할 수도 있고, 변경이 필요한 설정의 key-value만 넣어서 요청할 수도 있음
+  * 위의 예는 변경 가능한 모든 설정을 보여줌
+  * 다만 `request: "setting",`은 항상 필요함
+
+설정의 일부만 변경하는 요청은 다음과 같다.
+```
+let request = {
+  request: "setting",
+  bot_skilled: 5,
+  bot_dumb: 4,
+};
+ws.send(request);
+```
+
+setting error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 응답
+```
+{
+  request: "setting",
+  response: "error",
+  type: "message",
+  message: "You are not in any room"
+}
+```
+
+setting error: 방장이 아닌 사람이 게임 시작 요청을 보낸 경우 아래 메시지 응답
+```
+{
+  request: "setting",
+  response: "error",
+  type: "message",
+  message: "Forbidden"
+}
+```
+
+setting error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 방 설정을 변경하려 하는 경우 아래 메시지 응답
+```
+{
+  request: "setting",
+  response: "error",
+  type: "message",
+  message: "Cannot change the settings of the non-wait room"
+}
+```
+
+setting error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
+```
+{
+  request: "setting",
+  response: "error",
+  type: "message",
+  message: "Bad request"
+}
+```
+
+* 잘못된 설정 변경 요청의 예
+  * `name`이 `""`(빈 문자열)인 경우
+  * `name`의 길이가 32를 초과하는 경우
+  * `mode`가 0 또는 1이 아닌 경우
+  * `password`의 길이가 20을 초과하는 경우
+  * `bot_skilled` 또는 `bot_dumb` 각각이 음수이거나 10을 초과하는 경우
+  * `max_person`이 0 이하이거나 30을 초과하는 경우
+  * `bot_skilled + bot_dumb + 1 > max_person`인 경우
+* 한 번의 요청 안에 하나라도 잘못된 설정이 있으면 해당 요청 전체가 반영되지 않음
+
+**setting broadcast**: 방 설정 변경 성공 시 해당 방에 입장해 있는 모든 사람들에게 방 정보가 담긴 아래의 정보 응답
+```
+{
+  request: "setting",
+  response: "broadcast",
+  type: "room",
+  data: {
+    state: 0,                                     // Wait
+    time_offset : -1,                             // 대기 방에서는 -1
+    time_duration : -1,                           // 대기 방에서는 -1
+    init_time: "",                                // 대기 방에서는 빈 문자열로 반환
+    start_time: "",                               // 대기 방에서는 빈 문자열로 반환
+    end_time: "",                                 // 대기 방에서는 빈 문자열로 반환
+    name: "Welcome!",
+    mode: 1,                                      // Limited
+    has_password: True,
+    bot_skilled: 5,
+    bot_dumb: 4,
+    max_person: 30,
+    num_person: 11                                // 봇 + 사람(접속 끊긴 사람 포함) 인원
+  }
 }
 ```
 
