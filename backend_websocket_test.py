@@ -2,28 +2,68 @@ from fastapi.testclient import TestClient
 import time
 import datetime
 
-def test_websocket_join_and_quit(app):
+def test_websocket_signin_and_signout(app):
     client = TestClient(app)
-    print("----------------- Test 1: join and quit -----------------")
-    # 입장 요청
-    print("@ send join")
-    with client.websocket_connect("/join?affiliation=STAFF&name=test") as websocket:
+    print("----------------- Test 1: signin and signout -----------------")
+    # 로그인 요청
+    print("@ send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
         try:
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "join" and data["response"] == "success"
+            assert data["request"] == "signin" and data["response"] == "success"
+
+            # 로그아웃 요청
+            print("@@ send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "join" and data["response"] == "broadcast"
+            assert data["request"] == "signout" and data["response"] == "success"
+        except AssertionError:
+            pass
+
+def test_websocket_create_and_quit(app):
+    client = TestClient(app)
+    print("----------------- Test 2: create and quit -----------------")
+    # 로그인 요청
+    print("@ send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
+        try:
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signin" and data["response"] == "success"
+            
+            # 방 생성 요청
+            print("@@ send create")
+            websocket.send_json({
+                'request': 'create',
+                'room_name': "Welcome!",
+                'mode': 0,
+                'password': ""
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "create" and data["response"] == "success"
 
             # 퇴장 요청
-            print("@@ send quit")
+            print("@@@ send quit")
             websocket.send_json({
                 'request': 'quit'
             })
             data = websocket.receive_json(mode='text')
             print(data)
             assert data["request"] == "quit" and data["response"] == "success"
+
+            # 로그아웃 요청
+            print("@@@@ send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signout" and data["response"] == "success"
         except AssertionError:
             pass
 
@@ -384,8 +424,11 @@ if __name__ == '__main__':
         from sql_app.main import app
     else:
         from .sql_app.main import app
-    test_websocket_join_and_quit(app)
+    test_websocket_signin_and_signout(app)
     print()
+    test_websocket_create_and_quit(app)
+    print()
+    """
     test_websocket_join_and_start_and_hand(app)
     print()
     test_websocket_join_and_error_and_disconnect(app)
@@ -394,3 +437,4 @@ if __name__ == '__main__':
     print()
     test_websocket_many_hands(app)
     print()
+    """

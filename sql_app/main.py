@@ -159,6 +159,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         # 이때 방 garbage collection(종료 시간이 넘었는데 여전히 Play 상태인 방들을 End 상태로 변경)도 일어남
         recon_room_id = crud.check_person_playing(db, person.id)
         if recon_room_id == -1:
+            print("재접속 아님")
             profile_and_room_list = {
                 'name': person.name,
                 'person_id': person.id,
@@ -168,6 +169,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
             await ConnectionManager.send_json("signin", "success", "profile_and_room_list", profile_and_room_list, websocket)
 
         else:
+            print("재접속 시도")
             # 재접속 시도
             manager.change_room_id(person.id, recon_room_id)
             recon_data = {
@@ -183,13 +185,16 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         await after_signin(websocket, person.id, db)
 
     except WebSocketDisconnect:
+        print("연결 끊어짐")
         room_id = manager.find_connection_by_websocket(websocket)[2]
         manager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
         crud.update_room_to_quit(db, room_id, person.id)
         await manager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id) # disconnect`ed`
-    except:
+    except Exception as e:
+        print("다른 예외")
+        print(e.__cause__)
         room_id = manager.find_connection_by_websocket(websocket)[2]
         if websocket.state == 1:
             # CONNECTED
@@ -200,6 +205,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
         crud.update_room_to_quit(db, room_id, person.id)
+        print("접속 끊긴 사람 퇴장 완료")
         await manager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
     
 
@@ -573,7 +579,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             # 연결이 끊긴 상태가 아니라면...
             await ConnectionManager.send_json("refresh", "success", "room_list", read_non_end_rooms(db), websocket)
 
-        if request == "join":
+        elif request == "join":
             # 방 입장 요청
 
             # 방 비밀번호는 다음과 같이 처리한다.
@@ -614,7 +620,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             elif error_code == 5:
                 await ConnectionManager.send_text("join", "error", "The same person has already entered in non-end room", websocket)
 
-        if request == "create":
+        elif request == "create":
             # 방 생성 요청
             if old_room_id != -1:
                 await ConnectionManager.send_text("create", "error", "You are already in the other room", websocket)
@@ -633,7 +639,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             elif error_code == 5:
                 await ConnectionManager.send_text("create", "error", "The same person has already entered in non-end room", websocket)
 
-        if request == "setting":
+        elif request == "setting":
             # 방 설정 변경 요청
             if old_room_id == -1:
                 await ConnectionManager.send_text("setting", "error", "You are not in any room", websocket)
@@ -675,7 +681,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("setting", "error", "Bad request: exceed max_person by bots", websocket)
             
 
-        if request == "team":
+        elif request == "team":
             # 팀 변경 요청
             if old_room_id == -1:
                 await ConnectionManager.send_text("team", "error", "You are not in any room", websocket)
@@ -693,7 +699,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             elif error_code == 4:
                 await ConnectionManager.send_text("team", "error", "Bad request", websocket)
 
-        if request == "hand":
+        elif request == "hand":
             # 손 입력 요청
             # 해당 방에 새로운 손 추가
             if old_room_id == -1:

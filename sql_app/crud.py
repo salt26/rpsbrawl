@@ -95,11 +95,11 @@ def get_room(db: Session, room_id: int):
         return schemas.Room.from_orm(db_room)
 
 def get_non_end_rooms(db: Session):
-    db_room = db.query(models.Room).filter(models.Room.state != schemas.RoomStateEnum.End).all()
-    if db_room is None:
+    rooms = db.query(models.Room).filter(models.Room.state != schemas.RoomStateEnum.End).all()
+    if rooms is None:
         return None
     else:
-        return schemas.Room.from_orm(db_room)
+        return parse_obj_as(schemas.List[schemas.Room], rooms)
 
 """
 def get_last_wait_room(db: Session):
@@ -221,6 +221,11 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
         # 만약 퇴장 후 사람이 아무도 남지 않는 경우 방 제거
         print("delete room")
         db.delete(db_room.first())
+        db.delete(db_game.first())
+        db.commit()
+        db.refresh(db_person.first())
+        return (None, 0)
+        
     elif db_game.first().is_host:
         # 만약 퇴장하는 사람이 방장일 경우, 해당 방에 남아있는 다른 사람 중 한 명을 방장으로 만듦
         was_host = True
@@ -371,12 +376,12 @@ def update_room_to_end(db: Session, room_id: int):
     return schemas.Room.from_orm(db_room.first())
 
 def update_expired_rooms_to_end(db: Session):
-    playing_rooms = db.query(models.Room).filter(and_(models.Room.state == schemas.RoomStateEnum.Play, \
-        or_(and_(models.Room.end_time is not None, models.Room.end_time + timedelta(seconds=END_WAITING_TIME + 5) < datetime.now()),\
-            and_(models.Room.start_time is not None, models.Room.time_duration is not None, models.Room.start_time + timedelta(seconds=models.Room.time_duration + END_WAITING_TIME + 5) < datetime.now()),\
-            and_(models.Room.init_time is not None, models.Room.time_offset is not None, models.Room.time_duration is not None, models.Room.init_time + timedelta(seconds=models.Room.time_offset + models.Room.time_duration + END_WAITING_TIME + 5) < datetime.now())))).all()
+    playing_rooms = db.query(models.Room).filter(models.Room.state == schemas.RoomStateEnum.Play).all()
     for room in playing_rooms:
-        update_room_to_end(db, room.id)  # 이렇게 garbage collection된 방은 모두 End 상태가 되지만 그 중 일부의 end_time이 None일 수 있음
+        if (room.end_time is not None and room.end_time + timedelta(seconds=END_WAITING_TIME + 5) < datetime.now()) or \
+            (room.start_time is not None and room.time_duration is not None and room.start_time  + timedelta(seconds=models.Room.time_duration + END_WAITING_TIME + 5) < datetime.now()) or \
+            (room.init_time is not None and room.time_offset is not None and room.time_duration is not None and room.init_time + timedelta(seconds=models.Room.time_offset + models.Room.time_duration + END_WAITING_TIME + 5) < datetime.now()):
+            update_room_to_end(db, room.id)  # 이렇게 garbage collection된 방은 모두 End 상태가 되지만 그 중 일부의 end_time이 None일 수 있음
 
 def get_hands(db: Session, room_id: int):
     db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()

@@ -62,7 +62,7 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
 }
 ```
 
-signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
+signin error: 같은 이름의 사람이 이미 접속하여 어떤 대기 방 또는 플레이 중인 방에 입장해 있는 경우, 로그인이 제한되고 다음 메시지 응답
 ```
 {
   request: "signin",
@@ -319,9 +319,9 @@ join error: 해당 방에 비밀번호가 있고 이를 입력하지 않았거�
 ```
 let request = {
   request: "create",
-  room_name: "방 이름", // 이름은 다른 방과 겹쳐도 무관
+  room_name: "방 이름", // 이름은 다른 방과 겹쳐도 무관, 32글자 이내여야 함
   mode: 0,             // 0은 일반 모드, 1은 연속해서 같은 손을 입력할 수 없는 모드
-  password: "비밀번호"  // 비밀번호가 없는 경우 ""(빈 문자열) 전송
+  password: "비밀번호"  // 비밀번호가 없는 경우 ""(빈 문자열) 전송, 20글자 이내여야 함
 };
 ws.send(request);
 ```
@@ -406,9 +406,9 @@ create error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
 ```
 let request = {
   request: "setting",
-  name: "새 방 이름",
+  name: "새 방 이름",       // 32글자 이내여야 함
   mode: 1,                 // 0은 일반 모드, 1은 연속해서 같은 손을 입력할 수 없는 모드
-  password: "새 비밀번호",  // 비밀번호를 없애는 경우 ""(빈 문자열) 전송
+  password: "새 비밀번호",  // 비밀번호를 없애는 경우 ""(빈 문자열) 전송, 20글자 이내여야 함
   bot_skilled: 1,
   bot_dumb: 1,
   max_person: 25
