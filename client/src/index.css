@@ -2,14 +2,12 @@
   box-sizing: border-box !important;
 }
 
-/* 스크롤바 커스터마이징 */
 ::-webkit-scrollbar {
-  width: 10px; /* 스크롤바의 너비 */
+  width: 15px; /* 스크롤바의 너비 */
 }
 
 ::-webkit-scrollbar-thumb {
-  height: 30%; /* 스크롤바의 길이 */
-  background: var(--mint); /* 스크롤바의 색상 */
+  background: #f5f5f5; /* 스크롤바의 색상 */
 
   border-radius: 10px;
 }
@@ -17,6 +15,7 @@
 ::-webkit-scrollbar-track {
   background: rgba(33, 122, 244, 0.1); /*스크롤바 뒷 배경 색상*/
 }
+
 #root {
   --background: #524fa1;
   --white: #ffffff;
@@ -25,6 +24,7 @@
   --mint: #31b5b9;
   --light-mint: #88d8db;
   --light-purple: #7b78d5;
+  --purple: #5949a2;
   --red: #fe5c00;
   width: 100%;
 }
