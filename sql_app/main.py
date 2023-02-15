@@ -312,6 +312,7 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
         et = db_room.end_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
 
     return {
+        'id': room_id,
         'state': db_room.state,
         "time_offset" : to,
         "time_duration" : td,
@@ -355,6 +356,7 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
             et = room.end_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
 
         rooms.append({
+            'id': room.id,
             'state': room.state,
             "time_offset" : to,
             "time_duration" : td,
@@ -516,9 +518,25 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     await task1
     await task2
 
-    crud.update_room_to_end(db, room_id)    # 방을 End 페이즈로 바꾸고 모든 인원 퇴장 (로그아웃 아님!)
+    old_room = crud.update_room_to_end(db, room_id)    # 방을 End 페이즈로 바꾸고 모든 인원 퇴장 (로그아웃 아님!)
+    old_games = crud.get_games_in_room(db, room_id, True)
+
+    # 옮겨야 하는 정보?
+    # 1. 사람, 팀, 방장 권한
+    # 2. 게임 방 이름, 모드, 비밀번호, 숙련봇 수, 트롤봇 수, 최대 인원
+    for g in old_games:
+        if g.is_host:
+            new_room, _ = crud.create_room_and_enter(db, g.person_id, old_room.name, old_room.mode, old_room.password)
+            crud.update_room_setting(db, new_room.id, bot_skilled=old_room.bot_skilled, bot_dumb=old_room.bot_dumb, max_person=old_room.max_persons)
+            break
+    for g in old_games:
+        if not g.is_host:
+            crud.update_room_to_enter(db, new_room.id, g.person_id, old_room.password)
     for connection in manager.find_all_connections_by_room_id(room_id):
-        manager.change_room_id(connection[1], -1)
+        manager.change_room_id(connection[1], new_room.id)
+    # 해당 방 전체에게 입장 데이터(방 정보 및 전적(사람) 목록) 응답
+    join_data = {"room": read_room(new_room.id, db), "game_list": read_game(new_room.id, db)}
+    await manager.broadcast_json("end", "join_data", join_data, new_room.id)
 
 async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depends(get_db)):
     while True:
@@ -581,8 +599,9 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             _, error_code = crud.update_room_to_enter(db, data.get("room_id", -1), person_id, data.get("password"))
             if error_code == 0:
                 manager.change_room_id(person_id, data["room_id"])
-                # 해당 방 전체에게 전적(사람) 목록 반환 응답
-                await manager.broadcast_json("join", "game_list", read_game(data["room_id"], db), data["room_id"])
+                # 해당 방 전체에게 입장 데이터(방 정보 및 전적(사람) 목록) 응답
+                join_data = {"room": read_room(data["room_id"], db), "game_list": read_game(data["room_id"], db)}
+                await manager.broadcast_json("join", "join_data", join_data, data["room_id"])
             elif error_code == 1:
                 await ConnectionManager.send_text("join", "error", "Room not found", websocket)
             elif error_code == 2:
@@ -604,9 +623,9 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             room, error_code = crud.create_room_and_enter(db, person_id, data.get("room_name"), data.get("mode", schemas.RoomModeEnum.Normal), data.get("password"))
             if error_code == 0:
                 manager.change_room_id(person_id, room.id)
-                # 해당 방 전체에게 전적(사람) 목록 반환 응답
-                created_data = {"room": read_room(room.id, db), "game_list": read_game(room.id, db)}
-                await ConnectionManager.send_json("create", "success", "created_data", created_data, websocket)
+                # 개인에게 입장 데이터(방 정보 및 전적(사람) 목록) 응답
+                join_data = {"room": read_room(room.id, db), "game_list": read_game(room.id, db)}
+                await ConnectionManager.send_json("create", "success", "join_data", join_data, websocket)
             elif error_code == 2:
                 await ConnectionManager.send_text("create", "error", "Bad request", websocket)
             elif error_code == 3:
