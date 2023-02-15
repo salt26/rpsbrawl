@@ -710,6 +710,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
 
             _, error_code = crud.update_room_to_quit(db, old_room_id, person_id)
             if error_code == 0:
+                manager.change_room_id(person_id, -1)
                 await ConnectionManager.send_text("quit", "success", "Successfully left the room", websocket)
                 await manager.broadcast_json("quit", "game_list", read_game(old_room_id, db), old_room_id)
             elif error_code == 1:
@@ -719,11 +720,20 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             elif error_code == 3:
                 await ConnectionManager.send_text("quit", "error", "Person not found", websocket)
             elif error_code == 4:
-                await ConnectionManager.send_text("quit", "error", "Person does not exist in the room", websocket)
+                await ConnectionManager.send_text("quit", "error", "You are not in that room", websocket)
         
         elif request == "signout":
             # 로그아웃 요청
             # 접속 종료
+            
+            # 요청을 날릴 때 있던 곳이 대기 방이면 퇴장 처리도 한다.
+            # 방 목록 화면에 있었거나 플레이 중인 방에 있었어도 로그아웃이 가능하지만, 퇴장 처리는 되지 않는다.
+            if old_room_id != -1:
+                _, error_code = crud.update_room_to_quit(db, old_room_id, person_id)
+                if error_code == 0:
+                    manager.change_room_id(person_id, -1)
+                    await manager.broadcast_json("signout", "game_list", read_game(old_room_id, db), old_room_id)
+
             await ConnectionManager.send_text("signout", "success", "Successfully signed out", websocket)
             await manager.close(websocket)
             return
