@@ -661,7 +661,18 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             if old_room_id == -1:
                 await ConnectionManager.send_text("team", "error", "You are not in any room", websocket)
                 continue
-            pass
+            
+            _, error_code = crud.update_game_for_team(db, old_room_id, person_id, data.get("team", -1))
+            if error_code == 0:
+                await manager.broadcast_json("team", "game_list", read_game(old_room_id, db), room.id)
+            elif error_code == 1:
+                await ConnectionManager.send_text("team", "error", "Room not found", websocket)
+            elif error_code == 2:
+                await ConnectionManager.send_text("team", "error", "Cannot change the team in the non-wait room", websocket)
+            elif error_code == 3:
+                await ConnectionManager.send_text("team", "error", "You are not in that room", websocket)
+            elif error_code == 4:
+                await ConnectionManager.send_text("team", "error", "Bad request", websocket)
 
         if request == "hand":
             # 손 입력 요청

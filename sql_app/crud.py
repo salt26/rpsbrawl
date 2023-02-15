@@ -461,16 +461,16 @@ def create_game_for_all(db: Session, room_id: int, person_ids: list):
 """
 
 def update_game(db: Session, room_id: int, person_id: int, score: int):
-    db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
-    if db_room is None:
+    room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if room is None:
         # 오류
         return (None, 15)
-    elif db_room.state != schemas.RoomStateEnum.Play:
+    elif room.state != schemas.RoomStateEnum.Play:
         # 오류
         return (None, 11)
-    if db_room.start_time is None or db_room.start_time > datetime.now():
+    if room.start_time is None or room.start_time > datetime.now():
         return (None, 12)
-    elif db_room.end_time is not None and db_room.end_time < datetime.now():
+    elif room.end_time is not None and room.end_time < datetime.now():
         return (None, 16)
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id))
@@ -493,6 +493,27 @@ def update_game(db: Session, room_id: int, person_id: int, score: int):
             "lose": db_game.first().lose + 1,
             "score": db_game.first().score - 1
         })
+    db.commit()
+    db.refresh(db_game.first())
+    return (schemas.Game.from_orm(db_game.first()), 0)
+
+def update_game_for_team(db: Session, room_id: int, person_id: int, team: int):
+    if team < 0 or team > 7:
+        return (None, 4)
+
+    db_room = db.query(models.Room).filter(models.Room.id == room_id)
+    if db_room.first() is None:
+        return (None, 1)
+    elif db_room.first().state != schemas.RoomStateEnum.Wait:
+        return (None, 2)
+    db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
+        models.Game.person_id == person_id))
+    if db_game.first() is None:
+        return (None, 3)
+        
+    db_game.update({
+        "team": team
+    })
     db.commit()
     db.refresh(db_game.first())
     return (schemas.Game.from_orm(db_game.first()), 0)

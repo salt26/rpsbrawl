@@ -445,7 +445,7 @@ setting error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
   request: "setting",
   response: "error",
   type: "message",
-  message: "Bad request"
+  message: "Bad request: name"  // ":" 뒤에 오는 문자열은 어떤 요청이 잘못되었는지 알려줌
 }
 ```
 
@@ -482,6 +482,68 @@ setting error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
   }
 }
 ```
+
+#### 팀 변경(team)
+
+프론트엔드에서 대기 방 화면에 있는 동안 다음을 요청하여 자신의 팀 변경
+```
+let request = {
+  request: "team",
+  team: 7           // 0 이상 7 이하
+};
+ws.send(request);
+```
+
+team error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 응답
+```
+{
+  request: "team",
+  response: "error",
+  type: "message",
+  message: "You are not in any room"
+}
+```
+
+team error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 팀을 변경하려 하는 경우 아래 메시지 응답
+```
+{
+  request: "team",
+  response: "error",
+  type: "message",
+  message: "Cannot change the team in the non-wait room"
+}
+```
+
+team error: `team` 값이 잘못된 경우 아래 메시지 응답
+```
+{
+  request: "team",
+  response: "error",
+  type: "message",
+  message: "Bad request"
+}
+```
+
+**team broadcast**: 누군가가 팀 변경 성공 시(본인 포함) 해당 방의 모든 사람들에게 해당 방에 입장해 있는 사람들의 목록인 다음 정보 응답
+```
+{
+  request: "team",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      team: 7,        // 0 이상 7 이하, 봇의 경우 -1
+      name: "이름",
+      is_host: False,
+      is_human: True,
+      ...             // 전적 정보가 담겨 있지만 게임 시작 전이라 무의미
+    },
+    ...             // 해당 방에 입장해 있는 사람 수만큼 존재
+  ]
+}
+```
+
+* 목록 안에서 본인 정보는 name을 비교하여 직접 찾아야 함
 
 ---
 
