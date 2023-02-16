@@ -525,7 +525,7 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     await task1
     await task2
 
-    old_room = crud.update_room_to_end(db, room_id)    # 방을 End 페이즈로 바꾸고 모든 인원 퇴장 (로그아웃 아님!)
+    old_room = crud.update_room_to_end(db, room_id)    # 방을 End 페이즈로 바꾸고 모든 인원을 새 방으로 이동
     old_games = crud.get_games_in_room(db, room_id, True)
 
     # 옮겨야 하는 정보?
@@ -600,7 +600,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             # 3. 해당 유저가 접속한 방의 모든 사람들(본인 포함)에게 최신 전적(사람) 목록 전송
             
             if old_room_id != -1:
-                await ConnectionManager.send_text("join", "error", "You are already in the other room", websocket)
+                await ConnectionManager.send_text("join", "error", "You are already in a room", websocket)
                 continue
 
             _, error_code = crud.update_room_to_enter(db, data.get("room_id", -1), person_id, data.get("password"))
@@ -626,7 +626,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
         elif request == "create":
             # 방 생성 요청
             if old_room_id != -1:
-                await ConnectionManager.send_text("create", "error", "You are already in the other room", websocket)
+                await ConnectionManager.send_text("create", "error", "You are already in a room", websocket)
                 continue
 
             # https://stackoverflow.com/questions/43634618/how-do-i-test-if-int-value-exists-in-python-enum-without-using-try-catch

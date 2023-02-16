@@ -224,7 +224,7 @@ ws.send(request);
 let request = {
   request: "join",
   room_id: 1,       // 입장하려는 방의 번호
-  password: null    // null 또는 문자열
+  password: ""      // 문자열 (빈 문자열을 보내면 비밀번호가 없는 방에 입장 가능)
 };
 ws.send(request);
 ```
@@ -253,7 +253,7 @@ join error: 해당 사람이 다른 대기 방 또는 플레이 방에 이미 �
   request: "join",
   response: "error",
   type: "message",
-  message: "You are already in the other room"
+  message: "You are already in a room"
 }
 ```
 
@@ -361,7 +361,7 @@ create error: 해당 사람이 다른 대기 방 또는 플레이 방에 이미 
   request: "create",
   response: "error",
   type: "message",
-  message: "You are already in the other room"
+  message: "You are already in a room"
 }
 ```
 
