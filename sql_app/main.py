@@ -194,7 +194,6 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         await manager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id) # disconnect`ed`
     except Exception as e:
         print("다른 예외")
-        print(e.__cause__)
         traceback.print_exc()
         room_id = manager.find_connection_by_websocket(websocket)[2]
         if websocket.state == 1:
@@ -517,6 +516,7 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
 
     crud.update_room_end_time(db, room_id)  # 백엔드 자체에서 시간으로 입력 가능 여부를 판단하면 안 되고, 함수를 호출한 순간 무조건 결과 창 표시 상태로 변경해야 한다.
     hand_data = {
+        "room": read_room(room_id, db),
         "hand_list": read_all_hands(room_id, db),
         "game_list": read_game(room_id, db)
     }
@@ -620,6 +620,8 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_json("join", "error_refresh", "room", read_room(data["room_id"], db), websocket)
             elif error_code == 5:
                 await ConnectionManager.send_text("join", "error", "The same person has already entered in non-end room", websocket)
+            elif error_code == 6:
+                await ConnectionManager.send_text("join", "error", "Room is full", websocket)
 
         elif request == "create":
             # 방 생성 요청
@@ -722,7 +724,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
 
             hand = data.get("hand", -1)
             if hand not in iter(schemas.HandEnum):
-                await ConnectionManager.send_text("create", "error", "Bad request: hand", websocket)
+                await ConnectionManager.send_text("hand", "error", "Bad request: hand", websocket)
                 continue
 
             _, error_code = crud.create_hand(db, room_id=old_room_id, person_id=person_id, hand=schemas.HandEnum(hand))
