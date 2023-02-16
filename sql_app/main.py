@@ -195,6 +195,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
     except Exception as e:
         print("다른 예외")
         print(e.__cause__)
+        traceback.print_exc()
         room_id = manager.find_connection_by_websocket(websocket)[2]
         if websocket.state == 1:
             # CONNECTED
@@ -533,7 +534,7 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     for g in old_games:
         if g.is_host:
             new_room, _ = crud.create_room_and_enter(db, g.person_id, old_room.name, old_room.mode, old_room.password)
-            crud.update_room_setting(db, new_room.id, bot_skilled=old_room.bot_skilled, bot_dumb=old_room.bot_dumb, max_person=old_room.max_persons)
+            crud.update_room_setting(db, new_room.id, bot_skilled=old_room.bot_skilled, bot_dumb=old_room.bot_dumb, max_persons=old_room.max_persons)
             break
     for g in old_games:
         if not g.is_host:
@@ -626,7 +627,13 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("create", "error", "You are already in the other room", websocket)
                 continue
 
-            room, error_code = crud.create_room_and_enter(db, person_id, data.get("room_name"), data.get("mode", schemas.RoomModeEnum.Normal), data.get("password"))
+            # https://stackoverflow.com/questions/43634618/how-do-i-test-if-int-value-exists-in-python-enum-without-using-try-catch
+            mode = data.get("mode", 0)
+            if mode not in iter(schemas.RoomModeEnum):
+                await ConnectionManager.send_text("create", "error", "Bad request: mode", websocket)
+                continue
+
+            room, error_code = crud.create_room_and_enter(db, person_id, data.get("room_name"), schemas.RoomModeEnum(mode), data.get("password"))
             if error_code == 0:
                 manager.change_room_id(person_id, room.id)
                 # 개인에게 입장 데이터(방 정보 및 전적(사람) 목록) 응답
@@ -659,8 +666,15 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("setting", "error", "Forbidden", websocket)
                 continue
 
-            room, error_code = crud.update_room_setting(db, old_room_id, name=data.get("name"), mode=data.get("mode"), \
-                password=data.get("password"), bot_skilled=data.get("bot_skilled"), bot_dumb=data.get("bot_dumb"), max_person=data.get("max_person"))
+            mode = data.get("mode")
+            if mode is not None:
+                if mode not in iter(schemas.RoomModeEnum):
+                    await ConnectionManager.send_text("setting", "error", "Bad request: mode", websocket)
+                    continue
+                mode = schemas.RoomModeEnum(mode)
+
+            room, error_code = crud.update_room_setting(db, old_room_id, name=data.get("name"), mode=mode, \
+                password=data.get("password"), bot_skilled=data.get("bot_skilled"), bot_dumb=data.get("bot_dumb"), max_persons=data.get("max_persons"))
             if error_code == 0:
                 await manager.broadcast_json("setting", "room", read_room(room.id, db), room.id)
             elif error_code == 1:
@@ -672,13 +686,13 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             elif error_code == 13:
                 await ConnectionManager.send_text("setting", "error", "Bad request: password", websocket)
             elif error_code == 23:
-                await ConnectionManager.send_text("setting", "error", "Bad request: max_person", websocket)
+                await ConnectionManager.send_text("setting", "error", "Bad request: max_persons", websocket)
             elif error_code == 33:
                 await ConnectionManager.send_text("setting", "error", "Bad request: bot_skilled", websocket)
             elif error_code == 43:
                 await ConnectionManager.send_text("setting", "error", "Bad request: bot_dumb", websocket)
             elif error_code == 53:
-                await ConnectionManager.send_text("setting", "error", "Bad request: exceed max_person by bots", websocket)
+                await ConnectionManager.send_text("setting", "error", "Bad request: exceed max_persons", websocket)
             
 
         elif request == "team":
@@ -689,7 +703,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             
             _, error_code = crud.update_game_for_team(db, old_room_id, person_id, data.get("team", -1))
             if error_code == 0:
-                await manager.broadcast_json("team", "game_list", read_game(old_room_id, db), room.id)
+                await manager.broadcast_json("team", "game_list", read_game(old_room_id, db), old_room_id)
             elif error_code == 1:
                 await ConnectionManager.send_text("team", "error", "Room not found", websocket)
             elif error_code == 2:
@@ -706,7 +720,12 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("hand", "error", "You are not in any room", websocket)
                 continue
 
-            _, error_code = crud.create_hand(db, room_id=old_room_id, person_id=person_id, hand=data.get("hand"))
+            hand = data.get("hand", -1)
+            if hand not in iter(schemas.HandEnum):
+                await ConnectionManager.send_text("create", "error", "Bad request: hand", websocket)
+                continue
+
+            _, error_code = crud.create_hand(db, room_id=old_room_id, person_id=person_id, hand=schemas.HandEnum(hand))
             if error_code == 0:
                 hand_data = {
                     "hand_list": read_hands(old_room_id, 6, db),

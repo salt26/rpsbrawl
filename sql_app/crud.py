@@ -245,7 +245,7 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
     return (schemas.Room.from_orm(db_room.first()), 0)
 
 def update_room_setting(db: Session, room_id: int, name: str or None = None, mode: schemas.RoomModeEnum or None = None, \
-    password: str or None = None, bot_skilled: int or None = None, bot_dumb: int or None = None, max_person: int or None = None):
+    password: str or None = None, bot_skilled: int or None = None, bot_dumb: int or None = None, max_persons: int or None = None):
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
     if db_room.first() is None:
         return (None, 1)
@@ -254,6 +254,7 @@ def update_room_setting(db: Session, room_id: int, name: str or None = None, mod
 
     if name is not None:
         if name == "" or len(name) > 32:
+            db.rollback()
             return (None, 3)
         else:
             db_room.update({
@@ -265,6 +266,7 @@ def update_room_setting(db: Session, room_id: int, name: str or None = None, mod
         })
     if password is not None:
         if len(password) > 20:
+            db.rollback()
             return (None, 13)
         elif password == "":
             db_room.update({
@@ -274,15 +276,17 @@ def update_room_setting(db: Session, room_id: int, name: str or None = None, mod
             db_room.update({
                 "password": password
             })
-    if max_person is not None:
-        if max_person < 1 or max_person > 30:
+    if max_persons is not None:
+        if max_persons > 30:
+            db.rollback()
             return (None, 23)
         else:
             db_room.update({
-                "max_person": max_person
+                "max_persons": max_persons
             })
     if bot_skilled is not None:
         if bot_skilled < 0 or bot_skilled > 10:
+            db.rollback()
             return (None, 33)
         else:
             db_room.update({
@@ -290,15 +294,17 @@ def update_room_setting(db: Session, room_id: int, name: str or None = None, mod
             })
     if bot_dumb is not None:
         if bot_dumb < 0 or bot_dumb > 10:
+            db.rollback()
             return (None, 43)
         else:
             db_room.update({
                 "bot_dumb": bot_dumb
             })
             
-    print("db_room.first().bot_skilled + db_room.first().bot_dumb + 1 = " + str(db_room.first().bot_skilled + db_room.first().bot_dumb + 1))
-    print("db_room.first().max_person = " + str(db_room.first().max_person))
-    if db_room.first().bot_skilled + db_room.first().bot_dumb + 1 > db_room.first().max_person:
+    print("db_room.first().bot_skilled + db_room.first().bot_dumb + len(db_room.first().persons) = " + str(db_room.first().bot_skilled + db_room.first().bot_dumb + len(db_room.first().persons)))
+    print("db_room.first().max_persons = " + str(db_room.first().max_persons))
+    if db_room.first().bot_skilled + db_room.first().bot_dumb + len(db_room.first().persons) > db_room.first().max_persons:
+        db.rollback()
         return (None, 53)
 
     db.commit()

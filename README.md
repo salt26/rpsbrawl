@@ -45,6 +45,21 @@
   * 브라우저에서 `http://127.0.0.1:8000/docs` 접속
 
 ### API
+* 목차
+  * [signin](#로그인signin)
+  * [refresh](#방-목록-새로고침refresh)
+  * [join](#입장join)
+  * [create](#생성create)
+  * [setting](#방-설정-변경setting)
+  * [team](#팀-변경team)
+  * [quit](#퇴장quit)
+  * [start](#게임-시작start)
+  * [hand](#손-입력hand)
+  * [end (응답만 존재)](#게임-종료end)
+  * [signout](#로그아웃signout)
+  * [disconnected (응답만 존재)](#연결-끊김disconnected)
+  * [기타 오류 (응답만 존재)](#기타-오류)
+
 #### 로그인(signin)
 
 프론트엔드(JavaScript)의 로그인 전 화면에서 다음을 요청하여 로그인
@@ -126,7 +141,7 @@ signin error: 같은 이름의 사람이 이미 접속하여 어떤 대기 방 �
       has_password: True,                           // 비밀번호 유무에 관계 없이 바로 재접속 가능
       bot_skilled: 2,
       bot_dumb: 3,
-      max_person: 30,
+      max_persons: 30,
       num_person: 9                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
     }, 
     hand_list: [
@@ -161,6 +176,8 @@ signin error: 같은 이름의 사람이 이미 접속하여 어떤 대기 방 �
 * 같은 이름의 사람이 대기 방 혹은 플레이 중인 방에 접속해 있으면 해당 이름으로는 로그인할 수 없다.
 * 같은 이름의 사람이 방 목록 화면에 접속해 있으면 접속해 있던 사람의 접속을 끊고 같은 이름으로 새로 접속하게 된다.
 
+---
+
 #### 방 목록 새로고침(refresh)
 
 프론트엔드에서 방 목록 화면에 있는 동안 다음을 요청하여 방 목록 정보를 새로 받음
@@ -190,13 +207,15 @@ ws.send(request);
       has_password: True,
       bot_skilled: 2,
       bot_dumb: 3,
-      max_person: 30,
+      max_persons: 30,
       num_person: 7                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
     },
     ...   // 대기 방과 플레이 중인 방 개수만큼 존재
   ]
 }
 ```
+
+---
 
 #### 입장(join)
 
@@ -266,7 +285,7 @@ join error: 해당 방에 비밀번호가 있고 이를 입력하지 않았거�
     has_password: True,
     bot_skilled: 2,
     bot_dumb: 3,
-    max_person: 30,
+    max_persons: 30,
     num_person: 7                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
   }
 }
@@ -292,7 +311,7 @@ join error: 해당 방에 비밀번호가 있고 이를 입력하지 않았거�
       has_password: True,
       bot_skilled: 2,
       bot_dumb: 3,
-      max_person: 30,
+      max_persons: 30,
       num_person: 7                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
     },
     game_list: [
@@ -319,9 +338,9 @@ join error: 해당 방에 비밀번호가 있고 이를 입력하지 않았거�
 ```
 let request = {
   request: "create",
-  room_name: "방 이름", // 이름은 다른 방과 겹쳐도 무관, 32글자 이내여야 함
+  room_name: "방 이름", // 이름은 다른 방과 겹쳐도 무관, 빈 문자열이 아니고 32글자 이내여야 함
   mode: 0,             // 0은 일반 모드, 1은 연속해서 같은 손을 입력할 수 없는 모드
-  password: "비밀번호"  // 비밀번호가 없는 경우 ""(빈 문자열) 전송, 20글자 이내여야 함
+  password: "비밀번호"  // 비밀번호가 없는 경우 ""(빈 문자열) 전송할 것, 20글자 이내여야 함
 };
 ws.send(request);
 ```
@@ -382,7 +401,7 @@ create error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
       has_password: True,
       bot_skilled: 0,
       bot_dumb: 0,
-      max_person: 30,
+      max_persons: 30,
       num_person: 1                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
     },
     game_list: [
@@ -406,12 +425,12 @@ create error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
 ```
 let request = {
   request: "setting",
-  name: "새 방 이름",       // 32글자 이내여야 함
-  mode: 1,                 // 0은 일반 모드, 1은 연속해서 같은 손을 입력할 수 없는 모드
-  password: "새 비밀번호",  // 비밀번호를 없애는 경우 ""(빈 문자열) 전송, 20글자 이내여야 함
-  bot_skilled: 1,
-  bot_dumb: 1,
-  max_person: 25
+  name: "새 방 이름",        // 빈 문자열이 아니고 32글자 이내여야 함
+  mode: 1,                  // 0은 일반 모드, 1은 연속해서 같은 손을 입력할 수 없는 모드
+  password: "새 비밀번호",   // 비밀번호를 없애는 경우 ""(빈 문자열) 전송할 것, 20글자 이내여야 함
+  bot_skilled: 1,           // 0 이상 10 이하
+  bot_dumb: 1,              // 0 이상 10 이하
+  max_persons: 25           // 30 이하, (모든 봇 수) + (현재 입장한 사람 수) <= max_persons
 };
 ws.send(request);
 ```
@@ -476,8 +495,8 @@ setting error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
   * `mode`가 0 또는 1이 아닌 경우
   * `password`의 길이가 20을 초과하는 경우
   * `bot_skilled` 또는 `bot_dumb` 각각이 음수이거나 10을 초과하는 경우
-  * `max_person`이 0 이하이거나 30을 초과하는 경우
-  * `bot_skilled + bot_dumb + 1 > max_person`인 경우
+  * `max_persons`이 30을 초과하는 경우
+  * `bot_skilled + bot_dumb + (현재 입장해 있는 사람 수) > max_persons`인 경우
 * 한 번의 요청 안에 하나라도 잘못된 설정이 있으면 해당 요청 전체가 반영되지 않음
 
 **setting broadcast**: 방 설정 변경 성공 시 해당 방에 입장해 있는 모든 사람들에게 방 정보가 담긴 아래의 정보 응답
@@ -498,7 +517,7 @@ setting error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
     has_password: True,
     bot_skilled: 5,
     bot_dumb: 4,
-    max_person: 30,
+    max_persons: 30,
     num_person: 11                                // 봇 + 사람(접속 끊긴 사람 포함) 인원
   }
 }
@@ -694,7 +713,7 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
       has_password: True,
       bot_skilled: 2,
       bot_dumb: 3,
-      max_person: 30,
+      max_persons: 30,
       num_person: 9                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
     }, 
     hand_list: [
@@ -746,7 +765,7 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
     has_password: True,
     bot_skilled: 2,
     bot_dumb: 3,
-    max_person: 30,
+    max_persons: 30,
     num_person: 9                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
   }
 }
@@ -912,7 +931,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
       has_password: True,
       bot_skilled: 5,
       bot_dumb: 4,
-      max_person: 30,
+      max_persons: 30,
       num_person: 13                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
     },
     game_list: [
