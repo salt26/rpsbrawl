@@ -14,6 +14,10 @@ class RoomStateEnum(IntEnum):
     Play = 1
     End = 2
 
+class RoomModeEnum(IntEnum):
+    Normal = 0
+    Limited = 1
+
 class HandBase(BaseModel):
     room_id: int
     person_id: int
@@ -43,15 +47,18 @@ class Game(GameBase):
     win: int
     draw: int
     lose: int
+    team: int
+    is_host: bool
+    is_human: bool = True
     #hands: List[Hand] = []
 
     class Config:
         orm_mode = True
 
 class PersonBase(BaseModel):
-    affiliation: str
+    #affiliation: str
     name: str
-    is_admin: bool
+    #is_admin: bool
 
 class PersonCreate(PersonBase):
     #password: str
@@ -59,7 +66,7 @@ class PersonCreate(PersonBase):
 
 class Person(PersonBase):
     id: int
-    is_active: bool
+    #is_active: bool
     rooms: List[Game] = []
 
     class Config:
@@ -78,8 +85,13 @@ class Room(RoomBase):
     init_time: Union[datetime, None] = None
     start_time: Union[datetime, None] = None
     end_time: Union[datetime, None] = None
+    name: str
+    mode: RoomModeEnum = RoomModeEnum.Normal
+    password: Union[str, None] = None
+    bot_skilled: int = 0
+    bot_dumb: int = 0
+    max_persons: int = 30
     persons: List[Game] = []
-    games: List[Game] = []
 
     class Config:
         orm_mode = True

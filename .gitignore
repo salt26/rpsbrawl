@@ -1,8 +1,8 @@
 __pycache__/
 sql_app.db
 ignore/
-alembic/
-alembic.ini
+#alembic/
+#alembic.ini
 setupProxy.js
 
 # Virtualenv

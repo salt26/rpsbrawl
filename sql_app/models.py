@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 
 from .database import Base
 #from enum import IntEnum
-from .schemas import HandEnum, RoomStateEnum
+from .schemas import HandEnum, RoomStateEnum, RoomModeEnum
 
 
 # https://docs.sqlalchemy.org/en/20/orm/basic_relationships.html
@@ -33,17 +33,24 @@ class Room(Base):
     start_time = Column(DateTime(timezone=True), nullable=True)
     end_time = Column(DateTime(timezone=True), nullable=True)
 
+    name = Column(String, index=True)
+    mode = Column(Enum(RoomModeEnum), default=RoomModeEnum.Normal)
+    password = Column(String, nullable=True, default=None)
+    bot_skilled = Column(Integer, default=0)
+    bot_dumb = Column(Integer, default=0)
+    max_persons = Column(Integer, default=30)
+
     persons = relationship("Game", back_populates="room", cascade="all, delete-orphan")
 
 class Person(Base):
     __tablename__ = "persons"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    affiliation = Column(String, index=True)
+    #affiliation = Column(String, index=True)   # 삭제되었음에 유의!
     name = Column(String, index=True)
-    is_admin = Column(Boolean, default=False)
+    #is_admin = Column(Boolean, default=False)  # 삭제되었음에 유의!
     #hashed_password = Column(String)
-    is_active = Column(Boolean, default=False)
+    #is_active = Column(Boolean, default=False) # 삭제되었음에 유의!
 
     rooms = relationship("Game", back_populates="person", cascade="all, delete-orphan")
 
@@ -59,6 +66,10 @@ class Game(Base):
     draw = Column(Integer, default=0)
     lose = Column(Integer, default=0)
     score = Column(Integer, default=0)
+
+    team = Column(Integer, index=True)
+    is_host = Column(Boolean)
+    is_human = Column(Boolean, default=True)
 
     room = relationship("Room", back_populates="persons")
     person = relationship("Person", back_populates="rooms")
