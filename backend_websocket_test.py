@@ -941,7 +941,7 @@ def test_websocket_error_and_disconnect(app):
             print(data)
             assert data["request"] == "create" and data["response"] == "error"
 
-            # 방 생성 요청 -> 방 안에서 했으므로 오류
+            # 방 입장 요청 -> 방 안에서 했으므로 오류
             print("\n10. send join -> you are already in a room")
             websocket.send_json({
                 'request': 'join',
@@ -1024,19 +1024,31 @@ def test_websocket_error_and_disconnect(app):
 
             time.sleep(1)
 
-            print("\n18. disconnect")
+            # 손 입력을 받기 시작한 후에 손 입력 요청
+            print("\n18. send hand 2")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 2
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+
+            time.sleep(1)
+
+            print("\n19. disconnect")
         
         except AssertionError:
             pass
 
-    time.sleep(4)
+    time.sleep(3)
     # 시간이 끝나 게임이 종료되었다는 응답은 접속이 끊어진 상태라서 받지 못함
-    print("\n19. end response hand_data -> cannot receive")
+    print("\n20. end response hand_data -> cannot receive")
 
     time.sleep(2)
     
     # 재접속 -> 손 입력은 종료되었지만 게임 방의 상태는 아직 플레이 상태
-    print("\n20. send signin -> reconnected")
+    print("\n21. send signin -> reconnected")
     with client.websocket_connect("/signin?name=test") as websocket:
         try:
             data = websocket.receive_json(mode='text')
@@ -1046,7 +1058,7 @@ def test_websocket_error_and_disconnect(app):
             time.sleep(3)
 
             # 손 입력이 종료된 후에 손 입력 요청
-            print("\n21. send hand 1 -> game has ended")
+            print("\n22. send hand 1 -> game has ended")
             websocket.send_json({
                 'request': 'hand',
                 'hand': 1
@@ -1057,33 +1069,42 @@ def test_websocket_error_and_disconnect(app):
 
             # 게임이 종료되고 10초 후(재접속 후 8초 후) 새로운 방에 재입장되었다는 응답
             data = websocket.receive_json(mode='text')
-            print("\n22. end response join_data")
+            print("\n23. end response join_data")
             print(data)
             assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
 
             # 웹소켓 연결 강제 종료
-            print("\n23. websocket close")
+            print("\n24. websocket close")
             websocket.close()
 
         except AssertionError:
             pass
 
-def test_websocket_join_and_start_and_hand(app):
+def test_websocket_reconnect(app):
     client = TestClient(app)
-    print("------------ Test 2: join and start and hand ------------")
-    # 입장 요청
-    print("@ send join")
-    with client.websocket_connect("/join?affiliation=STAFF&name=관리자") as websocket:
+    print("----------------- Test 7: reconnect -----------------")
+
+    print("\n01. send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
         try:
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "join" and data["response"] == "success"
+            assert data["request"] == "signin" and data["response"] == "success"
+
+            # 방 생성 요청
+            print("\n02. send create")
+            websocket.send_json({
+                'request': 'create',
+                'room_name': "Hell!",
+                'mode': 1,
+                'password': "password"
+            })
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "join" and data["response"] == "broadcast"
-            
+            assert data["request"] == "create" and data["response"] == "success"
+
             # 게임 시작 요청
-            print("@@ send start 3 10")
+            print("\n03. send start 3 10")
             websocket.send_json({
                 'request': 'start',
                 'time_offset': 3,
@@ -1092,51 +1113,32 @@ def test_websocket_join_and_start_and_hand(app):
             data = websocket.receive_json(mode='text')
             print(data)
             assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
+            
+            time.sleep(1)
 
-            # 게임 시작 후 손 입력을 받기 전에 손 입력 요청 -> 오류 응답
-            print("@@@ send hand 0 -> error response")
-            websocket.send_json({
-                'request': 'hand',
-                'hand': 0
-            })
+            print("\n04. disconnect")
+
+        except AssertionError:
+            pass
+        
+    time.sleep(2)
+    # 손 입력을 받기 시작한다는 응답은 접속이 끊어진 상태라서 받지 못함
+    print("\n05. start response -> cannot receive")
+
+    time.sleep(3)
+
+    # 재접속 -> 게임이 시작되었고 손 입력을 받는 중
+    print("\n06. send signin -> reconnected")
+    with client.websocket_connect("/signin?name=test") as websocket:
+        try:
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "hand" and data["response"] == "error"
-
-            # 손 입력을 받기 시작한다는 응답
-            data = websocket.receive_json(mode='text')
-            print("@@@@ start response")
-            print(data)
-            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room_start'
-
-            time.sleep(2)
-
-            # 손 입력을 받기 시작한 후에 손 입력 요청
-            print("@@@@@ send hand 0")
-            websocket.send_json({
-                'request': 'hand',
-                'hand': 0
-            })
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+            assert data["request"] == "signin" and data["response"] == "reconnected"
 
             time.sleep(3)
 
-            # 손 입력을 받기 시작한 후에 손 입력 요청 (지는 손)
-            print("@@@@@@ send hand 1 -> lose")
-            websocket.send_json({
-                'request': 'hand',
-                'hand': 1
-            })
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
-
-            time.sleep(2)
-
-            # 손 입력을 받기 시작한 후에 손 입력 요청 (이기는 손)
-            print("@@@@@@@ send hand 0 -> win")
+            # 손 입력을 받기 시작한 후에 손 입력 요청
+            print("\n07. send hand 0")
             websocket.send_json({
                 'request': 'hand',
                 'hand': 0
@@ -1145,21 +1147,59 @@ def test_websocket_join_and_start_and_hand(app):
             print(data)
             assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
 
-            # 게임이 종료되었다는 응답 -> 자동 퇴장
+            # 시간이 끝나 게임이 종료되었다는 응답
             data = websocket.receive_json(mode='text')
-            print("@@@@@@@@ end response")
+            print("\n08. end response hand_data")
             print(data)
             assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data'
 
-            print("@@@@@@@@@ send hand 0 -> not connected")
-            try:
-                websocket.send_json({
-                    'request': 'hand',
-                    'hand': 0
-                })
-            except Exception as e:
-                assert e.__class__ == RuntimeError and str(e) == 'Cannot call "send" once a close message has been sent.'
-        
+            time.sleep(5)
+            print("\n09. disconnect")
+
+        except AssertionError:
+            pass
+
+    time.sleep(5)
+    # 새 방으로 입장되었다는 응답은 접속이 끊어진 상태라서 받지 못함
+    print("\n10. end response join_data -> cannot receive")
+
+    time.sleep(1)
+    
+    # 접속 -> 기존 방의 게임이 끝났으므로 재접속으로 취급되지 않고 방 목록 화면으로 접속
+    print("\n11. send signin -> not reconnected")
+    with client.websocket_connect("/signin?name=test") as websocket:
+        try:
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signin" and data["response"] == "success"
+            
+            # 방 목록 새로고침 요청
+            print("\n12. refresh")
+            websocket.send_json({
+                'request': 'refresh'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "refresh" and data["response"] == "success"
+
+            # 퇴장 요청 -> 방 목록 화면에 있으므로 실패
+            print("\n13. send quit -> you are not in any room")
+            websocket.send_json({
+                'request': 'quit'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "quit" and data["response"] == "error"
+
+            # 로그아웃 요청
+            print("\n14. send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signout" and data["response"] == "success"
+
         except AssertionError:
             pass
 
@@ -1237,17 +1277,19 @@ if __name__ == '__main__':
         from sql_app.main import app
     else:
         from .sql_app.main import app
-    #test_websocket_signin_and_signout(app)
-    #print()
-    #test_websocket_create_and_quit(app)
-    #print()
-    #test_websocket_setting_and_team(app)
-    #print()
-    #test_websocket_normal_start_and_hand(app)
-    #print()
-    #test_websocket_setting_and_many_hand(app)
-    #print()
+    test_websocket_signin_and_signout(app)
+    print()
+    test_websocket_create_and_quit(app)
+    print()
+    test_websocket_setting_and_team(app)
+    print()
+    test_websocket_normal_start_and_hand(app)
+    print()
+    test_websocket_setting_and_many_hand(app)
+    print()
     test_websocket_error_and_disconnect(app)
+    print()
+    test_websocket_reconnect(app)
     print()
     """
     test_websocket_join_and_start_and_hand(app)

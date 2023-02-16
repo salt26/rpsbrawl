@@ -193,7 +193,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
         crud.update_room_to_quit(db, room_id, person.id)
         await manager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id) # disconnect`ed`
-    except Exception as e:
+    except Exception:
         print("다른 예외")
         traceback.print_exc()
         room_id = manager.find_connection_by_websocket(websocket)[2]
@@ -532,16 +532,29 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     # 옮겨야 하는 정보?
     # 1. 사람, 팀, 방장 권한
     # 2. 게임 방 이름, 모드, 비밀번호, 숙련봇 수, 트롤봇 수, 최대 인원
+    # 방에 있던 사람 일부가 접속을 끊은 경우, 이 사람들은 새 방으로 입장시키지 말아야 한다.
+    # 접속을 끊은 사람 중에 방장이 있다면?
+    connected_persons = list(map(lambda e: e[1], manager.find_all_connections_by_room_id(room_id)))
+    new_host_id = -1
     for g in old_games:
         if g.is_host:
-            new_room, _ = crud.create_room_and_enter(db, g.person_id, old_room.name, old_room.mode, old_room.password)
-            crud.update_room_setting(db, new_room.id, bot_skilled=old_room.bot_skilled, bot_dumb=old_room.bot_dumb, max_persons=old_room.max_persons)
-            break
-    for g in old_games:
-        if not g.is_host:
-            crud.update_room_to_enter(db, new_room.id, g.person_id, old_room.password)
-    for connection in manager.find_all_connections_by_room_id(room_id):
-        manager.change_room_id(connection[1], new_room.id)
+            if g.person_id in connected_persons:
+                new_host_id = g.person_id
+                new_room, _ = crud.create_room_and_enter(db, g.person_id, old_room.name, old_room.mode, old_room.password)
+                crud.update_room_setting(db, new_room.id, bot_skilled=old_room.bot_skilled, bot_dumb=old_room.bot_dumb, max_persons=old_room.max_persons)
+                break
+            elif len(connected_persons) == 0:
+                return
+            else:
+                # 방장 이양 후 방 생성
+                new_host_id = connected_persons[0]
+                new_room, _ = crud.create_room_and_enter(db, connected_persons[0], old_room.name, old_room.mode, old_room.password)
+                crud.update_room_setting(db, new_room.id, bot_skilled=old_room.bot_skilled, bot_dumb=old_room.bot_dumb, max_persons=old_room.max_persons)
+                break
+    for person_id in connected_persons:
+        if person_id != new_host_id:
+            crud.update_room_to_enter(db, new_room.id, person_id, old_room.password)
+        manager.change_room_id(person_id, new_room.id)
     # 해당 방 전체에게 입장 데이터(방 정보 및 전적(사람) 목록) 응답
     join_data = {"room": read_room(new_room.id, db), "game_list": read_game(new_room.id, db)}
     await manager.broadcast_json("end", "join_data", join_data, new_room.id)
@@ -821,7 +834,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                     time_offset=data.get("time_offset", 5), time_duration=data.get("time_duration", 60))
 
                 # https://tech.buzzvil.com/blog/asyncio-no-1-coroutine-and-eventloop/
-                #asyncio.create_task(manage_time_for_room(old_room_id, time_offset=data.get("time_offset", 5), time_duration=data.get("time_duration", 60), db=db))
+                # 멀티스레드를 사용하여, start 요청을 보낸 사람(방장)이 접속 종료 시 해당 방의 게임이 멈춰버리던 문제 해결
                 threading.Thread(target=manage_time_for_room_threading, args=(old_room_id, data.get("time_offset", 5), data.get("time_duration", 60), db)).start()
             else:
                 await ConnectionManager.send_text("start", "error", "Room is not in a wait mode", websocket)
