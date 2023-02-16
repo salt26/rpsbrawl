@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconn
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pytz import timezone
+import threading
 import asyncio
 import json
 import traceback
@@ -545,6 +546,9 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     join_data = {"room": read_room(new_room.id, db), "game_list": read_game(new_room.id, db)}
     await manager.broadcast_json("end", "join_data", join_data, new_room.id)
 
+def manage_time_for_room_threading(room_id: int, time_offset: int, time_duration: int, db: Session = Depends(get_db)):
+    asyncio.run(manage_time_for_room(room_id, time_offset, time_duration, db))
+
 async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depends(get_db)):
     while True:
         old_room_id = manager.get_room_id(person_id)
@@ -817,7 +821,8 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                     time_offset=data.get("time_offset", 5), time_duration=data.get("time_duration", 60))
 
                 # https://tech.buzzvil.com/blog/asyncio-no-1-coroutine-and-eventloop/
-                asyncio.create_task(manage_time_for_room(old_room_id, time_offset=data.get("time_offset", 5), time_duration=data.get("time_duration", 60), db=db))
+                #asyncio.create_task(manage_time_for_room(old_room_id, time_offset=data.get("time_offset", 5), time_duration=data.get("time_duration", 60), db=db))
+                threading.Thread(target=manage_time_for_room_threading, args=(old_room_id, data.get("time_offset", 5), data.get("time_duration", 60), db)).start()
             else:
                 await ConnectionManager.send_text("start", "error", "Room is not in a wait mode", websocket)
 

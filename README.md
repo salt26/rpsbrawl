@@ -1069,7 +1069,8 @@ disconnect broadcast: 요청 데이터에 필요한 정보가 모두 들어있�
 
 
 ### API test
-* 백엔드 서버를 실행 중인 상황에서([Run](#run) 참조) 별도의 터미널을 켜고 아래 명령어 실행
+* 터미널을 켜고 아래 명령어 실행
+  * 백엔드 서버를 따로 실행하지 않아도 동작함
 * `cd {root_of_this_repository}`
 * `./sql_app/Scripts/activate.ps1` (가상환경 실행)
 * `python ./backend_websocket_test.py`
