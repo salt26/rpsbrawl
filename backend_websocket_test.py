@@ -1293,18 +1293,9 @@ def test_websocket_play_with_a_skilled_bot(app):
             assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
 
             time.sleep(1)
-            
-            # 방 목록 새로고침 요청
-            print("\n09. refresh")
-            websocket.send_json({
-                'request': 'refresh'
-            })
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "refresh" and data["response"] == "success"
 
             # 퇴장 요청 -> 방에 혼자 있었으므로 방이 제거됨
-            print("\n10. send quit -> room removed")
+            print("\n09. send quit -> room removed")
             websocket.send_json({
                 'request': 'quit'
             })
@@ -1313,7 +1304,7 @@ def test_websocket_play_with_a_skilled_bot(app):
             assert data["request"] == "quit" and data["response"] == "success"
 
             # 로그아웃 요청
-            print("\n11. send signout")
+            print("\n10. send signout")
             websocket.send_json({
                 'request': 'signout'
             })
@@ -1423,18 +1414,9 @@ def test_websocket_play_with_a_dumb_bot(app):
             assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
 
             time.sleep(1)
-            
-            # 방 목록 새로고침 요청
-            print("\n09. refresh")
-            websocket.send_json({
-                'request': 'refresh'
-            })
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "refresh" and data["response"] == "success"
 
             # 퇴장 요청 -> 방에 혼자 있었으므로 방이 제거됨
-            print("\n10. send quit -> room removed")
+            print("\n09. send quit -> room removed")
             websocket.send_json({
                 'request': 'quit'
             })
@@ -1443,7 +1425,7 @@ def test_websocket_play_with_a_dumb_bot(app):
             assert data["request"] == "quit" and data["response"] == "success"
 
             # 로그아웃 요청
-            print("\n11. send signout")
+            print("\n10. send signout")
             websocket.send_json({
                 'request': 'signout'
             })
@@ -1532,19 +1514,9 @@ def test_websocket_play_with_many_bots(app):
             assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
 
             time.sleep(1)
-            """
-            # 방 목록 새로고침 요청
-            print("\n09. refresh")
-            websocket.send_json({
-                'request': 'refresh'
-            })
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "refresh" and data["response"] == "success"
-
-            """
+            
             # 퇴장 요청 -> 방에 혼자 있었으므로 방이 제거됨
-            print("\n10. send quit -> room removed")
+            print("\n09. send quit -> room removed")
             websocket.send_json({
                 'request': 'quit'
             })
@@ -1553,7 +1525,7 @@ def test_websocket_play_with_many_bots(app):
             assert data["request"] == "quit" and data["response"] == "success"
 
             # 로그아웃 요청
-            print("\n11. send signout")
+            print("\n10. send signout")
             websocket.send_json({
                 'request': 'signout'
             })

@@ -1,4 +1,4 @@
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, not_
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
@@ -593,5 +593,6 @@ def get_expired_rooms(db: Session):
     return parse_obj_as(schemas.List[schemas.Room], room)
 
 def get_bots(db: Session, name_prefix: str):
-    bots = db.query(models.Person).filter(and_(not models.Person.is_human, models.Person.name.like(name_prefix + '-%'))).all()
+    bots = db.query(models.Person).filter(and_(not_(models.Person.is_human), models.Person.name.like(name_prefix + "-%"))).all()
+    #bots = list(filter(lambda b: b.name.startswith(name_prefix + "-"), bots))
     return parse_obj_as(schemas.List[schemas.Person], bots)

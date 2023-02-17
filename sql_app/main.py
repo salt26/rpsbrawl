@@ -139,7 +139,7 @@ class BotManager:
         # 남는 봇이 있으면 반환한다.
         # 남는 봇이 없으면 새로 만들어 반환한다.
         bots = crud.get_bots(db, "S")
-        remaining_bots = list(set(map(lambda b: b.person_id, bots)).difference(set(map(lambda b: b[0], self.active_bots))))
+        remaining_bots = list(set(map(lambda b: b.id, bots)).difference(set(map(lambda b: b[0], self.active_bots))))
         if len(remaining_bots) > 0:
             self.active_bots.append([remaining_bots[0], room_id])
             return crud.get_person(db, remaining_bots[0])
@@ -155,7 +155,7 @@ class BotManager:
         # 남는 봇이 있으면 반환한다.
         # 남는 봇이 없으면 새로 만들어 반환한다.
         bots = crud.get_bots(db, "D")
-        remaining_bots = list(set(map(lambda b: b.person_id, bots)).difference(set(map(lambda b: b[0], self.active_bots))))
+        remaining_bots = list(set(map(lambda b: b.id, bots)).difference(set(map(lambda b: b[0], self.active_bots))))
         if len(remaining_bots) > 0:
             self.active_bots.append([remaining_bots[0], room_id])
             return crud.get_person(db, remaining_bots[0])
