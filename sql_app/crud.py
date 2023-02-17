@@ -207,6 +207,28 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int, password: st
     db.refresh(db_room.first())
     return (schemas.Room.from_orm(db_room.first()), 0)
 
+def update_room_to_enter_bot(db: Session, room_id: int, bot_id: int):
+    # 해당 방에 봇 입장
+    
+    db_person = db.query(models.Person).filter(models.Person.id == bot_id)
+    if db_person.first() is None:
+        return (None, 3)
+    elif db_person.first().is_human:
+        return (None, 2)
+
+    db_room = db.query(models.Room).filter(models.Room.id == room_id)
+    if db_room.first() is None:
+        return (None, 1)
+    
+    game = models.Game(person=db_person.first(), room=db_room.first(), team=-1, is_host=False)
+    db.add(game)
+    db_room.first().persons.append(game)
+    db_person.first().rooms.append(game)
+    db.commit()
+    db.refresh(game)
+    db.refresh(db_person.first())
+    db.refresh(db_room.first())
+    return (schemas.Room.from_orm(db_room.first()), 0)
 
 # https://stackoverflow.com/questions/9667138/how-to-update-sqlalchemy-row-entry
 

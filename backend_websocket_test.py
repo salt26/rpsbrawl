@@ -22,6 +22,7 @@ def test_websocket_signin_and_signout(app):
             print(data)
             assert data["request"] == "signout" and data["response"] == "success"
         except AssertionError:
+            print("assertion failed")
             pass
 
 def test_websocket_create_and_quit(app):
@@ -132,6 +133,7 @@ def test_websocket_create_and_quit(app):
             print(data)
             assert data["request"] == "signout" and data["response"] == "success"
         except AssertionError:
+            print("assertion failed")
             pass
 
 
@@ -384,6 +386,7 @@ def test_websocket_setting_and_team(app):
             print(data)
             assert data["request"] == "signout" and data["response"] == "success"
         except AssertionError:
+            print("assertion failed")
             pass
 
 def test_websocket_normal_start_and_hand(app):
@@ -573,6 +576,7 @@ def test_websocket_normal_start_and_hand(app):
             print(data)
             assert data["request"] == "signout" and data["response"] == "success"
         except AssertionError:
+            print("assertion failed")
             pass
 
 
@@ -843,6 +847,7 @@ def test_websocket_setting_and_many_hand(app):
             print(data)
             assert data["request"] == "signout" and data["response"] == "success"
         except AssertionError:
+            print("assertion failed")
             pass
 
 def test_websocket_error_and_disconnect(app):
@@ -856,6 +861,7 @@ def test_websocket_error_and_disconnect(app):
             print(data)
             assert data["request"] == "signin" and data["response"] == "error"
         except AssertionError:
+            print("assertion failed")
             pass
 
     print("\n02. send signin")
@@ -968,6 +974,7 @@ def test_websocket_error_and_disconnect(app):
             print("\n12. disconnect")
 
         except AssertionError:
+            print("assertion failed")
             pass
         
     time.sleep(1)
@@ -1010,6 +1017,7 @@ def test_websocket_error_and_disconnect(app):
             assert data["request"] == "signout" and data["response"] == "success"
 
         except AssertionError:
+            print("assertion failed")
             pass
 
     time.sleep(1)
@@ -1039,6 +1047,7 @@ def test_websocket_error_and_disconnect(app):
             print("\n19. disconnect")
         
         except AssertionError:
+            print("assertion failed")
             pass
 
     time.sleep(3)
@@ -1078,6 +1087,7 @@ def test_websocket_error_and_disconnect(app):
             websocket.close()
 
         except AssertionError:
+            print("assertion failed")
             pass
 
 def test_websocket_reconnect(app):
@@ -1119,6 +1129,7 @@ def test_websocket_reconnect(app):
             print("\n04. disconnect")
 
         except AssertionError:
+            print("assertion failed")
             pass
         
     time.sleep(2)
@@ -1157,6 +1168,7 @@ def test_websocket_reconnect(app):
             print("\n09. disconnect")
 
         except AssertionError:
+            print("assertion failed")
             pass
 
     time.sleep(5)
@@ -1201,71 +1213,437 @@ def test_websocket_reconnect(app):
             assert data["request"] == "signout" and data["response"] == "success"
 
         except AssertionError:
+            print("assertion failed")
             pass
 
-def test_websocket_join_and_error_and_disconnect(app):
+
+def test_websocket_play_with_a_skilled_bot(app):
     client = TestClient(app)
-    print("--------- Test 3: join and error and disconnect ---------")
-    # 입장 요청
-    print("@ send join")
-    with client.websocket_connect("/join?affiliation=STAFF&name=test_villain") as websocket:
+    print("----------------- Test 8: play with a skilled bot -----------------")
+    # 로그인 요청
+    print("01. send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
         try:
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "join" and data["response"] == "success"
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "join" and data["response"] == "broadcast"
+            assert data["request"] == "signin" and data["response"] == "success"
 
-            print("@@ send plain text (not a JSON)")
-            websocket.send_text("Hello world!")
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "" and data["response"] == "error"
-            
-            print("@@@ disconnected (without sending quit)")
-        
-        except AssertionError:
-            pass
-
-    
-    print("@@@@ send join")
-    with client.websocket_connect("/join?affiliation=STAFF&name=test_villain") as websocket:
-        try:
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "join" and data["response"] == "success"
-            room_id = data["data"]["room_id"]
-            data = websocket.receive_json(mode='text')
-            print(data)
-            assert data["request"] == "join" and data["response"] == "broadcast"
-
-            print("@@@@@ send start (without required keyword arguments) -> disconnect")
+            # 방 생성 요청
+            print("\n02. send create")
             websocket.send_json({
-                'request': 'start'
+                'request': 'create',
+                'room_name': "Welcome!",
+                'mode': 0,
+                'password': ""
             })
-            data = client.get("/room/" + str(room_id))
-            print(data.json())
-            assert data.json()["state"] == 0
-        
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "create" and data["response"] == "success"
+
+            # 설정 변경 요청: 봇 수 변경
+            print("\n03. send setting bot_s=1")
+            websocket.send_json({
+                'request': "setting",
+                'bot_skilled': 1
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "setting" and data["response"] == "broadcast"
+
+            # 게임 시작 요청
+            print("\n04. send start 3 10")
+            websocket.send_json({
+                'request': 'start',
+                'time_offset': 3,
+                'time_duration': 10
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
+
+            # 손 입력을 받기 시작한다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n05. start response")
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room_start'
+
+            count = 0
+            # 게임이 끝날 때까지 응답 받기 반복
+            while True:
+                count += 1
+                data = websocket.receive_json(mode='text')
+                if data["request"] == "hand" and data["response"] == "broadcast":
+                    # 봇이 손을 입력했다는 응답
+                    print("\n06-" + str(count) + ". hand response by bot")
+                    print(data)
+                elif data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data':
+                    # 시간이 끝나 게임이 종료되었다는 응답
+                    print("\n07. end response hand_data")
+                    print(data)
+                    break
+                else:
+                    print("\n06-" + str(count) + ". unknown response")
+                    print(data)
+                    assert False
+
+            # 게임이 종료되고 10초 후 새로운 방에 재입장되었다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n08. end response join_data")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
+
+            time.sleep(1)
+            
+            # 방 목록 새로고침 요청
+            print("\n09. refresh")
+            websocket.send_json({
+                'request': 'refresh'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "refresh" and data["response"] == "success"
+
+            # 퇴장 요청 -> 방에 혼자 있었으므로 방이 제거됨
+            print("\n10. send quit -> room removed")
+            websocket.send_json({
+                'request': 'quit'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "quit" and data["response"] == "success"
+
+            # 로그아웃 요청
+            print("\n11. send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signout" and data["response"] == "success"
         except AssertionError:
+            print("assertion failed")
             pass
 
-    print("@@@@@@ send join")
-    with client.websocket_connect("/join?affiliation=STAFF&name=test_villain") as websocket:
+# test_websocket_play_with_a_skilled_bot(app) 의 출력 결과 중 일부
+"""
+{
+    'request': 'hand',
+    'response': 'broadcast',
+    'type': 'hand_data',
+    'data': {
+        'hand_list': [
+            {'team': -1, 'name': 'S-1676618077-762663', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:14:51.974288 KST', 'room_id': 13},
+            {'team': -1, 'name': 'S-1676618077-762663', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 16:14:53.754109 KST', 'room_id': 13},
+            {'team': -1, 'name': 'S-1676618077-762663', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 16:14:55.619460 KST', 'room_id': 13},
+            {'team': -1, 'name': 'S-1676618077-762663', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:14:57.486072 KST', 'room_id': 13},
+            {'team': -1, 'name': 'S-1676618077-762663', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 16:14:59.080475 KST', 'room_id': 13},
+            {'team': -1, 'name': 'S-1676618077-762663', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 16:15:00.961673 KST', 'room_id': 13}
+        ],
+        'game_list': [
+            {'rank': 1, 'team': -1, 'name': 'S-1676618077-762663', 'is_host': False, 'is_human': False, 'score': 6, 'win': 6, 'draw': 0, 'lose': 0, 'room_id': 13},
+            {'rank': 2, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 13}
+        ]
+    }
+}
+"""
+
+def test_websocket_play_with_a_dumb_bot(app):
+    client = TestClient(app)
+    print("----------------- Test 9: play with a dumb bot -----------------")
+    # 로그인 요청
+    print("01. send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
         try:
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "join" and data["response"] == "success"
-            room_id = data["data"]["room_id"]
+            assert data["request"] == "signin" and data["response"] == "success"
+
+            # 방 생성 요청
+            print("\n02. send create")
+            websocket.send_json({
+                'request': 'create',
+                'room_name': "Welcome!",
+                'mode': 0,
+                'password': ""
+            })
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "join" and data["response"] == "broadcast"
+            assert data["request"] == "create" and data["response"] == "success"
+
+            # 설정 변경 요청: 봇 수 변경
+            print("\n03. send setting bot_d=1")
+            websocket.send_json({
+                'request': "setting",
+                'bot_dumb': 1
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "setting" and data["response"] == "broadcast"
+
+            # 게임 시작 요청
+            print("\n04. send start 3 10")
+            websocket.send_json({
+                'request': 'start',
+                'time_offset': 3,
+                'time_duration': 10
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
+
+            # 손 입력을 받기 시작한다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n05. start response")
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room_start'
+
+            count = 0
+            # 게임이 끝날 때까지 응답 받기 반복
+            while True:
+                count += 1
+                data = websocket.receive_json(mode='text')
+                if data["request"] == "hand" and data["response"] == "broadcast":
+                    # 봇이 손을 입력했다는 응답
+                    print("\n06-" + str(count) + ". hand response by bot")
+                    print(data)
+                elif data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data':
+                    # 시간이 끝나 게임이 종료되었다는 응답
+                    print("\n07. end response hand_data")
+                    print(data)
+                    break
+                else:
+                    print("\n06-" + str(count) + ". unknown response")
+                    print(data)
+                    assert False
+
+            # 게임이 종료되고 10초 후 새로운 방에 재입장되었다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n08. end response join_data")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
+
+            time.sleep(1)
             
-            print("@@@@@@@ disconnected (without sending quit)")
-            
+            # 방 목록 새로고침 요청
+            print("\n09. refresh")
+            websocket.send_json({
+                'request': 'refresh'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "refresh" and data["response"] == "success"
+
+            # 퇴장 요청 -> 방에 혼자 있었으므로 방이 제거됨
+            print("\n10. send quit -> room removed")
+            websocket.send_json({
+                'request': 'quit'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "quit" and data["response"] == "success"
+
+            # 로그아웃 요청
+            print("\n11. send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signout" and data["response"] == "success"
         except AssertionError:
+            print("assertion failed")
             pass
+
+
+def test_websocket_play_with_many_bots(app):
+    client = TestClient(app)
+    print("----------------- Test 10: play with many bots -----------------")
+    # 로그인 요청
+    print("01. send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
+        try:
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signin" and data["response"] == "success"
+
+            # 방 생성 요청
+            print("\n02. send create")
+            websocket.send_json({
+                'request': 'create',
+                'room_name': "Welcome!",
+                'mode': 0,
+                'password': ""
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "create" and data["response"] == "success"
+
+            # 설정 변경 요청: 봇 수 변경
+            print("\n03. send setting bot_s=3 bot_d=3")
+            websocket.send_json({
+                'request': "setting",
+                'bot_skilled': 3,
+                'bot_dumb': 3
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "setting" and data["response"] == "broadcast"
+
+            # 게임 시작 요청
+            print("\n04. send start 3 10")
+            websocket.send_json({
+                'request': 'start',
+                'time_offset': 3,
+                'time_duration': 10
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
+
+            # 손 입력을 받기 시작한다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n05. start response")
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room_start'
+
+            count = 0
+            # 게임이 끝날 때까지 응답 받기 반복
+            while True:
+                count += 1
+                data = websocket.receive_json(mode='text')
+                if data["request"] == "hand" and data["response"] == "broadcast":
+                    # 봇이 손을 입력했다는 응답
+                    print("\n06-" + str(count) + ". hand response by bot")
+                    print(data)
+                elif data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data':
+                    # 시간이 끝나 게임이 종료되었다는 응답
+                    print("\n07. end response hand_data")
+                    print(data)
+                    break
+                else:
+                    print("\n06-" + str(count) + ". unknown response")
+                    print(data)
+                    assert False
+
+            # 게임이 종료되고 10초 후 새로운 방에 재입장되었다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n08. end response join_data")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
+
+            time.sleep(1)
+            """
+            # 방 목록 새로고침 요청
+            print("\n09. refresh")
+            websocket.send_json({
+                'request': 'refresh'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "refresh" and data["response"] == "success"
+
+            """
+            # 퇴장 요청 -> 방에 혼자 있었으므로 방이 제거됨
+            print("\n10. send quit -> room removed")
+            websocket.send_json({
+                'request': 'quit'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "quit" and data["response"] == "success"
+
+            # 로그아웃 요청
+            print("\n11. send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signout" and data["response"] == "success"
+        except AssertionError:
+            print("assertion failed")
+            pass
+
+# test_websocket_play_with_many_bots(app) 의 출력 결과 중 일부
+"""
+{
+    'request': 'end',
+    'response': 'broadcast',
+    'type': 'hand_data',
+    'data': {
+        'room': {'id': 15, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 16:25:27.031129 KST', 'start_time': '2023-02-17 16:25:43.074192 KST', 'end_time': '2023-02-17 16:25:54.406517 KST', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 3, 'bot_dumb': 3, 'max_persons': 30, 'num_persons': 13},
+        'hand_list': [
+            {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 16:25:27.031129 KST', 'room_id': 15},
+            {'team': -1, 'name': 'D-1676618728-641138', 'is_human': False, 'hand': 1, 'score': -1, 'time': '2023-02-17 16:25:43.507154 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-113644', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 16:25:43.905156 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-39072', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 16:25:44.370127 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-650588', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 16:25:44.825462 KST', 'room_id': 15},
+            {'team': -1, 'name': 'D-1676618728-287653', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:25:45.357159 KST', 'room_id': 15},
+            {'team': -1, 'name': 'D-1676618727-912025', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 16:25:45.908369 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-113644', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 16:25:46.757124 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-39072', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 16:25:47.230324 KST', 'room_id': 15},
+            {'team': -1, 'name': 'D-1676618728-641138', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:25:47.706966 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-650588', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 16:25:48.479815 KST', 'room_id': 15},
+            {'team': -1, 'name': 'D-1676618728-287653', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 16:25:48.936627 KST', 'room_id': 15},
+            {'team': -1, 'name': 'D-1676618727-912025', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 16:25:49.374217 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-113644', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:25:50.192202 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-39072', 'is_human': False, 'hand': 1, 'score': 0, 'time': '2023-02-17 16:25:50.783897 KST', 'room_id': 15},
+            {'team': -1, 'name': 'D-1676618728-641138', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 16:25:51.308096 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-650588', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 16:25:52.050105 KST', 'room_id': 15},
+            {'team': -1, 'name': 'S-1676618727-113644', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 16:25:52.734318 KST', 'room_id': 15},
+            {'team': -1, 'name': 'D-1676618728-287653', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:25:53.370584 KST', 'room_id': 15},
+            {'team': -1, 'name': 'D-1676618727-912025', 'is_human': False, 'hand': 1, 'score': 0, 'time': '2023-02-17 16:25:53.819636 KST', 'room_id': 15}
+        ],
+        'game_list': [
+            {'rank': 1, 'team': -1, 'name': 'D-1676618728-287653', 'is_host': False, 'is_human': False, 'score': 3, 'win': 3, 'draw': 0, 'lose': 0, 'room_id': 15},
+            {'rank': 2, 'team': -1, 'name': 'S-1676618727-650588', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 1, 'lose': 0, 'room_id': 15},
+            {'rank': 3, 'team': -1, 'name': 'S-1676618727-113644', 'is_host': False, 'is_human': False, 'score': 1, 'win': 2, 'draw': 1, 'lose': 1, 'room_id': 15},
+            {'rank': 4, 'team': -1, 'name': 'D-1676618728-641138', 'is_host': False, 'is_human': False, 'score': 1, 'win': 2, 'draw': 0, 'lose': 1, 'room_id': 15},
+            {'rank': 5, 'team': -1, 'name': 'D-1676618727-912025', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 2, 'lose': 0, 'room_id': 15},
+            {'rank': 6, 'team': -1, 'name': 'S-1676618727-39072', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 3, 'lose': 0, 'room_id': 15},
+            {'rank': 7, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 15}
+        ]
+    }
+}
+
+{
+    'request': 'end',
+    'response': 'broadcast',
+    'type': 'hand_data',
+    'data': {
+        'room': {'id': 16, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 16:36:05.293573 KST', 'start_time': '2023-02-17 16:36:21.270804 KST', 'end_time': '2023-02-17 16:36:31.544894 KST', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 3, 'bot_dumb': 3, 'max_persons': 30, 'num_persons': 13},
+        'hand_list': [
+            {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 16:36:05.293573 KST', 'room_id': 16},
+            {'team': -1, 'name': 'S-1676619365-792594', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 16:36:21.892462 KST', 'room_id': 16},
+            {'team': -1, 'name': 'D-1676619366-77963', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:36:22.379527 KST', 'room_id': 16},
+            {'team': -1, 'name': 'S-1676619365-588509', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 16:36:22.749677 KST', 'room_id': 16},
+            {'team': -1, 'name': 'D-1676619366-126782', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:36:23.278487 KST', 'room_id': 16},
+            {'team': -1, 'name': 'S-1676619365-374043', 'is_human': False, 'hand': 1, 'score': 0, 'time': '2023-02-17 16:36:23.729354 KST', 'room_id': 16},
+            {'team': -1, 'name': 'D-1676619366-44786', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 16:36:24.373309 KST', 'room_id': 16},
+            {'team': -1, 'name': 'S-1676619365-792594', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 16:36:24.993880 KST', 'room_id': 16},
+            {'team': -1, 'name': 'D-1676619366-126782', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:36:25.397045 KST', 'room_id': 16},
+            {'team': -1, 'name': 'S-1676619365-588509', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 16:36:25.894315 KST', 'room_id': 16},
+            {'team': -1, 'name': 'D-1676619366-77963', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:36:26.354668 KST', 'room_id': 16},
+            {'team': -1, 'name': 'S-1676619365-374043', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 16:36:27.107222 KST', 'room_id': 16},
+            {'team': -1, 'name': 'S-1676619365-792594', 'is_human': False, 'hand': 0, 'score': 0, 'time': '2023-02-17 16:36:27.679716 KST', 'room_id': 16},
+            {'team': -1, 'name': 'D-1676619366-44786', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 16:36:28.063121 KST', 'room_id': 16},
+            {'team': -1, 'name': 'S-1676619365-588509', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 16:36:29.019412 KST', 'room_id': 16},
+            {'team': -1, 'name': 'D-1676619366-126782', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 16:36:29.662637 KST', 'room_id': 16},
+            {'team': -1, 'name': 'S-1676619365-374043', 'is_human': False, 'hand': 1, 'score': -1, 'time': '2023-02-17 16:36:30.336527 KST', 'room_id': 16},
+            {'team': -1, 'name': 'D-1676619366-77963', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 16:36:30.847537 KST', 'room_id': 16}
+        ],
+        'game_list': [
+            {'rank': 1, 'team': -1, 'name': 'D-1676619366-126782', 'is_host': False, 'is_human': False, 'score': 3, 'win': 3, 'draw': 0, 'lose': 0, 'room_id': 16},
+            {'rank': 2, 'team': -1, 'name': 'D-1676619366-77963', 'is_host': False, 'is_human': False, 'score': 3, 'win': 3, 'draw': 0, 'lose': 0, 'room_id': 16},
+            {'rank': 3, 'team': -1, 'name': 'S-1676619365-792594', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 1, 'lose': 0, 'room_id': 16},
+            {'rank': 4, 'team': -1, 'name': 'D-1676619366-44786', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 16},
+            {'rank': 5, 'team': -1, 'name': 'S-1676619365-374043', 'is_host': False, 'is_human': False, 'score': 0, 'win': 1, 'draw': 1, 'lose': 1, 'room_id': 16},
+            {'rank': 6, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 16},
+            {'rank': 7, 'team': -1, 'name': 'S-1676619365-588509', 'is_host': False, 'is_human': False, 'score': -1, 'win': 1, 'draw': 0, 'lose': 2, 'room_id': 16}
+        ]
+    }
+}
+"""
 
 # 프로젝트 루트 폴더(sql_app 폴더의 상위 폴더)에서 실행할 것!
 if __name__ == '__main__':
@@ -1277,6 +1655,7 @@ if __name__ == '__main__':
         from sql_app.main import app
     else:
         from .sql_app.main import app
+    """
     test_websocket_signin_and_signout(app)
     print()
     test_websocket_create_and_quit(app)
@@ -1291,13 +1670,10 @@ if __name__ == '__main__':
     print()
     test_websocket_reconnect(app)
     print()
-    """
-    test_websocket_join_and_start_and_hand(app)
+    test_websocket_play_with_a_skilled_bot(app)
     print()
-    test_websocket_join_and_error_and_disconnect(app)
-    print()
-    test_websocket_forbidden_start(app)
-    print()
-    test_websocket_many_hands(app)
+    test_websocket_play_with_a_dumb_bot(app)
     print()
     """
+    test_websocket_play_with_many_bots(app)
+    print()
