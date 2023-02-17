@@ -9,7 +9,8 @@ import { LanguageContext } from "../../utils/LanguageProvider";
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
-function Room({ title, lock, person, state }) {
+function Room({ room }) {
+  const { id, name, has_password, state, max_persons, num_persons } = room;
   var navigate = useNavigate();
   const mode = useContext(LanguageContext);
   const joinBtnStyle = {
@@ -26,29 +27,27 @@ function Room({ title, lock, person, state }) {
     bg: "linear-gradient(180deg, #FA1515 0%, #F97916 100%);",
   };
 
-  const _enterRoom = (room_id) => {
+  const _enterRoom = () => {
     // 방 입장
-
-    navigate(`./${room_id}/waiting`);
+    //navigate(`./${id}/waiting`);
   };
   return (
     <Box>
       <Row>
         <Medium color="white" size="25px">
-          Welcome
+          {name}
         </Medium>
-
-        <SvgIcon src={LockSrc} size="20px" />
+        {has_password && <SvgIcon src={LockSrc} size="20px" />}
       </Row>
       <Row>
         <Medium color="white" size="20px">
-          15/30
+          {num_persons}/{max_persons}
         </Medium>
         {state == 0 ? (
           <GradientBtn
             text={Language[mode].join}
             style={joinBtnStyle}
-            onClick={() => _enterRoom(1)}
+            onClick={() => _enterRoom(id)}
           />
         ) : (
           <GradientBtn

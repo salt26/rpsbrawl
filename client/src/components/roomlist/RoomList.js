@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Room from "./Room";
 import GradientBtn from "./GradientBtn";
@@ -6,15 +6,37 @@ import SizedBox from "../common/SizedBox";
 import { Language } from "../../db/Language";
 import { LanguageContext } from "../../utils/LanguageProvider";
 import { useContext } from "react";
+import RefreshBtn from "./RefreshBtn";
+import { WebsocketContext } from "../../utils/WebSocketProvider";
 function RoomList({ rooms, setCreateRoomModalVisible }) {
   const mode = useContext(LanguageContext);
-  const _createRoom = () => {
-    console.log("create room success");
+
+  const [roomLists, setRoomLists] = useState(rooms);
+
+  const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
+  useEffect(() => {
+    ws.onmessage = function (event) {
+      const res = JSON.parse(event.data);
+
+      if (ready) {
+        if (res?.response === "error") {
+          alert(res.message);
+          return;
+        }
+
+        switch (res?.type) {
+          case "room_list": // 룸 목록 갱신 요청에 대한 응답
+            setRoomLists(res.data);
+        }
+      }
+    };
+  }, [ready]);
+  const _openCreateRoomModal = () => {
     setCreateRoomModalVisible(true);
   };
 
   const _quickStart = () => {
-    console.log("quick start success");
+    // console.log("quick start success");
   };
 
   const blueBtnStyle = {
@@ -30,34 +52,39 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
     bg: "linear-gradient(180deg, #FA1515 0%, #F97916 100%);",
   };
 
+  const _refreshRoomList = () => {
+    if (ready) {
+      let request = {
+        request: "refresh",
+      };
+      ws.send(JSON.stringify(request));
+    }
+  };
   return (
     <BgBox>
       <Row>
-        <GradientBtn
-          text={Language[mode].create_room}
-          onClick={_createRoom}
-          style={blueBtnStyle}
-          anim
-        />
+        <div style={{ display: "flex", flexDirection: "row", gap: "30px" }}>
+          <GradientBtn
+            text={Language[mode].create_room}
+            onClick={_openCreateRoomModal}
+            style={blueBtnStyle}
+            anim
+          />
 
-        <GradientBtn
-          text={Language[mode].quick_start}
-          onClick={_quickStart}
-          style={redBtnStyle}
-          anim
-        />
+          <GradientBtn
+            text={Language[mode].quick_start}
+            onClick={_quickStart}
+            style={redBtnStyle}
+            anim
+          />
+        </div>
+        <RefreshBtn onClick={_refreshRoomList} />
       </Row>
       <SizedBox width="100%" height={"30px"} />
       <RoomContainer>
-        <Room state={0} />
-        <Room /> <Room />
-        <Room />
-        <Room />
-        <Room />
-        <Room />
-        <Room />
-        <Room />
-        <Room />
+        {roomLists.map((room) => (
+          <Room room={room} />
+        ))}
       </RoomContainer>
     </BgBox>
   );
@@ -109,6 +136,8 @@ const Row = styled.div`
   width: 100%;
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
+
   gap: 20px;
 `;
 export default RoomList;
