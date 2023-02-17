@@ -17,13 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useRef, createContext, useEffect } from "react";
 import { LanguageContext } from "../utils/LanguageProvider";
 import HTTP from "../utils/HTTP";
-import {
-  setUserName,
-  getUserName,
-  getUserAffiliation,
-  setUserId,
-  setUserAffiliation,
-} from "../utils/User";
+import { getUserName } from "../utils/User";
 import { Language } from "../db/Language";
 import { BASE_WEBSOCKET_URL } from "../Config";
 import { WebsocketContext } from "../utils/WebSocketProvider";
@@ -50,49 +44,18 @@ function RuleBox() {
 
 function LoginBox() {
   const [name, setName] = useState(getUserName());
-  const [selectedOption, setSelectedOption] = useState(getUserAffiliation()); //소속
-  const [roomId, setRoomId] = useState();
+
   var navigate = useNavigate();
   const mode = useContext(LanguageContext);
-  const [createWebSocketConnection, ready, res, send] =
-    useContext(WebsocketContext); //전역 소켓 사용
-
-  useEffect(() => {
-    if (ready) {
-      if (res?.response === "error") {
-        alert(res.message);
-        return;
-      }
-
-      switch (res?.type) {
-        case "profile":
-          // 사용자 정보(이름,소속,저장,관리자 여부)를 로컬스토리지에 저장
-          const { data } = res;
-          console.log(data);
-          setUserName(data.name);
-          setUserAffiliation(data.affiliation);
-          setUserId(data.person_id);
-          setRoomId(data.room_id); // 할당된 룸 번호 저장
-          localStorage.setItem("is_admin", data.is_admin); // 관리자 여부
-
-          break;
-
-        case "game_list": // 방목록으로 이동
-          console.log(res.data);
-          if (roomId) {
-            navigate(`/rooms`, { state: res.data }); // 게임 대기화면 이동 + 해당 방 목록 인원 전달
-          }
-      }
-    }
-  }, [ready, send, res]); // 소켓연결에 성공했다면
+  const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
 
   const _joinGame = () => {
     if (name === "") {
       alert("fill in the blank");
       return;
     }
-    navigate("./rooms");
-    //createWebSocketConnection(selectedOption, name); // Socket Connection 생성
+
+    createWebSocketConnection(name); // Socket Connection 생성
   };
   return (
     <BgBox width="250px" height="300px" color="white">

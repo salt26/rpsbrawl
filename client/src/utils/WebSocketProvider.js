@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { createContext } from "react";
 import { BASE_WEBSOCKET_URL } from "../Config";
+import { setUserId, setUserName } from "./User";
+import { useNavigate } from "react-router-dom";
 export const WebsocketContext = createContext([
   () => {},
   false,
   null,
   () => {},
+  "default",
 ]);
 
 //                                            ready, value, send
@@ -15,15 +18,12 @@ export const WebsocketContext = createContext([
 export const WebsocketProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [res, setRes] = useState(null);
-
+  const navigate = useNavigate();
   const ws = useRef(null);
   // 웹소켓 연결
 
-  function createWebSocketConnection(affiliation, name) {
-    const socket = new WebSocket(
-      `${BASE_WEBSOCKET_URL}/join?affiliation=${affiliation}&name=${name}`
-    );
-
+  function createWebSocketConnection(name) {
+    var socket = new WebSocket(`${BASE_WEBSOCKET_URL}/signin?name=${name}`);
     socket.onopen = (event) => {
       console.log("Socket open", event);
       setIsReady(true);
@@ -33,23 +33,33 @@ export const WebsocketProvider = ({ children }) => {
       console.log("onclose!", event);
       setIsReady(false);
     };
+
     socket.onmessage = function (event) {
-      const data = JSON.parse(event.data); // 전달된 json string을 object로 변환
-      setRes(data);
+      const res = JSON.parse(event.data);
+      // 전달된 json string을 object로 변환
+      console.log("onmessage", res.type, res);
+      console.log(res);
+      if (res?.response === "error") {
+        alert(res.message);
+        return;
+      }
 
-      console.log("onmessage", data.type, data);
+      switch (res?.type) {
+        case "profile_and_room_list":
+          const { data } = res;
+          console.log(data);
+          setUserName(data.name);
+
+          setUserId(data.person_id);
+          console.log("메시지 좀 바다");
+          navigate(`/rooms`, { state: data.rooms });
+          break;
+      }
     };
-
     ws.current = socket;
   }
 
-  const ret = [
-    createWebSocketConnection,
-    isReady,
-    res,
-
-    ws.current?.send.bind(ws.current),
-  ];
+  const ret = [createWebSocketConnection, isReady, ws.current];
 
   return (
     <WebsocketContext.Provider value={ret}>
