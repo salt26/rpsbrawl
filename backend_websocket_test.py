@@ -1627,7 +1627,6 @@ if __name__ == '__main__':
         from sql_app.main import app
     else:
         from .sql_app.main import app
-    """
     test_websocket_signin_and_signout(app)
     print()
     test_websocket_create_and_quit(app)
@@ -1646,6 +1645,5 @@ if __name__ == '__main__':
     print()
     test_websocket_play_with_a_dumb_bot(app)
     print()
-    """
     test_websocket_play_with_many_bots(app)
     print()
