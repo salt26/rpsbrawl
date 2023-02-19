@@ -191,7 +191,7 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int, password: st
         return (None, 6)
     
     # 팀 번호는 0 ~ 7 중 가장 인원이 적은 팀으로 배정
-    games = get_games_in_room(db, room_id)
+    games = get_games_in_room(db, room_id, True)
     teams = [0, 0, 0, 0, 0, 0, 0, 0]
     for g in games:
         if g.team >= 0 and g.team <= 7:
