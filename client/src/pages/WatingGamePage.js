@@ -30,7 +30,7 @@ import AddBot from "../components/gameroom/AddBot";
 import SvgIcon from "../components/common/SvgIcon";
 import LockSrc from "../assets/images/lock.svg";
 import SettingSrc from "../assets/images/setting.svg";
-import CreateRoomModal from "../components/gameroom/CreateRoomModal";
+import SettingModal from "../components/gameroom/SettingModal";
 
 export default function WatingGamePage() {
   const { room_id } = useParams();
@@ -71,6 +71,14 @@ export default function WatingGamePage() {
           case "room_list": // 룸 목록 갱신 요청에 대한 응답
             navigate("/rooms", { state: res.data });
             break;
+          case "init_data": // 게임 시작시 정보
+            navigate(`/rooms/${room_id}/game`, { state: res.data });
+            break;
+          case "room": // 방 설정 변경 성공시
+            setRoomInfo(res.data);
+            alert("방 설정이 성공적으로 변경되었습니다.");
+
+            break;
         }
       }
     };
@@ -91,12 +99,7 @@ export default function WatingGamePage() {
     }
   };
 
-  const _refreshRoomList = () => {
-    if (ready) {
-    }
-  };
   const _startGame = () => {
-    console.log(ready);
     if (ready) {
       let request = {
         request: "start",
@@ -106,14 +109,15 @@ export default function WatingGamePage() {
 
       ws.send(JSON.stringify(request));
     }
-    //navigate(`/room/${room_id}/game`);
+
     // navigate(`/rooms/1/game`);
   };
   return (
     <Container>
-      <CreateRoomModal
+      <SettingModal
         modalVisible={settingModalVisible}
         setModalVisible={setSettingModalVisible}
+        roomInfo={roomInfo}
       />
       <TitleContainer>
         <Row2>
@@ -127,11 +131,7 @@ export default function WatingGamePage() {
         </BgBox>
       </TitleContainer>
       <Anim>
-        <MediumOutline
-          color="
-#6E3D9D"
-          size={"60px"}
-        >
+        <MediumOutline color="#6E3D9D" size={"60px"}>
           {Language[mode].ingame_title_text}
         </MediumOutline>
       </Anim>
