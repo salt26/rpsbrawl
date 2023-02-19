@@ -6,54 +6,42 @@ import MyNameTag from "../common/MyNameTag";
 
 export default function UserList({ users }) {
   const my_name = getUserName();
+
+  const team_color = [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "navy",
+    "purple",
+  ];
+
   return (
     <Container>
-      {users.map(({ affiliation, name }, idx) => {
-        if (name === my_name) {
+      {users.map(({ team, name, is_host }, idx) => {
+        if (is_host) {
+          return (
+            <AdminTag key={idx} color={team_color[team]}>
+              {name}
+            </AdminTag>
+          );
+        } else if (name === my_name) {
           return (
             <Anim>
-              <MyNameTag key={idx} size="s" name={name}>
+              <MyNameTag key={idx} size="s" none>
                 {name}
               </MyNameTag>
             </Anim>
           );
-        } else if (affiliation === "STAFF") {
-          return <AdminTag key={idx}>{name}</AdminTag>;
         } else {
-          return <NameTag key={idx}>{name}</NameTag>;
+          return (
+            <NameTag key={idx} color={team_color[team]}>
+              {name}
+            </NameTag>
+          );
         }
       })}
-      <Anim>
-        <MyNameTag size="s" none>
-          김서연
-        </MyNameTag>
-      </Anim>
-
-      <AdminTag>김서연</AdminTag>
-      <NameTag color="red">{"YEONLEAF"}</NameTag>
-      <NameTag color="orange">{"YEONLEAF"}</NameTag>
-      <NameTag color="green">{"YEONLEAF"}</NameTag>
-      <NameTag color="navy">{"YEONLEAF"}</NameTag>
-      <NameTag color="red">{"YEONLEAF"}</NameTag>
-      <NameTag color="orange">{"YEONLEAF"}</NameTag>
-      <NameTag color="green">{"YEONLEAF"}</NameTag>
-      <NameTag color="navy">{"YEONLEAF"}</NameTag>
-      <NameTag color="red">{"YEONLEAF"}</NameTag>
-      <NameTag color="orange">{"YEONLEAF"}</NameTag>
-      <NameTag color="green">{"YEONLEAF"}</NameTag>
-      <NameTag color="navy">{"YEONLEAF"}</NameTag>
-      <NameTag color="red">{"YEONLEAF"}</NameTag>
-      <NameTag color="orange">{"YEONLEAF"}</NameTag>
-      <NameTag color="green">{"YEONLEAF"}</NameTag>
-      <NameTag color="navy">{"YEONLEAF"}</NameTag>
-      <NameTag color="navy">{"YEONLEAF"}</NameTag>
-      <NameTag color="red">{"YEONLEAF"}</NameTag>
-      <NameTag color="orange">{"YEONLEAF"}</NameTag>
-      <NameTag color="green">{"YEONLEAF"}</NameTag>
-      <NameTag color="navy">{"YEONLEAF"}</NameTag>
-      <NameTag color="navy">{"YEONLEAF"}</NameTag>
-      <NameTag color="red">{"YEONLEAF"}</NameTag>
-      <NameTag color="orange">{"YEONLEAF"}</NameTag>
     </Container>
   );
 }

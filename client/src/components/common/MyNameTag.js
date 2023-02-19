@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { Medium } from "../../styles/font";
 import { css } from "styled-components";
+
 function MyNameTag({ children, size, none }) {
   const fontsize = {
     s: "25px",

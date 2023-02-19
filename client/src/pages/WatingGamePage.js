@@ -38,73 +38,63 @@ export default function WatingGamePage() {
 
   const mode = useContext(LanguageContext);
 
-  const [numberOfUser, setNumberOfUser] = useState(1);
-  const [users, setUsers] = useState([]);
-  const [room, setRoom] = useState(null); //Room정보
-  const [handList, setHandList] = useState(null);
-  const [gameList, setGameList] = useState(null);
-  const [roomTitle, setRoomTitle] = useState("Welcome");
+  const [numberOfUser, setNumberOfUser] = useState(state.game_list.length);
+  const [users, setUsers] = useState(state.game_list);
+  const [roomInfo, setRoomInfo] = useState(state.room); //Room정보
+
   const [settingModalVisible, setSettingModalVisible] = useState(false); //설정창
 
   const [myTeam, setMyTeam] = useState("red");
 
-  // ! 관리자 여부 -> bool이 아니라 string임에 유의(js는 "false" 를 true로 판단)!
-  const isAuthorized =
-    localStorage.getItem("is_admin") === "true" &&
-    localStorage.getItem("password") === PASSWORD;
+  const isAuthorized = true;
 
   console.log(isAuthorized);
   const person_id = getUserId();
   const person_name = getUserName();
   var navigate = useNavigate();
 
-  const [createSocketConnection, ready, res, send] =
-    useContext(WebsocketContext); //전역 소켓 불러오기
-
+  const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   useEffect(() => {
-    /*
-    if (ready) {
-      console.log(res.type, res.data);
+    ws.onmessage = function (event) {
+      const res = JSON.parse(event.data);
 
-      if (res?.response === "error") {
-        alert(res.message);
-        return;
+      if (ready) {
+        if (res?.response === "error") {
+          alert(res.message);
+          return;
+        }
+
+        switch (res?.type) {
+          case "game_list": // 팀 변경 요청에 대한 응답
+            setUsers(res.data);
+            break;
+          case "room_list": // 룸 목록 갱신 요청에 대한 응답
+            navigate("/rooms", { state: res.data });
+            break;
+        }
       }
-
-      switch (res.request) {
-        case "join":
-        case "disconnected":
-        case "quit":
-          setUsers(res.data);
-          setNumberOfUser(res.data.length);
-          break;
-        case "start":
-          // 게임이 시작하면 room -> hand -> game 순으로 전달
-          if (res.type === "init_data") {
-            navigate(`/room/${room_id}/game`, {
-              state: res.data,
-            });
-          }
-
-          break;
-      }
-    }
-    */
-  }, [res]); // 메시지가 바뀔때마다
+    };
+  }, [ready]);
 
   const _quitGame = () => {
     if (ready) {
-      let request = {
+      let request1 = {
         request: "quit",
       };
 
-      send(JSON.stringify(request));
-      navigate("/rooms");
-      localStorage.removeItem("is_admin");
+      ws.send(JSON.stringify(request1));
+
+      let request2 = {
+        request: "refresh",
+      };
+      ws.send(JSON.stringify(request2));
     }
-    navigate("/rooms");
   };
 
+  const _refreshRoomList = () => {
+    if (ready) {
+    }
+  };
   const _startGame = () => {
     console.log(ready);
     if (ready) {
@@ -114,10 +104,10 @@ export default function WatingGamePage() {
         time_duration: TIME_DURATION, // seconds, 처음 손을 입력받기 시작한 후 손을 입력받는 시간대의 길이
       };
 
-      send(JSON.stringify(request));
+      ws.send(JSON.stringify(request));
     }
     //navigate(`/room/${room_id}/game`);
-    navigate(`/rooms/1/game`);
+    // navigate(`/rooms/1/game`);
   };
   return (
     <Container>
@@ -128,12 +118,12 @@ export default function WatingGamePage() {
       <TitleContainer>
         <Row2>
           <Medium color="white" size="25px">
-            15 / 50
+            {roomInfo.num_persons} / {roomInfo.max_persons}
           </Medium>
-          <SvgIcon src={LockSrc} size="20px" />
+          {roomInfo.has_password && <SvgIcon src={LockSrc} size="20px" />}
         </Row2>
         <BgBox bgColor={"white"} width="230px" height="50px">
-          <Medium color="#6E3D9D">{roomTitle}</Medium>
+          <Medium color="#6E3D9D">{roomInfo.name}</Medium>
         </BgBox>
       </TitleContainer>
       <Anim>
