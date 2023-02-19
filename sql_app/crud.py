@@ -190,11 +190,11 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int, password: st
     elif db_room.first().max_persons < len(db_room.first().persons) + db_room.first().bot_skilled + db_room.first().bot_dumb:
         return (None, 6)
     
-    # 팀 번호는 0 ~ 7 중 가장 인원이 적은 팀으로 배정
+    # 팀 번호는 0 ~ 6 중 가장 인원이 적은 팀으로 배정
     games = get_games_in_room(db, room_id, True)
-    teams = [0, 0, 0, 0, 0, 0, 0, 0]
+    teams = [0, 0, 0, 0, 0, 0, 0]
     for g in games:
-        if g.team >= 0 and g.team <= 7:
+        if g.team >= 0 and g.team <= 6:
             teams[g.team] += 1
     f = lambda i: teams[i]
     game = models.Game(person=db_person.first(), room=db_room.first(), team=min(range(len(teams)), key=f), is_host=False)
@@ -549,7 +549,7 @@ def update_game(db: Session, room_id: int, person_id: int, score: int):
     return (schemas.Game.from_orm(db_game.first()), 0)
 
 def update_game_for_team(db: Session, room_id: int, person_id: int, team: int):
-    if team < 0 or team > 7:
+    if team < 0 or team > 6:
         return (None, 4)
 
     db_room = db.query(models.Room).filter(models.Room.id == room_id)

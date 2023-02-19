@@ -349,10 +349,10 @@ def test_websocket_setting_and_team(app):
             assert data["request"] == "setting" and data["response"] == "error"
 
             # 팀 변경 요청
-            print("\n21. send team 7")
+            print("\n21. send team 6")
             websocket.send_json({
                 'request': "team",
-                'team': 7
+                'team': 6
             })
             data = websocket.receive_json(mode='text')
             print(data)
@@ -791,10 +791,10 @@ def test_websocket_setting_and_many_hand(app):
             assert data["request"] == "refresh" and data["response"] == "success"
 
             # 팀 변경 요청
-            print("\n21. send team 7")
+            print("\n21. send team 6")
             websocket.send_json({
                 'request': "team",
-                'team': 7
+                'team': 6
             })
             data = websocket.receive_json(mode='text')
             print(data)
