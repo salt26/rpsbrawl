@@ -187,7 +187,7 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int, password: st
         return (None, 2)
     elif db_room.first().password is not None and db_room.first().password != password:
         return (None, 4)
-    elif db_room.first().max_persons <= len(db_room.first().persons) + db_room.first().bot_skilled + db_room.first().bot_dumb:
+    elif db_room.first().max_persons < len(db_room.first().persons) + db_room.first().bot_skilled + db_room.first().bot_dumb:
         return (None, 6)
     
     # 팀 번호는 0 ~ 7 중 가장 인원이 적은 팀으로 배정
