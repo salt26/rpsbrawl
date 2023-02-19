@@ -49,7 +49,6 @@ class Game(GameBase):
     lose: int
     team: int
     is_host: bool
-    is_human: bool = True
     #hands: List[Hand] = []
 
     class Config:
@@ -59,6 +58,7 @@ class PersonBase(BaseModel):
     #affiliation: str
     name: str
     #is_admin: bool
+    is_human: bool
 
 class PersonCreate(PersonBase):
     #password: str

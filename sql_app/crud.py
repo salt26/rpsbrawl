@@ -1,4 +1,4 @@
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, not_
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
@@ -49,11 +49,20 @@ def get_person_by_name(db: Session, name: str):
 
 def create_person(db: Session, name: str):
     # 회원 가입
-    db_person = models.Person(name=name)
-    db.add(db_person)
+    person = models.Person(name=name, is_human=True)
+    db.add(person)
     db.commit()
-    db.refresh(db_person)
-    return schemas.Person.from_orm(db_person)
+    db.refresh(person)
+    return schemas.Person.from_orm(person)
+
+def create_bot(db: Session, name_prefix: str):
+    # 새로운 봇 생성
+    # name_prefix는 대문자 한 글자 ("S": skilled, "D": dumb)
+    bot = models.Person(name=name_prefix + "-" + str(datetime.now().timestamp()).replace('.', '-'), is_human=False)
+    db.add(bot)
+    db.commit()
+    db.refresh(bot)
+    return schemas.Person.from_orm(bot)
 
 def check_person_playing(db: Session, person_id: int):
     update_expired_rooms_to_end(db)
@@ -76,23 +85,23 @@ def check_person_waiting_or_playing(db: Session, person_id: int):
 """
 def delete_person(db: Session, person: schemas.PersonCreate):
     # 회원 탈퇴 (아마 안 쓸 것)
-    db_person = db.query(models.Person).filter(and_(models.Person.affiliation == person.affiliation, \
+    person = db.query(models.Person).filter(and_(models.Person.affiliation == person.affiliation, \
         models.Person.name == person.name, models.Person.hashed_password == hash_password(person.password))).first()
-    db.delete(db_person)
+    db.delete(person)
     db.commit()
-    db.refresh(db_person)
-    return db_person
+    db.refresh(person)
+    return person
 """
 
 def get_rooms(db: Session):
     return parse_obj_as(schemas.List[schemas.Room], db.query(models.Room).all())
 
 def get_room(db: Session, room_id: int):
-    db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
-    if db_room is None:
+    room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if room is None:
         return None
     else:
-        return schemas.Room.from_orm(db_room)
+        return schemas.Room.from_orm(room)
 
 def get_non_end_rooms(db: Session):
     rooms = db.query(models.Room).filter(models.Room.state != schemas.RoomStateEnum.End).all()
@@ -104,9 +113,9 @@ def get_non_end_rooms(db: Session):
 """
 def get_last_wait_room(db: Session):
     # 마지막 대기 방 반환 (없으면 생성해서 반환)
-    db_room = db.query(models.Room).filter(models.Room.state == schemas.RoomStateEnum.Wait).all()
-    if len(db_room) > 0:
-        return schemas.Room.from_orm(db_room[-1])
+    rooms = db.query(models.Room).filter(models.Room.state == schemas.RoomStateEnum.Wait).all()
+    if len(rooms) > 0:
+        return schemas.Room.from_orm(rooms[-1])
     else:
         return create_room(db)
 """
@@ -146,15 +155,15 @@ def update_last_wait_room_to_enter(db: Session, person_id: int):
     db_person = db.query(models.Person).filter(models.Person.id == person_id)
     if db_person.first() is None or db_person.first().is_active:
         return None
-    db_game = models.Game(person=db_person.first(), room=db_room.first())
-    db.add(db_game)
-    db_room.first().persons.append(db_game)
-    db_person.first().rooms.append(db_game)
+    game = models.Game(person=db_person.first(), room=db_room.first())
+    db.add(game)
+    db_room.first().persons.append(game)
+    db_person.first().rooms.append(game)
     db_person.update({
         "is_active" : True
     })
     db.commit()
-    db.refresh(db_game)
+    db.refresh(game)
     db.refresh(db_person.first())
     db.refresh(db_room.first())
     return schemas.Room.from_orm(db_room.first())
@@ -198,6 +207,28 @@ def update_room_to_enter(db: Session, room_id: int, person_id: int, password: st
     db.refresh(db_room.first())
     return (schemas.Room.from_orm(db_room.first()), 0)
 
+def update_room_to_enter_bot(db: Session, room_id: int, bot_id: int):
+    # 해당 방에 봇 입장
+    
+    db_person = db.query(models.Person).filter(models.Person.id == bot_id)
+    if db_person.first() is None:
+        return (None, 3)
+    elif db_person.first().is_human:
+        return (None, 2)
+
+    db_room = db.query(models.Room).filter(models.Room.id == room_id)
+    if db_room.first() is None:
+        return (None, 1)
+    
+    game = models.Game(person=db_person.first(), room=db_room.first(), team=-1, is_host=False)
+    db.add(game)
+    db_room.first().persons.append(game)
+    db_person.first().rooms.append(game)
+    db.commit()
+    db.refresh(game)
+    db.refresh(db_person.first())
+    db.refresh(db_room.first())
+    return (schemas.Room.from_orm(db_room.first()), 0)
 
 # https://stackoverflow.com/questions/9667138/how-to-update-sqlalchemy-row-entry
 
@@ -303,8 +334,8 @@ def update_room_setting(db: Session, room_id: int, name: str or None = None, mod
                 "bot_dumb": bot_dumb
             })
             
-    print("db_room.first().bot_skilled + db_room.first().bot_dumb + len(db_room.first().persons) = " + str(db_room.first().bot_skilled + db_room.first().bot_dumb + len(db_room.first().persons)))
-    print("db_room.first().max_persons = " + str(db_room.first().max_persons))
+    #print("db_room.first().bot_skilled + db_room.first().bot_dumb + len(db_room.first().persons) = " + str(db_room.first().bot_skilled + db_room.first().bot_dumb + len(db_room.first().persons)))
+    #print("db_room.first().max_persons = " + str(db_room.first().max_persons))
     if db_room.first().bot_skilled + db_room.first().bot_dumb + len(db_room.first().persons) > db_room.first().max_persons:
         db.rollback()
         return (None, 53)
@@ -356,10 +387,10 @@ def update_room_end_time(db: Session, room_id: int):
     # 플레이 시간이 다 된 방에서 명시적으로 함수를 호출해 주어야 함
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
     if db_room.first() is None:
-        print("update_room_end_time failed: room not found")
+        #print("update_room_end_time failed: room not found")
         return None
     if not(db_room.first().end_time is None and db_room.first().state == schemas.RoomStateEnum.Play):
-        print("update_room_end_time failed: end_time is not None or not in play mode")
+        #print("update_room_end_time failed: end_time is not None or not in play mode")
         return None
     db_room.update({
         "end_time" : datetime.now()
@@ -399,83 +430,83 @@ def update_expired_rooms_to_end(db: Session):
             update_room_to_end(db, room.id)  # 이렇게 garbage collection된 방은 모두 End 상태가 되지만 그 중 일부의 end_time이 None일 수 있음
 
 def get_hands(db: Session, room_id: int):
-    db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
-    db_hands.sort(key=lambda e: e.time)
-    return parse_obj_as(schemas.List[schemas.Hand], db_hands)
+    hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
+    hands.sort(key=lambda e: e.time)
+    return parse_obj_as(schemas.List[schemas.Hand], hands)
     # 가장 오래 전에 입력된 손이 [0]번째 인덱스
 
 def get_hands_from_last(db: Session, room_id: int, limit: int = 6):
     if limit <= 0:
         limit = 1
-    db_hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
-    if len(db_hands) <= 0:
+    hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
+    if len(hands) <= 0:
         return None
-    db_hands.sort(key=lambda e: e.time)
-    n = len(db_hands) - limit
+    hands.sort(key=lambda e: e.time)
+    n = len(hands) - limit
     if n < 0:
         n = 0
-    return parse_obj_as(schemas.List[schemas.Hand], db_hands[n:])
+    return parse_obj_as(schemas.List[schemas.Hand], hands[n:])
 
 def get_hands_by_person(db: Session, room_id: int, person_id: int):
-    db_hands = db.query(models.Hand).filter(and_(models.Hand.room_id == room_id, \
+    hands = db.query(models.Hand).filter(and_(models.Hand.room_id == room_id, \
         models.Hand.person_id == person_id)).all()
-    return parse_obj_as(schemas.List[schemas.Hand], db_hands)
+    return parse_obj_as(schemas.List[schemas.Hand], hands)
 
 def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnum):
     # 시간 확인
-    db_room = db.query(models.Room).filter(models.Room.id == room_id).first()
-    if db_room is None:
+    room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if room is None:
         # 오류
         return (None, 5)
-    elif db_room.state != schemas.RoomStateEnum.Play:
+    elif room.state != schemas.RoomStateEnum.Play:
         return (None, 1)
-    elif db_room.start_time is None or db_room.start_time > datetime.now():
+    elif room.start_time is None or room.start_time > datetime.now():
         return (None, 2)
-    elif db_room.end_time is not None and db_room.end_time < datetime.now():
+    elif room.end_time is not None and room.end_time < datetime.now():
         return (None, 6)
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id))
     if db_game.first() is None:
         return (None, 3)
 
-    db_hand = get_hands(db, room_id)
-    if db_hand is None or len(db_hand) <= 0:
+    hands = get_hands(db, room_id)
+    if hands is None or len(hands) <= 0:
         return (None, 4)
     
-    score = hand_score(hand, db_hand[-1].hand)
-    db_hand = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)
-    db.add(db_hand)
+    score = hand_score(hand, hands[-1].hand)
+    hands = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)
+    db.add(hands)
     db.commit()
-    db.refresh(db_hand)
+    db.refresh(hands)
     # 개인 점수 변경
     _, error_code = update_game(db, room_id=room_id, person_id=person_id, score=score)
     
-    return (schemas.Hand.from_orm(db_hand), error_code)
+    return (schemas.Hand.from_orm(hands), error_code)
 
 def get_game(db: Session, room_id: int, person_id: int):
-    db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
+    game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id)).first()
-    if db_game is None:
+    if game is None:
         return None
     else:
-        return schemas.Game.from_orm(db_game)
+        return schemas.Game.from_orm(game)
 
 """
 def create_game(db: Session, room_id: int, person_id: int):
-    db_game = models.Game(room_id=room_id, person_id=person_id, score=0, \
+    game = models.Game(room_id=room_id, person_id=person_id, score=0, \
         win=0, draw=0, lose=0, hands=[])
-    db.add(db_game)
+    db.add(game)
     db.commit()
-    db.refresh(db_game)
-    return schemas.Game.from_orm(db_game)
+    db.refresh(game)
+    return schemas.Game.from_orm(game)
 """
 
 """
 def create_game_for_all(db: Session, room_id: int, person_ids: list):
     for p in person_ids:
-        db_game = models.Game(room_id=room_id, person_id=p, score=0, \
+        game = models.Game(room_id=room_id, person_id=p, score=0, \
             win=0, draw=0, lose=0, hands=[])
-        db.add(db_game)
+        db.add(game)
     db.commit()
     return
 """
@@ -539,17 +570,29 @@ def update_game_for_team(db: Session, room_id: int, person_id: int, team: int):
     return (schemas.Game.from_orm(db_game.first()), 0)
 
 def get_games(db: Session):
-    db_game = db.query(models.Game).all()
-    return parse_obj_as(schemas.List[schemas.Game], db_game)
+    games = db.query(models.Game).all()
+    return parse_obj_as(schemas.List[schemas.Game], games)
+
+def check_human_from_game(db: Session, game: models.Game):
+    person = db.query(models.Person).filter(models.Person.id == game.person_id).first()
+    if person is None:
+        return False
+    else:
+        return person.is_human
 
 def get_games_in_room(db: Session, room_id: int, only_human: bool):
+    games = db.query(models.Game).filter(models.Game.room_id == room_id).all()
     if only_human:
-        db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, models.Game.is_human)).all()
+        return parse_obj_as(schemas.List[schemas.Game], list(filter(lambda g: check_human_from_game(db, g), games)))
     else:
-        db_game = db.query(models.Game).filter(models.Game.room_id == room_id).all()
-    return parse_obj_as(schemas.List[schemas.Game], db_game)
+        return parse_obj_as(schemas.List[schemas.Game], games)
 
 def get_expired_rooms(db: Session):
-    db_room = db.query(models.Room).filter(and_(models.Room.state == schemas.RoomStateEnum.Play,
+    room = db.query(models.Room).filter(and_(models.Room.state == schemas.RoomStateEnum.Play,
         models.Room.end_time < datetime.now())).all()
-    return parse_obj_as(schemas.List[schemas.Room], db_room)
+    return parse_obj_as(schemas.List[schemas.Room], room)
+
+def get_bots(db: Session, name_prefix: str):
+    bots = db.query(models.Person).filter(and_(not_(models.Person.is_human), models.Person.name.like(name_prefix + "-%"))).all()
+    #bots = list(filter(lambda b: b.name.startswith(name_prefix + "-"), bots))
+    return parse_obj_as(schemas.List[schemas.Person], bots)

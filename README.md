@@ -147,7 +147,9 @@ signin error: 같은 이름의 사람이 이미 접속하여 어떤 대기 방 �
     hand_list: [
       ...,
       {
+        team: 0,
         name: "이름",
+        is_human: True,
         hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
         score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
         time: "2022-12-25 03:24:42.610891 KST",
@@ -730,6 +732,7 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
       {
         team: 0,
         name: "이름",         // 이 방에 입장한 첫 번째 사람 이름
+        is_human: True,
         hand: 0,   // 0(Rock) 또는 1(Scissor) 또는 2(Paper) 중 랜덤으로 부여
         score: 0,  // 첫 번째 손이므로 항상 비긴(0) 것으로 취급
         time: "2022-12-25 03:24:00.388157 KST",
@@ -856,6 +859,7 @@ hand error: 잘못된 손(0, 1, 2가 아닌 수)을 내거나 요청에 hand가 
       {
         team: 0,
         name: "이름",
+        is_human: True,
         hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
         score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
         time: "2022-12-25 03:24:12.388157 KST",
@@ -916,6 +920,7 @@ hand error: 잘못된 손(0, 1, 2가 아닌 수)을 내거나 요청에 hand가 
       {
         team: 0,
         name: "이름",
+        is_human: True,
         hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
         score: 1,   // 1(이김) 또는 0(비김) 또는 -1(짐)
         time: "2022-12-25 03:25:04.510891 KST",
@@ -1069,43 +1074,104 @@ disconnect broadcast: 요청 데이터에 필요한 정보가 모두 들어있�
 
 
 ### API test
-* 백엔드 서버를 실행 중인 상황에서([Run](#run) 참조) 별도의 터미널을 켜고 아래 명령어 실행
+* 터미널을 켜고 아래 명령어 실행
+  * 백엔드 서버를 따로 실행하지 않아도 동작함
 * `cd {root_of_this_repository}`
 * `./sql_app/Scripts/activate.ps1` (가상환경 실행)
 * `python ./backend_websocket_test.py`
 
 #### 현재 테스트한 항목
-##### Test 1
-* join을 통한 웹 소켓 연결: 성공
-* quit 요청을 통해 대기 방에서 나가기: 성공
+##### Test 1: 로그인, 로그아웃
+* signin을 통한 웹 소켓 연결: 성공
+* signout 요청을 통해 연결 끊기: 성공
   
-##### Test 2
-* start 요청을 통해 대기 방에서 플레이 중인 방으로 전환하기: 성공
-* start 직후에 hand 요청을 날리고 오류 메시지 받기: 성공
-* start 후 3초 후에 손 입력을 받기 시작한다는 메시지 받기: 성공
-* 손 입력을 받기 시작한 후 2초 후에 hand 요청을 날리고 반영된 결과 받기: 성공
-* 손 입력을 받기 시작한 후 5초 후에 hand 요청을 날리고 반영된 결과 받기: 성공
-* 손 입력을 받기 시작한 후 7초 후에 hand 요청을 날리고 반영된 결과 받기: 성공
-* 손 입력을 받기 시작한 후 10초 후(게임이 종료될 시간)에 end 응답 받기: 성공
-* 게임 종료 이후 손 입력을 요청하는 경우 이미 연결이 끊긴 상황이라 오류 발생: 확인
+##### Test 2: 방 생성, 퇴장
+* create로 새 방 만들기: 성공
+* quit으로 방에서 나오기: 성공
+  * 방에서 마지막 사람이 나오면 방이 제거됨: 확인
+* 잘못된 create 요청 날리고 오류 메시지 받기: 성공
+* mode와 password 없이 create 요청 날려서 새 방 만들기: 성공
   
-##### Test 3
-* 요청 양식(JSON)에 맞지 않는 요청을 날리고 오류 메시지 받기: 성공
-* 대기 방에서 quit 요청 없이 임의로 연결을 종료해도 이후에 같은 소속과 이름의 계정으로 새로운 방에 들어갈 수 있음: 확인
-* 대기 방에서 start 요청을 `time_offset`과 `time_duration` 없이 날리고 서버에 의해 연결 끊기기: 성공
-* 서버에 의해 연결이 끊겨도 이후에 같은 소속과 이름의 계정으로 새로운 방에 들어갈 수 있음: 확인
+##### Test 3: 방 설정 변경, 팀 변경
+* 방장이 되어 setting으로 모든 설정을 한 번에 변경하기: 성공
+* setting으로 일부 설정만 변경하기: 성공
+* 잘못된 setting 요청 날리고 오류 메시지 받기: 성공
+  * 봇을 포함한 현재 입장 인원에 따라, 봇 수 또는 최대 인원 수를 잘못 변경할 때 오류 메시지 받기: 확인
+  * 둘 이상의 설정을 변경하려다가 그 중 하나에서 잘못된 값이 확인되는 경우 하나도 변경하지 않고(롤백하고) 오류 메시지 받기: 확인
+* team으로 팀 변경하기: 성공
+* 방에서 퇴장하지 않고 바로 signout하기: 성공
+  * 이때 quit 절차가 실행되면서 사람 없는 방이 제거됨: 확인
 
-##### Test 4
-* 관리자 권한이 없는 계정으로 입장한 후 start 요청을 날리고 "Forbidden" 오류 응답 받기: 성공
+##### Test 4: 일반 모드로 게임 시작, 손 입력, 게임 종료
+* refresh로 방 목록 새로고침: 성공
+* 방장이 되어 start로 게임 시작: 성공
+* 손 입력 받기 전에 hand 요청 날리고 오류 메시지 받기: 성공
+* 손 입력 받기 시작한다는 응답 받기: 성공
+* 손 입력을 받는 동안 hand 요청: 성공
+* 잘못된 hand 요청 날리고 오류 메시지 받기: 성공
+* 손 입력 종료될 때 end 응답 받기: 성공
+* 손 입력 종료 후 hand 요청 날리고 오류 메시지 받기: 성공
+* 손 입력 종료되고 10초 후에 새로운 방에 재입장된 다음 end 응답 받기: 성공
+  * 기존의 방 설정이 그대로 유지됨: 확인
 
-##### Test 5
+##### Test 5: 방 설정 변경, 많은 손 입력
 * 손이 6번 이상 입력되었을 때, 게임 중에 손 입력 시 hand 응답으로 오는 hand_list에 마지막 6개의 손만 포함하기: 성공
 * 게임 종료 시 end 응답으로 오는 hand_list에 모든 손 포함하기: 성공
+  * 점수도 잘 반영되어 있음: 확인
+* 두 번째 end 응답 받고 재입장 후에 team으로 팀 변경: 성공
+* 두 번째 end 응답 받고 재입장 후에 setting으로 방 설정 변경: 성공
+
+##### Test 6: 오류, 접속 끊김, 재접속
+* name을 빈 문자열로 해서 signin 요청 날리고 오류 메시지 받기: 성공
+* 방 목록 화면(방에 입장하지 않은 상태)에서 setting, team, quit, start, hand 요청 날리고 오류 메시지 받기: 성공
+* 대기 방에 입장한 상태에서 create, join 요청 날리고 오류 메시지 받기: 성공
+* start로 게임 시작 후 손 입력을 받기 전에 접속을 끊었다가 signin으로 재접속: 성공
+  * 재접속 시 이전에는 게임이 진행되지 않고 멈추는 버그가 있었는데, 이는 방장(start 요청을 날린 사람)이 게임 시작 후 접속이 끊기면 게임 시간을 흐르게 하는 함수가 같이 죽어서 생기는 버그였음
+  * 이제는 멀티스레딩을 사용하여, 방장이 나가더라도 한 번 시작한 게임은 끝까지 잘 진행되며, 따라서 재접속이 가능해짐: 확인
+* 손 입력을 받는 중에 signout으로 연결 끊기: 성공
+  * 여전히 게임이 진행 중이므로 퇴장 처리가 되지 않고, 따라서 재접속 가능
+* signin으로 재접속해서 hand 요청: 성공
+* 접속을 끊은 동안 시간 종료에 따른 end 응답을 못 받고 새 방으로 이동하기 전 재접속: 성공
+* 대기 방에서 퇴장하거나 signout하지 않고 접속 끊기: 성공
+  * 이때 quit 절차가 실행되면서 사람 없는 방이 제거됨: 확인
+
+##### Test 7: 접속 끊김, 재접속 2
+* start로 게임 시작 후 손 입력을 받기 전에 접속을 끊어서 손 입력을 받기 시작한다는 start 응답을 못 받고 손 입력을 받는 중에 재접속: 성공
+* 이후 hand 요청: 성공
+* 시간 종료에 따른 end 응답을 받고 새 방으로 이동되기 전에 접속을 끊어서 새 방으로 이동된 end 응답을 받지 못한 후 signin으로 접속: 성공
+  * 이때 기존 방의 게임이 끝났으므로 재접속으로 취급되지 않고 방 목록 화면으로 접속: 확인
+* quit 요청을 날렸지만 방 목록 화면에 있으므로 오류 메시지 받기: 성공
+* refresh 요청으로 새 방이 생성되지 않았음을 확인: 성공
+
+##### Test 8: 숙련봇 한 명과 플레이
+* start 요청 전에는 해당 방의 game_list에 봇이 포함되어 있지 않음: 확인
+* setting 요청으로 숙련봇 한 명을 넣고 start 요청 시, start 응답의 init_data의 game_list에 숙련봇 정보 포함: 확인
+* 숙련봇이 알아서 10초 동안 hand를 내서 +6점의 기록을 냄: 성공
+* 시간 종료에 따른 end 응답(hand_data)을 받는 순간 봇 종료: 성공
+* 방 재입장 후 refresh 요청 없이 바로 quit 요청을 해도 오류 없이 퇴장: 성공
+
+##### Test 9: 트롤봇 한 명과 플레이
+* start 요청 전에는 해당 방의 game_list에 봇이 포함되어 있지 않음: 확인
+* setting 요청으로 트롤봇 한 명을 넣고 start 요청 시, start 응답의 init_data의 game_list에 트롤봇 정보 포함: 확인
+* 트롤봇이 알아서 10초 동안 hand를 내서 -5점의 기록을 냄: 성공
+* 시간 종료에 따른 end 응답(hand_data)을 받는 순간 봇 종료: 성공
+
+##### Test 8: 숙련봇 셋, 트롤봇 셋과 플레이
+* start 요청 전에는 해당 방의 game_list에 봇이 포함되어 있지 않음: 확인
+* setting 요청으로 숙련봇 세 명과 트롤봇 세 명을 넣고 start 요청 시, start 응답의 init_data의 game_list에 숙련봇 정보 포함: 확인
+* 봇들이 알아서 10초 동안 concurrent하게 hand를 냄: 성공
+* 시간 종료에 따른 end 응답(hand_data)을 받는 순간 봇 종료: 성공
+  * 결과에서 점수 계산 잘 됨: 확인
 
 #### 테스트하지 않은 항목
-* 여러 명이 동시에 한 방에 들어가고 나가고 연결이 끊기는 상황
-* 여러 방에서 동시에 게임이 돌아가는 상황 -> 당장은 고려하지 않을 것
-* 플레이 중인 방에서 연결이 끊겼을 때 다시 입장하려는 상황 -> 아직 구현이 안 되어 있지만 기존의 방이 아직 플레이 중인 상태라면 그 방으로 재입장하도록 구현할 예정
+* join
+* 꽉 찬 방에 join
+* 비밀번호가 있는 방에 비밀번호를 입력하지 않거나 틀리게 해서 join
+* join 시 부여되는 팀 번호 확인
+* 사람이 두 명 이상 입장한 방에서 방장 quit -> 방장 이양되는지 확인
+* 방장이 아닌 사람이 setting
+* 방장이 아닌 사람이 start
+* 두 명 이상이 있는 방에서 게임 종료 후 새 방으로 이동되기 전에 방장이 접속을 종료했을 때 다른 사람이 방장을 이양받고 새 방으로 이동되는지 확인
 
 #### 테스트 로그
 * `cd {root_of_this_repository}`
@@ -1113,85 +1179,584 @@ disconnect broadcast: 요청 데이터에 필요한 정보가 모두 들어있�
 * `python ./backend_websocket_test.py`
 
 ```
------------------ Test 1: join and quit -----------------
-@ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test', 'is_admin': False, 'room_id': 25, 'person_id': 1}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 25}]}
-@@ send quit
-{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+----------------- Test 1: signin and signout -----------------
+01. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
 
------------- Test 2: join and start and hand ------------
-@ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'room_id': 25, 'person_id': 2}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리 자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 25}]}
-@@ send start 3 10
-{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-05 17:50:10.599367 KST', 'start_time': '', 'end_time': ''}, 'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:10.599367 KST', 'room_id': 25}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 25}]}}
-@@@ send hand 0 -> error response
+02. send signout
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+----------------- Test 2: create and quit -----------------
+01. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+02. send create
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 3}]}}
+
+03. send quit -> room removed
+update room to quit (DEBUG)
+delete room
+{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully left the room'}
+
+04. send create mode=2 -> bad request
+{'request': 'create', 'response': 'error', 'type': 'message', 'message': 'Bad request: mode'}
+
+05. send create name="123456789012345678901234567890123" -> bad request
+{'request': 'create', 'response': 'error', 'type': 'message', 'message': 'Bad request'}
+
+06. send create name="" -> bad request
+{'request': 'create', 'response': 'error', 'type': 'message', 'message': 'Bad request'}
+
+07. send create password="123456789012345678901" -> bad request
+{'request': 'create', 'response': 'error', 'type': 'message', 'message': 'Bad request'}
+
+08. send create without mode and password
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 3}]}}
+
+09. send quit -> room removed
+update room to quit (DEBUG)
+delete room
+{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully left the room'}
+
+10. send signout
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+----------------- Test 3: setting and team -----------------
+01. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+02. send create
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 3}]}}
+
+03. send setting name="Hello!" mode=1 password="password" bot_s=1 bot_d=1 max_p=25
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 1, 'bot_dumb': 1, 'max_persons': 25, 'num_persons': 3}}
+
+04. send setting password=""
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': False, 'bot_skilled': 1, 'bot_dumb': 1, 'max_persons': 25, 'num_persons': 3}}
+
+05. send setting password="password" bot_s=9
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 9, 'bot_dumb': 1, 'max_persons': 25, 'num_persons': 11}}
+
+06. send setting bot_d=5
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 9, 'bot_dumb': 5, 'max_persons': 25, 'num_persons': 15}}
+
+07. send setting name="" -> bad request
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: name'}
+
+08. send setting name="123456789012345678901234567890123" -> bad request
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: name'}
+
+09. send setting mode=3 -> bad request
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: mode'}
+
+10. send setting password="123456789012345678901" -> bad request
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: password'}
+
+11. send setting bot_skilled=-1 -> bad request
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: bot_skilled'}
+
+12. send setting bot_dumb=11 -> bad request
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: bot_dumb'}
+
+13. send setting max_persons=31 -> bad request
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: max_persons'}
+
+14. send setting max_persons=10 -> bad request (1 + 9 + 5 > 10)
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: exceed max_persons'}
+
+15. send setting bot_d=10 max_p=15 -> bad request (1 + 9 + 10 > 15) -> rollback to bot_d=5
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: exceed max_persons'}
+
+16. send setting max_persons=15 (1 + 9 + 5 <= 15)
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 9, 'bot_dumb': 5, 'max_persons': 15, 'num_persons': 15}}
+
+17. send setting bot_skilled=10 -> bad request (1 + 10 + 5 > 15)
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: exceed max_persons'}
+
+18. send setting bot_s=0 bot_d=0
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 15, 'num_persons': 1}}
+
+19. send setting max_persons=1
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 1, 'num_persons': 1}}
+
+20. send setting max_persons=0 -> bad request (1 + 0 + 0 > 0)
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'Bad request: exceed max_persons'}
+
+21. send team 7
+{'request': 'team', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'team': 7, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 3}]}
+
+22. send team -1 -> bad request
+{'request': 'team', 'response': 'error', 'type': 'message', 'message': 'Bad request'}
+
+23. send team None -> bad request
+{'request': 'team', 'response': 'error', 'type': 'message', 'message': 'Bad request'}
+
+24. send signout before quit
+update room to quit (DEBUG)
+delete room
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+----------------- Test 4: normal mode start and hand -----------------
+01. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+02. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': []}
+
+03. send create
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 3, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 3}]}}
+
+04. send start 3 10
+{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'id': 3, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:02:09.026071 KST', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:02:09.026071 KST', 'room_id': 3}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 3}]}}
+
+05. send hand 0 -> error response
 {'request': 'hand', 'response': 'error', 'type': 'message', 'message': 'Game not started yet'}
-@@@@ start response
-{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-05 17:50:10.599367 KST', 'start_time': '2023-01-05 17:50:13.679368 KST', 'end_time': ''}}
-@@@@@ send hand 0
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:10.599367 KST', 'room_id': 25}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:15.692800 KST', 'room_id': 25}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 25}]}}
-@@@@@@ send hand 1 -> lose
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:10.599367 KST', 'room_id': 25}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:15.692800 KST', 'room_id': 25}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:18.733531 KST', 'room_id': 25}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 0, 'draw': 1, 'lose': 1, 'room_id': 25}]}}
-@@@@@@@ send hand 0 -> win
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:10.599367 KST', 'room_id': 25}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:15.692800 KST', 'room_id': 25}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:18.733531 KST', 'room_id': 25}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 17:50:20.762751 KST', 'room_id': 25}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 1, 'draw': 1, 'lose': 1, 'room_id': 25}]}}
-@@@@@@@@ end response
-{'request': 'end', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:10.599367 KST', 'room_id': 25}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:15.692800 KST', 'room_id': 25}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:18.733531 KST', 'room_id': 25}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 17:50:20.762751 KST', 'room_id': 25}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 1, 'draw': 1, 'lose': 1, 'room_id': 25}]}}
-@@@@@@@@@ send hand 0 -> not connected
 
---------- Test 3: join and error and disconnect ---------
-@ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 26, 'person_id': 3}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 26}]}
-@@ send plain text (not a JSON)
-{'request': '', 'response': 'error', 'type': 'message', 'message': 'Bad request'}
-@@@ disconnected (without sending quit)
-@@@@ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 26, 'person_id': 3}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 26}]}
-@@@@@ send start (without required keyword arguments) -> disconnect
-{'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': ''}
-@@@@@@ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'room_id': 26, 'person_id': 3}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': 'test_villain', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 26}]}
-@@@@@@@ disconnected (without sending quit)
+06. start response
+{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'id': 3, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:02:09.026071 KST', 'start_time': '2023-02-17 17:02:22.494684 KST', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}}
 
----------------- Test 4: forbidden start ----------------
-@ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'UPnL', 'name': '아무개', 'is_admin': False, 'room_id': 26, 'person_id': 4}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'UPnL', 'name': '아무개', 'is_admin': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 26}]}
-@@ send start 3 10
-{'request': 'start', 'response': 'error', 'type': 'message', 'message': 'Forbidden'}
-@@@ send quit
-{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+07. send hand 0
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:02:09.026071 KST', 'room_id': 3}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:02:24.648253 KST', 'room_id': 3}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': -1, 'win': 0, 'draw': 0, 'lose': 1, 'room_id': 3}]}}
 
-------------------- Test 5: many hands ------------------
-@ send join
-{'request': 'join', 'response': 'success', 'type': 'profile', 'data': {'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'room_id': 26, 'person_id': 2}}
-{'request': 'join', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리 자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 26}]}
-@@ send start 3 10
-{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-05 17:50:23.974810 KST', 'start_time': '', 'end_time': ''}, 'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 17:50:23.974810 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 26}]}}
-@@@ start response
-{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-01-05 17:50:23.974810 KST', 'start_time': '2023-01-05 17:50:26.975776 KST', 'end_time': ''}}
-@@@@ send hand 0
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 17:50:23.974810 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 17:50:27.998423 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 0, 'draw': 0, 'lose': 1, 'room_id': 26}]}}
-@@@@@ send hand 1 -> lose
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 17:50:23.974810 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 17:50:27.998423 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:29.038681 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -2, 'win': 0, 'draw': 0, 'lose': 2, 'room_id': 26}]}}
-@@@@@@ send hand 0 -> win
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 17:50:23.974810 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 17:50:27.998423 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:29.038681 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 17:50:30.071005 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 1, 'draw': 0, 'lose': 2, 'room_id': 26}]}}
-@@@@@@@ send hand 0 -> draw
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 17:50:23.974810 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 17:50:27.998423 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:29.038681 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 17:50:30.071005 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:31.114831 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 1, 'draw': 1, 'lose': 2, 'room_id': 26}]}}
-@@@@@@@@ send hand 0 -> draw
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 17:50:23.974810 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 17:50:27.998423 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:29.038681 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 17:50:30.071005 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:31.114831 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:32.155551 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 1, 'draw': 2, 'lose': 2, 'room_id': 26}]}}
-@@@@@@@@@ send hand 0 -> draw
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 17:50:27.998423 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:29.038681 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 17:50:30.071005 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:31.114831 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:32.155551 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:33.191578 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 1, 'draw': 3, 'lose': 2, 'room_id': 26}]}}
-@@@@@@@@@@ send hand 0 -> draw
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:29.038681 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 17:50:30.071005 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:31.114831 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:32.155551 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:33.191578 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:34.223051 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 1, 'draw': 4, 'lose': 2, 'room_id': 26}]}}
-@@@@@@@@@@@ send hand 0 -> draw
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 17:50:30.071005 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:31.114831 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:32.155551 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:33.191578 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:34.223051 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:35.298568 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': -1, 'win': 1, 'draw': 5, 'lose': 2, 'room_id': 26}]}}
-@@@@@@@@@@@@ send hand 2 -> win
-{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:31.114831 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:32.155551 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:33.191578 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:34.223051 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:35.298568 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 2, 'score': 1, 'time': '2023-01-05 17:50:36.343538 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 2, 'draw': 5, 'lose': 2, 'room_id': 26}]}}
-@@@@@@@@@@@@@ end response
-{'request': 'end', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'affiliation': 'STAFF', 'name': '관 리자', 'hand': 2, 'score': 0, 'time': '2023-01-05 17:50:23.974810 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': -1, 'time': '2023-01-05 17:50:27.998423 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 1, 'score': -1, 'time': '2023-01-05 17:50:29.038681 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관리자', 'hand': 0, 'score': 1, 'time': '2023-01-05 17:50:30.071005 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:31.114831 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:32.155551 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:33.191578 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:34.223051 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 0, 'score': 0, 'time': '2023-01-05 17:50:35.298568 KST', 'room_id': 26}, {'affiliation': 'STAFF', 'name': '관 리자', 'hand': 2, 'score': 1, 'time': '2023-01-05 17:50:36.343538 KST', 'room_id': 26}], 'game_list': [{'rank': 1, 'affiliation': 'STAFF', 'name': '관리자', 'is_admin': True, 'score': 0, 'win': 2, 'draw': 5, 'lose': 2, 'room_id': 26}]}}
+08. send hand 3 -> bad request
+{'request': 'hand', 'response': 'error', 'type': 'message', 'message': 'Bad request: hand'}
+
+09. send hand None -> bad request
+{'request': 'hand', 'response': 'error', 'type': 'message', 'message': 'Bad request: hand'}
+
+10. send hand 1 -> lose
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:02:09.026071 KST', 'room_id': 3}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:02:24.648253 KST', 'room_id': 3}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:27.740411 KST', 'room_id': 3}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': -2, 'win': 0, 'draw': 0, 'lose': 2, 'room_id': 3}]}}
+
+11. send hand 0 -> win
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:02:09.026071 KST', 'room_id': 3}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:02:24.648253 KST', 'room_id': 3}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:27.740411 KST', 'room_id': 3}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:29.800734 KST', 'room_id': 3}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': -1, 'win': 1, 'draw': 0, 'lose': 2, 'room_id': 3}]}}
+
+12. end response hand_data
+{'request': 'end', 'response': 'broadcast', 'type': 'hand_data', 'data': {'room': {'id': 3, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:02:09.026071 KST', 'start_time': '2023-02-17 17:02:22.494684 KST', 'end_time': '2023-02-17 17:02:32.671032 KST', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:02:09.026071 KST', 'room_id': 3}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:02:24.648253 KST', 'room_id': 3}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:27.740411 KST', 'room_id': 3}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:29.800734 KST', 'room_id': 3}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': -1, 'win': 1, 'draw': 0, 'lose': 2, 'room_id': 3}]}}
+
+13. send hand 0 -> game has ended
+{'request': 'hand', 'response': 'error', 'type': 'message', 'message': 'Game has ended'}
+
+14. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': [{'id': 3, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:02:09.026071 KST', 'start_time': '2023-02-17 17:02:22.494684 KST', 'end_time': '2023-02-17 17:02:32.671032 KST', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}]}
+
+15. end response join_data
+{'request': 'end', 'response': 'broadcast', 'type': 'join_data', 'data': {'room': {'id': 4, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 4}]}}
+
+16. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': [{'id': 4, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}]}
+
+17. send quit -> room removed
+update room to quit (DEBUG)
+delete room
+{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully left the room'}
+
+18. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': []}
+
+19. send signout
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+----------------- Test 5: setting and many hand -----------------
+01. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+02. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': []}
+
+03. send create
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 4, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 4}]}}
+
+04. send setting name="Hello!" mode=1 password="password" max_p=25
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 4, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 25, 'num_persons': 1}}
+
+05. send team 3
+{'request': 'team', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 4}]}
+
+06. send start 3 10
+{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'id': 4, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:02:43.529528 KST', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 25, 'num_persons': 1}, 'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:02:43.529528 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 4}]}}
+
+07. start response
+{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'id': 4, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:02:43.529528 KST', 'start_time': '2023-02-17 17:02:46.707148 KST', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 25, 'num_persons': 1}}
+
+08. send hand 0
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:02:43.529528 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:47.891328 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 4}]}}
+
+09. send hand 1 -> lose
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:02:43.529528 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:47.891328 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:48.945542 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 1, 'draw': 0, 'lose': 1, 'room_id': 4}]}}
+
+10. send hand 0 -> win
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:02:43.529528 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:47.891328 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:48.945542 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:49.981910 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 2, 'draw': 0, 'lose': 1, 'room_id': 4}]}}
+
+11. send hand 0 -> draw
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:02:43.529528 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:47.891328 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:48.945542 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:49.981910 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:51.083177 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 2, 'draw': 1, 'lose': 1, 'room_id': 4}]}}
+
+12. send hand 0 -> draw
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:02:43.529528 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:47.891328 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:48.945542 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:49.981910 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:51.083177 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:52.163391 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 2, 'draw': 2, 'lose': 1, 'room_id': 4}]}}
+
+13. send hand 0 -> draw
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:47.891328 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:48.945542 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:49.981910 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:51.083177 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:52.163391 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:53.217613 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 2, 'draw': 3, 'lose': 1, 'room_id': 4}]}}
+
+14. send hand 0 -> draw -> show last 6 hands
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:48.945542 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:49.981910 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:51.083177 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:52.163391 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:53.217613 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:54.270212 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 2, 'draw': 4, 'lose': 1, 'room_id': 4}]}}
+
+15. send hand 0 -> draw -> show last 6 hands
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:49.981910 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:51.083177 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:52.163391 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:53.217613 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:54.270212 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:55.320676 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 2, 'draw': 5, 'lose': 1, 'room_id': 4}]}}
+
+16. send hand 2 -> win -> show last 6 hands
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:51.083177 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:52.163391 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:53.217613 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:54.270212 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:55.320676 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:02:56.382504 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 2, 'win': 3, 'draw': 5, 'lose': 1, 'room_id': 4}]}}
+
+17. end response hand_data
+{'request': 'end', 'response': 'broadcast', 'type': 'hand_data', 'data': {'room': {'id': 4, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:02:43.529528 KST', 'start_time': '2023-02-17 17:02:46.707148 KST', 'end_time': '2023-02-17 17:02:56.874260 KST', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 25, 'num_persons': 1}, 'hand_list': [{'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:02:43.529528 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:47.891328 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:02:48.945542 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:02:49.981910 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:51.083177 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:52.163391 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:53.217613 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:54.270212 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:02:55.320676 KST', 'room_id': 4}, {'team': 3, 'name': 'test', 'is_human': True, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:02:56.382504 KST', 'room_id': 4}], 'game_list': [{'rank': 1, 'team': 3, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 2, 'win': 3, 'draw': 5, 'lose': 1, 'room_id': 4}]}}
+
+18. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': [{'id': 4, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:02:43.529528 KST', 'start_time': '2023-02-17 17:02:46.707148 KST', 'end_time': '2023-02-17 17:02:56.874260 KST', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 25, 'num_persons': 1}]}
+
+19. end response join_data
+{'request': 'end', 'response': 'broadcast', 'type': 'join_data', 'data': {'room': {'id': 5, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 25, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 5}]}}
+
+20. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': [{'id': 5, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 25, 'num_persons': 1}]}
+
+21. send team 7
+{'request': 'team', 'response': 'broadcast', 'type': 'game_list', 'data': [{'rank': 1, 'team': 7, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 5}]}
+
+22. send setting bot_s=5 bot_d=4
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 5, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 5, 'bot_dumb': 4, 'max_persons': 25, 'num_persons': 10}}
+
+23. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': [{'id': 5, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hello!', 'mode': 1, 'has_password': True, 'bot_skilled': 5, 'bot_dumb': 4, 'max_persons': 25, 'num_persons': 10}]}
+
+24. send quit -> room removed
+update room to quit (DEBUG)
+delete room
+{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully left the room'}
+
+25. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': []}
+
+26. send signout
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+----------------- Test 6: error and disconnect -----------------
+
+01. send signin name=""
+{'request': 'signin', 'response': 'error', 'type': 'message', 'message': 'Name is required'}
+
+02. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+03. send setting name="Hello!" mode=1 -> you are not in any room
+{'request': 'setting', 'response': 'error', 'type': 'message', 'message': 'You are not in any room'}
+
+04. send team 3 -> you are not in any room
+{'request': 'team', 'response': 'error', 'type': 'message', 'message': 'You are not in any room'}
+
+05. send quit -> you are not in any room
+{'request': 'quit', 'response': 'error', 'type': 'message', 'message': 'You are not in any room'}
+
+06. send start 3 10 -> you are not in any room
+{'request': 'start', 'response': 'error', 'type': 'message', 'message': 'You are not in any room'}
+
+07. send hand 0 -> you are not in any room
+{'request': 'hand', 'response': 'error', 'type': 'message', 'message': 'You are not in any room'}
+
+08. send create
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 5, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 5}]}}
+
+09. send create -> you are already in a room
+{'request': 'create', 'response': 'error', 'type': 'message', 'message': 'You are already in a room'}
+
+10. send join -> you are already in a room
+{'request': 'join', 'response': 'error', 'type': 'message', 'message': 'You are already in a room'}
+
+11. send start 3 10
+{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'id': 5, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:08.218743 KST', 'start_time': '', 'end_time': '', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:08.217743 KST', 'room_id': 5}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 5}]}}
+
+12. disconnect
+update room to quit (DEBUG)
+
+13. send signin -> reconnected
+{'request': 'signin', 'response': 'reconnected', 'type': 'recon_data', 'data': {'name': 'test', 'person_id': 1, 'room': {'id': 5, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:08.218743 KST', 'start_time': '', 'end_time': '', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:08.217743 KST', 'room_id': 5}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 5}]}}
+
+14. start response
+{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'id': 5, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:08.218743 KST', 'start_time': '2023-02-17 17:03:11.362102 KST', 'end_time': '', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}}
+
+15. send hand 0
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:08.217743 KST', 'room_id': 5}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:03:12.543728 KST', 'room_id': 5}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 5}]}}
+
+16. send signout
+update room to quit (DEBUG)
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+17. send signin -> reconnected
+{'request': 'signin', 'response': 'reconnected', 'type': 'recon_data', 'data': {'name': 'test', 'person_id': 1, 'room': {'id': 5, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:08.218743 KST', 'start_time': '2023-02-17 17:03:11.362102 KST', 'end_time': '', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:08.217743 KST', 'room_id': 5}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:03:12.543728 KST', 'room_id': 5}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 5}]}}
+
+18. send hand 2
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:08.217743 KST', 'room_id': 5}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:03:12.543728 KST', 'room_id': 5}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:03:15.639865 KST', 'room_id': 5}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 5}]}}
+
+19. disconnect
+update room to quit (DEBUG)
+
+20. end response hand_data -> cannot receive
+
+21. send signin -> reconnected
+{'request': 'signin', 'response': 'reconnected', 'type': 'recon_data', 'data': {'name': 'test', 'person_id': 1, 'room': {'id': 5, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:08.218743 KST', 'start_time': '2023-02-17 17:03:11.362102 KST', 'end_time': '2023-02-17 17:03:21.519087 KST', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:08.217743 KST', 'room_id': 5}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:03:12.543728 KST', 'room_id': 5}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:03:15.639865 KST', 'room_id': 5}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 5}]}}
+
+22. send hand 1 -> game has ended
+{'request': 'hand', 'response': 'error', 'type': 'message', 'message': 'Game has ended'}
+
+23. end response join_data
+{'request': 'end', 'response': 'broadcast', 'type': 'join_data', 'data': {'room': {'id': 6, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 6}]}}
+
+24. websocket close
+update room to quit (DEBUG)
+delete room
+
+----------------- Test 7: reconnect -----------------
+
+01. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+02. send create
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 6, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 6}]}}
+
+03. send start 3 10
+{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'id': 6, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:32.286133 KST', 'start_time': '', 'end_time': '', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:32.286133 KST', 'room_id': 6}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 6}]}}
+
+04. disconnect
+update room to quit (DEBUG)
+
+05. start response -> cannot receive
+
+06. send signin -> reconnected
+{'request': 'signin', 'response': 'reconnected', 'type': 'recon_data', 'data': {'name': 'test', 'person_id': 1, 'room': {'id': 6, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:32.286133 KST', 'start_time': '2023-02-17 17:03:35.471009 KST', 'end_time': '', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:32.286133 KST', 'room_id': 6}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 6}]}}
+
+07. send hand 0
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:32.286133 KST', 'room_id': 6}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:03:41.575889 KST', 'room_id': 6}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 6}]}}
+
+08. end response hand_data
+{'request': 'end', 'response': 'broadcast', 'type': 'hand_data', 'data': {'room': {'id': 6, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:32.286133 KST', 'start_time': '2023-02-17 17:03:35.471009 KST', 'end_time': '2023-02-17 17:03:45.500959 KST', 'name': 'Hell!', 'mode': 1, 'has_password': True, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:03:32.286133 KST', 'room_id': 6}, {'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:03:41.575889 KST', 'room_id': 6}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 6}]}}
+
+09. disconnect
+update room to quit (DEBUG)
+
+10. end response join_data -> cannot receive
+
+11. send signin -> not reconnected
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+12. refresh
+{'request': 'refresh', 'response': 'success', 'type': 'room_list', 'data': []}
+
+13. send quit -> you are not in any room
+{'request': 'quit', 'response': 'error', 'type': 'message', 'message': 'You are not in any room'}
+
+14. send signout
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+----------------- Test 8: play with a skilled bot -----------------
+01. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+02. send create
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 7, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}]}}
+
+03. send setting bot_s=1
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 7, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 1, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 2}}
+
+04. send start 3 10
+{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'id': 7, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:56.962473 KST', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 1, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 3}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:03:56.962473 KST', 'room_id': 7}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}, {'rank': 2, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}]}}
+
+05. start response
+{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'id': 7, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:56.962473 KST', 'start_time': '2023-02-17 17:04:00.461716 KST', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 1, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 3}}
+skilled bot has observed hand 0
+
+06-1. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:03:56.962473 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:01.453370 KST', 'room_id': 7}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 7}, {'rank': 2, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}]}}
+skilled bot has observed hand 2
+
+06-2. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:03:56.962473 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:01.453370 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:03.151156 KST', 'room_id': 7}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 7}, {'rank': 2, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}]}}
+skilled bot has observed hand 1
+
+06-3. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:03:56.962473 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:01.453370 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:03.151156 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:05.006644 KST', 'room_id': 7}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 3, 'win': 3, 'draw': 0, 'lose': 0, 'room_id': 7}, {'rank': 2, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}]}}
+skilled bot has observed hand 0
+
+06-4. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:03:56.962473 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:01.453370 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:03.151156 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:05.006644 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:06.788327 KST', 'room_id': 7}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 4, 'win': 4, 'draw': 0, 'lose': 0, 'room_id': 7}, {'rank': 2, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}]}}
+skilled bot has observed hand 2
+
+06-5. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:03:56.962473 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:01.453370 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:03.151156 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:05.006644 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:06.788327 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:08.623231 KST', 'room_id': 7}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 5, 'win': 5, 'draw': 0, 'lose': 0, 'room_id': 7}, {'rank': 2, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}]}}
+skilled bot has observed hand 1
+
+06-6. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:01.453370 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:03.151156 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:05.006644 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:06.788327 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:08.623231 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:10.460884 KST', 'room_id': 7}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 6, 'win': 6, 'draw': 0, 'lose': 0, 'room_id': 7}, {'rank': 2, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}]}}
+
+07. end response hand_data
+{'request': 'end', 'response': 'broadcast', 'type': 'hand_data', 'data': {'room': {'id': 7, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:03:56.962473 KST', 'start_time': '2023-02-17 17:04:00.461716 KST', 'end_time': '2023-02-17 17:04:10.852466 KST', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 1, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 3}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:03:56.962473 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:01.453370 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:03.151156 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:05.006644 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:06.788327 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:08.623231 KST', 'room_id': 7}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:10.460884 KST', 'room_id': 7}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 6, 'win': 6, 'draw': 0, 'lose': 0, 'room_id': 7}, {'rank': 2, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 7}]}}
+skilled_bot 2 in room 7 has terminated
+
+08. end response join_data
+{'request': 'end', 'response': 'broadcast', 'type': 'join_data', 'data': {'room': {'id': 8, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 1, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 2}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}]}}
+
+09. send quit -> room removed
+update room to quit (DEBUG)
+delete room
+{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully left the room'}
+
+10. send signout
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+----------------- Test 9: play with a dumb bot -----------------
+01. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+02. send create
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 8, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}]}}
+
+03. send setting bot_d=1
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 8, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 1, 'max_persons': 30, 'num_persons': 2}}
+
+04. send start 3 10
+{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'id': 8, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:04:22.884014 KST', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 1, 'max_persons': 30, 'num_persons': 3}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:04:22.884014 KST', 'room_id': 8}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}]}}
+
+05. start response
+{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'id': 8, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:04:22.884014 KST', 'start_time': '2023-02-17 17:04:26.300135 KST', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 1, 'max_persons': 30, 'num_persons': 3}}
+dumb bot has observed hand 1
+
+06-1. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:04:22.884014 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:27.006517 KST', 'room_id': 8}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': -1, 'win': 0, 'draw': 0, 'lose': 1, 'room_id': 8}]}}
+dumb bot has observed hand 2
+
+06-2. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:04:22.884014 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:27.006517 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:04:28.905085 KST', 'room_id': 8}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': -2, 'win': 0, 'draw': 0, 'lose': 2, 'room_id': 8}]}}
+dumb bot has observed hand 0
+
+06-3. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:04:22.884014 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:27.006517 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:04:28.905085 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:04:30.983595 KST', 'room_id': 8}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': -3, 'win': 0, 'draw': 0, 'lose': 3, 'room_id': 8}]}}
+dumb bot has observed hand 1
+
+06-4. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:04:22.884014 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:27.006517 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:04:28.905085 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:04:30.983595 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:33.019957 KST', 'room_id': 8}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': -4, 'win': 0, 'draw': 0, 'lose': 4, 'room_id': 8}]}}
+dumb bot has observed hand 2
+
+06-5. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:04:22.884014 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:27.006517 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:04:28.905085 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:04:30.983595 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:33.019957 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:04:35.272942 KST', 'room_id': 8}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': -5, 'win': 0, 'draw': 0, 'lose': 5, 'room_id': 8}]}}
+
+07. end response hand_data
+{'request': 'end', 'response': 'broadcast', 'type': 'hand_data', 'data': {'room': {'id': 8, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:04:22.884014 KST', 'start_time': '2023-02-17 17:04:26.300135 KST', 'end_time': '2023-02-17 17:04:36.418691 KST', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 1, 'max_persons': 30, 'num_persons': 3}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 1, 'score': 0, 'time': '2023-02-17 17:04:22.884014 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:27.006517 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:04:28.905085 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': -1, 'time': '2023-02-17 17:04:30.983595 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:33.019957 KST', 'room_id': 8}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 0, 'score': -1, 'time': '2023-02-17 17:04:35.272942 KST', 'room_id': 8}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 8}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': -5, 'win': 0, 'draw': 0, 'lose': 5, 'room_id': 8}]}}
+dumb_bot 5 in room 8 has terminated
+
+08. end response join_data
+{'request': 'end', 'response': 'broadcast', 'type': 'join_data', 'data': {'room': {'id': 9, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 1, 'max_persons': 30, 'num_persons': 2}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+09. send quit -> room removed
+update room to quit (DEBUG)
+delete room
+{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully left the room'}
+
+10. send signout
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
+
+----------------- Test 10: play with many bots -----------------
+01. send signin
+{'request': 'signin', 'response': 'success', 'type': 'profile_and_room_list', 'data': {'name': 'test', 'person_id': 1, 'rooms': []}}
+
+02. send create
+{'request': 'create', 'response': 'success', 'type': 'join_data', 'data': {'room': {'id': 9, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 0, 'bot_dumb': 0, 'max_persons': 30, 'num_persons': 1}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+03. send setting bot_s=3 bot_d=3
+{'request': 'setting', 'response': 'broadcast', 'type': 'room', 'data': {'id': 9, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 3, 'bot_dumb': 3, 'max_persons': 30, 'num_persons': 7}}
+
+04. send start 3 10
+{'request': 'start', 'response': 'broadcast', 'type': 'init_data', 'data': {'room': {'id': 9, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:04:48.440017 KST', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 3, 'bot_dumb': 3, 'max_persons': 30, 'num_persons': 13}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:48.440017 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+05. start response
+{'request': 'start', 'response': 'broadcast', 'type': 'room_start', 'data': {'id': 9, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:04:48.440017 KST', 'start_time': '2023-02-17 17:04:53.560462 KST', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 3, 'bot_dumb': 3, 'max_persons': 30, 'num_persons': 13}}
+dumb bot has observed hand 0
+skilled bot has observed hand 0
+skilled bot has observed hand 0
+skilled bot has observed hand 0
+
+06-1. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:48.440017 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:54.013320 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+dumb bot has observed hand 2
+
+06-2. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:48.440017 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:54.013320 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:54.312342 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+06-3. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:48.440017 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:54.013320 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:54.312342 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:54.686446 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+06-4. hand response by bot
+dumb bot has observed hand 2
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:48.440017 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:54.013320 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:54.312342 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:54.686446 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:55.183499 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': -1, 'win': 0, 'draw': 0, 'lose': 1, 'room_id': 9}]}}
+skilled bot has observed hand 2
+
+06-5. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:48.440017 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:54.013320 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:54.312342 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:54.686446 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:55.183499 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:56.143879 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': -1, 'win': 0, 'draw': 0, 'lose': 1, 'room_id': 9}]}}
+
+06-6. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:54.013320 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:54.312342 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:54.686446 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:55.183499 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:56.143879 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-914987', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:56.820976 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': -1, 'win': 0, 'draw': 0, 'lose': 1, 'room_id': 9}]}}
+
+06-7. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:54.312342 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:54.686446 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:55.183499 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:56.143879 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-914987', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:56.820976 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:57.391386 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': -1, 'win': 0, 'draw': 0, 'lose': 1, 'room_id': 9}]}}
+skilled bot has observed hand 0
+dumb bot has observed hand 0
+skilled bot has observed hand 0
+skilled bot has observed hand 0
+
+06-8. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:54.686446 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:55.183499 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:56.143879 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-914987', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:56.820976 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:57.391386 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:58.380456 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 0, 'win': 1, 'draw': 0, 'lose': 1, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+06-9. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:55.183499 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:56.143879 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-914987', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:56.820976 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:57.391386 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:58.380456 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.074357 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 0, 'win': 1, 'draw': 0, 'lose': 1, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 2, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+06-10. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:56.143879 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-914987', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:56.820976 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:57.391386 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:58.380456 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.074357 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.845364 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 0, 'win': 1, 'draw': 0, 'lose': 1, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 2, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+06-11. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'D-1676620639-914987', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:56.820976 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:57.391386 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:58.380456 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.074357 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.845364 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:05:00.300996 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 0, 'win': 1, 'draw': 0, 'lose': 1, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 2, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+dumb bot has observed hand 1
+dumb bot has observed hand 1
+skilled bot has observed hand 1
+
+06-12. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:57.391386 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:58.380456 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.074357 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.845364 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:05:00.300996 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:05:01.580921 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 1, 'win': 2, 'draw': 0, 'lose': 1, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 2, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+06-13. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:58.380456 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.074357 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.845364 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:05:00.300996 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:05:01.580921 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:05:02.283066 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 1, 'win': 2, 'draw': 0, 'lose': 1, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 2, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+
+06-14. hand response by bot
+{'request': 'hand', 'response': 'broadcast', 'type': 'hand_data', 'data': {'hand_list': [{'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.074357 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.845364 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:05:00.300996 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:05:01.580921 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:05:02.283066 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-914987', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:05:02.974804 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 1, 'win': 2, 'draw': 0, 'lose': 1, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 2, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+dumb bot has observed hand 2
+skilled bot has observed hand 2
+skilled bot has observed hand 2
+skilled bot has observed hand 2
+
+07. end response hand_data
+skilled bot hand failed: error_code 6
+{'request': 'end', 'response': 'broadcast', 'type': 'hand_data', 'data': {'room': {'id': 9, 'state': 1, 'time_offset': 3, 'time_duration': 10, 'init_time': '2023-02-17 17:04:48.440017 KST', 'start_time': '2023-02-17 17:04:53.560462 KST', 'end_time': '2023-02-17 17:05:03.858392 KST', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 3, 'bot_dumb': 3, 'max_persons': 30, 'num_persons': 13}, 'hand_list': [{'team': 0, 'name': 'test', 'is_human': True, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:48.440017 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:54.013320 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:54.312342 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:54.686446 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': -1, 'time': '2023-02-17 17:04:55.183499 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:04:56.143879 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-914987', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:04:56.820976 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 0, 'score': 0, 'time': '2023-02-17 17:04:57.391386 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:04:58.380456 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-368359', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.074357 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620639-025677', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:04:59.845364 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-380875', 'is_human': False, 'hand': 1, 'score': 1, 'time': '2023-02-17 17:05:00.300996 KST', 'room_id': 9}, {'team': -1, 'name': 'S-1676620638-698396', 'is_human': False, 'hand': 0, 'score': 1, 'time': '2023-02-17 17:05:01.580921 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-605873', 'is_human': False, 'hand': 2, 'score': 1, 'time': '2023-02-17 17:05:02.283066 KST', 'room_id': 9}, {'team': -1, 'name': 'D-1676620639-914987', 'is_human': False, 'hand': 2, 'score': 0, 'time': '2023-02-17 17:05:02.974804 KST', 'room_id': 9}], 'game_list': [{'rank': 1, 'team': -1, 'name': 'S-1676620639-025677', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 2, 'team': -1, 'name': 'D-1676620639-380875', 'is_host': False, 'is_human': False, 'score': 2, 'win': 2, 'draw': 0, 'lose': 0, 'room_id': 9}, {'rank': 3, 'team': -1, 'name': 'S-1676620638-698396', 'is_host': False, 'is_human': False, 'score': 1, 'win': 2, 'draw': 0, 'lose': 1, 'room_id': 9}, {'rank': 4, 'team': -1, 'name': 'D-1676620639-605873', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 5, 'team': -1, 'name': 'D-1676620639-914987', 'is_host': False, 'is_human': False, 'score': 1, 'win': 1, 'draw': 1, 'lose': 0, 'room_id': 9}, {'rank': 6, 'team': -1, 'name': 'S-1676620638-368359', 'is_host': False, 'is_human': False, 'score': 0, 'win': 0, 'draw': 2, 'lose': 0, 'room_id': 9}, {'rank': 7, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 9}]}}
+skilled_bot 2 in room 9 has terminated
+dumb bot hand failed: error_code 6
+dumb_bot 5 in room 9 has terminated
+skilled bot hand failed: error_code 6
+skilled_bot 3 in room 9 has terminated
+skilled bot hand failed: error_code 6
+skilled_bot 4 in room 9 has terminated
+dumb_bot 6 in room 9 has terminated
+dumb_bot 7 in room 9 has terminated
+
+08. end response join_data
+{'request': 'end', 'response': 'broadcast', 'type': 'join_data', 'data': {'room': {'id': 10, 'state': 0, 'time_offset': -1, 'time_duration': -1, 'init_time': '', 'start_time': '', 'end_time': '', 'name': 'Welcome!', 'mode': 0, 'has_password': False, 'bot_skilled': 3, 'bot_dumb': 3, 'max_persons': 30, 'num_persons': 7}, 'game_list': [{'rank': 1, 'team': 0, 'name': 'test', 'is_host': True, 'is_human': True, 'score': 0, 'win': 0, 'draw': 0, 'lose': 0, 'room_id': 10}]}}
+
+09. send quit -> room removed
+update room to quit (DEBUG)
+delete room
+{'request': 'quit', 'response': 'success', 'type': 'message', 'message': 'Successfully left the room'}
+
+10. send signout
+{'request': 'signout', 'response': 'success', 'type': 'message', 'message': 'Successfully signed out'}
 ```

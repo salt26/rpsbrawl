@@ -47,10 +47,11 @@ class Person(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     #affiliation = Column(String, index=True)   # 삭제되었음에 유의!
-    name = Column(String, index=True)
+    name = Column(String, unique=True, index=True)
     #is_admin = Column(Boolean, default=False)  # 삭제되었음에 유의!
     #hashed_password = Column(String)
     #is_active = Column(Boolean, default=False) # 삭제되었음에 유의!
+    is_human = Column(Boolean, default=True)
 
     rooms = relationship("Game", back_populates="person", cascade="all, delete-orphan")
 
@@ -69,7 +70,6 @@ class Game(Base):
 
     team = Column(Integer, index=True)
     is_host = Column(Boolean)
-    is_human = Column(Boolean, default=True)
 
     room = relationship("Room", back_populates="persons")
     person = relationship("Person", back_populates="rooms")

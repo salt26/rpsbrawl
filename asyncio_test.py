@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import threading
 
 async def say(t, msg):
     await asyncio.sleep(t)
@@ -72,5 +73,12 @@ async def main5_helper():
     loop.create_task(main5())
     loop.run_forever()
 
-asyncio.run(main4())
+def main4_async():
+    asyncio.run(main4())
+
+#asyncio.run(main4())
+#main4_async()
+
+t = threading.Thread(target=main4_async)
+t.start()
 print("end")
