@@ -12,9 +12,9 @@ import { useContext } from "react";
 import CreateRoomModal from "../components/gameroom/CreateRoomModal";
 import { useLocation } from "react-router-dom";
 import { WebsocketContext } from "../utils/WebSocketProvider";
-
+import { getUserName } from "../utils/User";
 function RoomListPage() {
-  const nickname = "FLOWERSAYO";
+  const my_name = getUserName();
   var navigate = useNavigate();
   const { state } = useLocation(); // 방 목록 정보
 
@@ -36,7 +36,7 @@ function RoomListPage() {
         {Language[mode].rooms}
       </Medium>
       <Back onClick={() => navigate("/")} />
-      <MyNameTag size="m"> {nickname}</MyNameTag>
+      <MyNameTag size="m"> {my_name}</MyNameTag>
       <RoomList
         rooms={rooms}
         setCreateRoomModalVisible={setCreateRoomModalVisible}

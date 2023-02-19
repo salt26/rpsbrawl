@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import ReactModal from "react-modal";
 import styled from "styled-components";
 import { Medium } from "../../styles/font";
@@ -11,12 +11,17 @@ import QuestionSrc from "../../assets/images/question.svg";
 import SizedBox from "../common/SizedBox";
 import GradientBtn from "../roomlist/GradientBtn";
 import { Tooltip } from "react-tooltip";
+import { WebsocketContext } from "../../utils/WebSocketProvider";
+import { useNavigate } from "react-router-dom";
+
 function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
   const [roomTitle, setRoomTitle] = useState("");
-  const [gameMode, setGameMode] = useState("normal");
+  const [gameMode, setGameMode] = useState(0);
   const [privateMode, setPrivateMode] = useState(false);
   const [password, setPassword] = useState("");
+  const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
 
+  var navigate = useNavigate();
   const blueBtnStyle = {
     fontSize: "25px",
     width: "40%",
@@ -33,10 +38,43 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
   };
 
   const _createRoom = () => {
+    if (password.length > 20) {
+      alert("Please set the password  no more than 20 characters.");
+      return;
+    }
+
+    if (roomTitle.length > 32) {
+      alert("Please set the title  no more than 32 characters.");
+      return;
+    }
+    let request = {
+      request: "create",
+      room_name: roomTitle, // 이름은 다른 방과 겹쳐도 무관, 빈 문자열이 아니고 32글자 이내여야 함
+      mode: gameMode, // 0은 일반 모드, 1은 연속해서 같은 손을 입력할 수 없는 모드
+      password: privateMode ? password : "", // 비밀번호가 없는 경우 ""(빈 문자열) 전송할 것, 20글자 이내여야 함
+    };
+    ws.send(JSON.stringify(request));
+    console.log(request);
     setModalVisible(false);
   };
+  useEffect(() => {
+    ws.onmessage = function (event) {
+      const res = JSON.parse(event.data); // 전달된 json string을 object로 변환
+
+      if (ready) {
+        if (res?.response === "error") {
+          alert(res.message);
+          return;
+        }
+
+        switch (res?.type) {
+        }
+      }
+    };
+  }, [ready]);
   return (
     <ReactModal
+      ariaHideApp={false}
       isOpen={modalVisible}
       style={{
         overlay: {
@@ -88,26 +126,26 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
           <Medium size="30px" color="black">
             Mode
           </Medium>
-          {gameMode === "normal" ? (
+          {gameMode === 0 ? (
             <SvgIcon src={CheckSrc} size="20px" />
           ) : (
             <SvgIcon
               src={UnCheckSrc}
               size="20px"
-              onClick={() => setGameMode("normal")}
+              onClick={() => setGameMode(0)}
             />
           )}
           <Medium size="25px" color="black">
             Normal
           </Medium>
 
-          {gameMode === "limited" ? (
+          {gameMode === 1 ? (
             <SvgIcon src={CheckSrc} size="20px" />
           ) : (
             <SvgIcon
               src={UnCheckSrc}
               size="20px"
-              onClick={() => setGameMode("limited")}
+              onClick={() => setGameMode(1)}
             />
           )}
           <Medium size="25px" color="black">
@@ -150,7 +188,7 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
           )}
           {privateMode ? (
             <input
-              type={"text"}
+              type={"password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={{

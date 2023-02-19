@@ -37,9 +37,14 @@ function MyNameTag({ children }) {
 }
 
 //스태프(방장) 네임택
-function AdminTag({ children }) {
+function AdminTag({ children, color }) {
   return (
-    <BorderBox width="150px" height="50px" bg={palette["special"]}>
+    <BorderBox
+      width="150px"
+      height="50px"
+      borderColor={color}
+      bg={palette[color]}
+    >
       <Image src={CrownSrc} />
 
       <Center>
