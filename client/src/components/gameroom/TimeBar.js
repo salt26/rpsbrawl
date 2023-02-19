@@ -73,7 +73,7 @@ export default function TimeBar({ duration }) {
       <ProgressBar
         completed={String((sec * 100) / 60)}
         customLabel=" "
-        bgColor={sec < 20 ? "var(--red)" : "var(--yellow)"}
+        bgColor={sec < 20 ? "var(--red)" : "#BDFF00"}
         width="550px"
         height="40px"
       />

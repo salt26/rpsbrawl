@@ -12,17 +12,16 @@ import { useNavigate } from "react-router-dom";
 import { getUserName, getUserAffiliation } from "../utils/User";
 import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
-
 export default function InGamePage() {
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
 
   const lastHand = useRef(state["hand_list"][state.hand_list.length - 1].hand);
 
-  const handList = useRef(state["hand_list"]);
+  //const handList = useRef(state["hand_list"]);
+  const [handList, setHandList] = useState(state["hand_list"]);
 
   const [isWaiting, setIsWaiting] = useState(true);
   const [count, setCount] = useState(5); //게임 시작까지 남은 시간
-  const [check, setCheck] = useState(true);
 
   const _getTimeOffset = useCallback((room) => {
     // 마운트 시에만 정의
@@ -55,60 +54,81 @@ export default function InGamePage() {
 
   const my_name = getUserName();
   const navigate = useNavigate();
-  const my_affiliation = getUserAffiliation();
+
   const { room_id } = useParams();
   const myPlace = useRef({
     name: my_name,
-    affiliation: my_affiliation,
+    team: 0,
     rank: 0,
     score: 0,
   });
 
   const firstPlace = useRef(state?.game_list[0]);
 
-  const [createSocketConnection, ready, res, send] =
-    useContext(WebsocketContext); //전역 소켓 불러오기
-
   useEffect(() => {
     _getTimeOffset(state.room);
   }, []);
 
+  const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   useEffect(() => {
-    if (ready) {
-      switch (res.request) {
-        case "hand": // 게임 전적 정보 갱신
-          if (res.type === "hand_data") {
-            myPlace.current = _findMyPlace(res.data.game_list);
-            firstPlace.current = res.data.game_list[0];
-            handList.current = res.data.hand_list;
-            const len = res.data.hand_list.length;
-            lastHand.current = res.data.hand_list[len - 1].hand; // 가장 최근에 입력된 손 갱신
-            setCheck(!check);
-          }
-          break;
-        case "end": // 게임 종료 신호
-          if (res.type === "hand_data") {
-            navigate(`/room/${room_id}/result`, {
-              // 결과화면으로 최종 전적정보 전달
-              state: {
-                handList: res.data.hand_list,
-                gameList: res.data.game_list,
-              },
-            });
-          }
+    ws.onmessage = function (event) {
+      const res = JSON.parse(event.data);
+      console.log(res);
+
+      if (ready) {
+        if (res?.response === "error") {
+          alert(res.message);
+          return;
+        }
+
+        console.log(res.data);
+
+        switch (res.request) {
+          case "hand": // 게임 전적 정보 갱신
+            if (res.type === "hand_data") {
+              myPlace.current = _findMyPlace(res.data.game_list);
+              firstPlace.current = res.data.game_list[0];
+              handList.current = res.data.hand_list;
+              const len = res.data.hand_list.length;
+
+              lastHand.current = res.data.hand_list[len - 1].hand; // 가장 최근에 입력된 손 갱신
+              setHandList(res.data.hand_list);
+            }
+            break;
+
+          case "end": // 게임 종료 신호
+            if (res.type === "hand_data") {
+              navigate(`/rooms/${room_id}/result`, {
+                // 결과화면으로 최종 전적정보 전달
+                state: res.data, //room, hand_list, game_list
+              });
+            }
+        }
+      }
+    };
+  }, [ready]);
+  /*
+  const _findLatestScore = (gameList) => {
+    var len = gameList.length;
+
+    for (var i = len - 1; i >= 0; i--) {
+      // 가장 최신 로그 부터
+      if (gameList[i].name == my_name) {
+        return gameList[i].score;
       }
     }
-  }, [res]); // 메시지가 도착하면
-
+    return "";
+  };
+*/
   const _findMyPlace = (gameList) => {
     for (var user of gameList) {
-      if (user.name === my_name && user.affiliation === my_affiliation) {
-        // 소속, 이름이 같으면
+      if (user.name === my_name) {
+        //  이름이 같으면
         return user;
       }
     }
 
-    return { name: "없음", affiliation: "찾을수없음", rank: 0 };
+    return { name: "없음", team: "찾을수없음", rank: 0 };
   };
 
   return (
@@ -122,7 +142,7 @@ export default function InGamePage() {
         <Right>
           <FirstPlace place={firstPlace.current} />
           <MyPlace place={myPlace.current} />
-          <NetworkLogs logs={handList.current} />
+          <NetworkLogs logs={handList} />
         </Right>
       </Container>
       <Count isWaiting={isWaiting}>{count}</Count>

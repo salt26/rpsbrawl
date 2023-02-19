@@ -2,14 +2,15 @@ import React from "react";
 import styled from "styled-components";
 import { Medium } from "../../styles/font";
 import { css } from "styled-components";
+import palette from "../../styles/palette";
 
-function MyNameTag({ children, size, none }) {
+function MyNameTag({ children, size, none, color }) {
   const fontsize = {
     s: "25px",
     m: "35px",
   };
   return (
-    <Container size={size} none={none}>
+    <Container size={size} none={none} bg={palette[color]}>
       <Medium size={fontsize[size]} color={"white"}>
         {children}
       </Medium>
@@ -45,12 +46,9 @@ const Container = styled.div`
   width: ${({ size }) => sizes[size].width};
   height: ${({ size }) => sizes[size].height};
 
-  background-image: linear-gradient(180deg, #fac215 0%, #f97916 100%),
-    linear-gradient(to right, red 0%, orange 100%);
-  background-origin: border-box;
-  background-clip: content-box, border-box;
+  background-image: ${({ bg }) =>
+    bg ? bg : "linear-gradient(180deg, #fac215 0%, #f97916 100%);"};
 
-  border: 1px solid #f99f15;
   border-radius: 10px;
 `;
 

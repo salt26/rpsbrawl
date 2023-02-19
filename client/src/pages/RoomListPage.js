@@ -36,7 +36,10 @@ function RoomListPage() {
         {Language[mode].rooms}
       </Medium>
       <Back onClick={() => navigate("/")} />
-      <MyNameTag size="m"> {my_name}</MyNameTag>
+      <MyNameTag size="m" color="var(--yellow)">
+        {" "}
+        {my_name}
+      </MyNameTag>
       <RoomList
         rooms={rooms}
         setCreateRoomModalVisible={setCreateRoomModalVisible}

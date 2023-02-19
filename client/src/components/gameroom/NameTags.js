@@ -1,5 +1,4 @@
 import React from "react";
-import BgBox from "../common/BgBox";
 import { Medium, GradientText } from "../../styles/font";
 import styled from "styled-components";
 import CrownSrc from "../../assets/images/crown.svg";
@@ -20,19 +19,6 @@ function NameTag({ color, children }) {
         </GradientText>
       </Center>
     </BorderBox>
-  );
-}
-
-//본인 네임택
-function MyNameTag({ children }) {
-  return (
-    <BgBox width="150px" height="50px" bgColor="var(--yellow)">
-      <Center>
-        <Medium size="25px" color={"white"}>
-          {children}
-        </Medium>
-      </Center>
-    </BgBox>
   );
 }
 
@@ -88,4 +74,15 @@ const BorderBox = styled.div`
   background-origin: border-box;
   background-clip: content-box, border-box;
 `;
-export { NameTag, MyNameTag, AdminTag };
+
+const BgBox = styled.div`
+  width: ${({ width }) => (width ? width : "120px")};
+  height: ${({ height }) => (height ? height : "50px")};
+  position: relative;
+
+  border-radius: 10px;
+
+  background-image: ${({ bg }) =>
+    bg ? `linear-gradient(#fff, #fff), ${bg}` : "none"};
+`;
+export { NameTag, AdminTag };

@@ -66,9 +66,6 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
           alert(res.message);
           return;
         }
-
-        switch (res?.type) {
-        }
       }
     };
   }, [ready]);
@@ -103,7 +100,7 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
     >
       <TitleBox>
         <Medium size="30px" color="white">
-          {mode == "create" ? "Create Room" : "Setting"}
+          {"Create Room"}
         </Medium>
       </TitleBox>
       <Container>
@@ -206,7 +203,7 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
         <SizedBox height={"15px"} />
         <Row>
           <GradientBtn
-            text={mode == "create" ? "Confirm" : "Update"}
+            text={"Confirm"}
             style={blueBtnStyle}
             anim
             onClick={_createRoom}

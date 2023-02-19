@@ -14,7 +14,6 @@ import "./networklog.css";
 
 //1등 점수 정보
 export default function NetworkLogs({ logs }) {
-  console.log(logs);
   var rpsDic = { 0: "rock", 1: "scissor", 2: "paper" };
 
   const scrollRef = useRef();
@@ -33,11 +32,19 @@ export default function NetworkLogs({ logs }) {
     $scroll.scrollTop = $scroll.scrollHeight;
   }, []);
 */
-
+  const team_color = [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "navy",
+    "purple",
+  ];
   return (
     <div>
-      <Medium size={"40px"} color={"white"}>
-        NetworkLogs
+      <Medium size={"30px"} color={"white"}>
+        Network logs
       </Medium>
       <SizedBox height={"10px"} />
       <BgBox width={"350px"} height={"300px"}>
@@ -45,9 +52,9 @@ export default function NetworkLogs({ logs }) {
           {/*네트워크 로그*/}
 
           {logs &&
-            logs.map(({ affiliation, name, hand, score }, idx) => (
+            logs.map(({ team, name, hand, score }, idx) => (
               <Log
-                belong={affiliation}
+                belong={team === -1 ? "Bot" : team_color[team]}
                 key={idx}
                 name={name}
                 rps={rpsDic[hand]}
