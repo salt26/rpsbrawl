@@ -7,13 +7,22 @@ import { Medium } from "../../styles/font";
 import { Language } from "../../db/Language";
 import { LanguageContext } from "../../utils/LanguageProvider";
 import { useContext } from "react";
+import { WebsocketContext } from "../../utils/WebSocketProvider";
+
 function TeamSelection({ setMyTeam }) {
   const teams = ["red", "orange", "yellow", "green", "blue", "navy", "purple"];
 
+  const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   const mode = useContext(LanguageContext);
-  const _changeMyTeam = (team) => {
-    setMyTeam(team);
+  const _changeMyTeam = (team_idx) => {
+    let request = {
+      request: "team",
+      team: team_idx, // 0 이상 7 이하
+    };
+    ws.send(JSON.stringify(request));
+    setMyTeam(team_idx);
   };
+
   return (
     <BgBox bgColor={"var(--light-purple)"} width="150px" height="400px">
       <TextContainer>
@@ -24,8 +33,8 @@ function TeamSelection({ setMyTeam }) {
 
       <Col>
         {" "}
-        {teams.map((team) => (
-          <TeamBtn color={team} onClick={(team) => _changeMyTeam(team)} />
+        {teams.map((team, idx) => (
+          <TeamBtn color={team} onClick={() => _changeMyTeam(idx)} />
         ))}
       </Col>
     </BgBox>
