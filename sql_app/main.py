@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Dict, Tuple
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 #from fastapi.security import OAuth2PasswordBearer
@@ -168,9 +168,38 @@ class BotManager:
     def release_bot(self, bot_id: int):
         self.active_bots = list(filter(lambda b: b[0] != bot_id, self.active_bots))
 
+class HandManager:
+    def __init__(self) -> None:
+        # 사용법:
+        # schemas.HandEnum(self.active_rooms[room_id][person_id]) = (last_hand, last_score_gain)
+        self.active_rooms: Dict[int, Dict[int, Tuple[int, int]]] = {}
+
+    def initialize_for_room(self, room_id: int, person_ids: List[int]):
+        # 방에서 게임이 시작될 때 호출해주어야 함
+        self.active_rooms[room_id] = {}
+        for p in person_ids:
+            self.active_rooms[room_id][p] = (-1, 0)
+
+    def get_last_hand_for_each_person(self, room_id: int):
+        # 방 번호가 잘못되었거나 게임이 끝난 방이거나 해당 방에서 initialize_for_room()을 호출한 적이 없는 경우: {} (빈 dict) 반환
+        # 정상적인 경우: 방에 입장해 있는 모든 사람들에 대해 person_id를 key로, 
+        #               Tuple(마지막 손의 int 값(낸 적이 없는 경우 -1), 마지막 손을 내서 변화한 점수 int 값(낸 적이 없는 경우 0))을 value로 하는 dict 반환
+        if room_id in self.active_rooms and self.active_rooms[room_id] is not None:
+            return self.active_rooms[room_id].copy()
+        else:
+            return {}
+
+    def update_last_hand(self, room_id: int, person_id: int, last_hand: int, last_score_gain: int):
+        if last_hand in iter(schemas.HandEnum) and room_id in self.active_rooms and self.active_rooms[room_id] is not None:
+            self.active_rooms[room_id][person_id] = (last_hand, last_score_gain)
+
+    def end_for_room(self, room_id: int):
+        # 방에서 게임이 종료될 때 데이터 삭제
+        self.active_rooms.pop(room_id, None)
 
 cManager = ConnectionManager()
-bManager = BotManager()
+bManager = BotManager()         # bManager는 lock과 함께 사용
+hManager = HandManager()        # hManager 역시 lock과 함께 사용
 lock = threading.Lock()
 
 @app.websocket("/signin")
@@ -411,6 +440,17 @@ def read_all_hands(room_id: int, db: Session = Depends(get_db)):
         })
     return ret
 
+"""
+def read_last_hand_for_each_person(room_id: int, db: Session = Depends(get_db)):
+    games = crud.get_games_in_room(db, room_id, False)
+    hands = crud.get_hands(db, room_id)
+    ret = {}
+    for game in games:
+        person = crud.get_person(db, person_id=game.person_id)
+        if hands.
+            ret[person.name] = None
+"""
+
 @app.get("/room/{room_id}/game")
 def read_game(room_id: int, db: Session = Depends(get_db)):
     # 해당 방의 사람들의 {순위, 팀 번호, 이름, 방장 여부, 점수, win, draw, lose, 방 번호} 반환
@@ -499,17 +539,20 @@ async def skilled_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db
             return
         elif room.start_time is not None:
             lock.acquire()
-            hand = crud.get_hands_from_last(db, room_id, 1)[0].hand
+            old_hand = crud.get_hands_from_last(db, room_id, 1)[0].hand
             lock.release()
-            print("skilled bot has observed hand " + str(hand))
+            print("skilled bot has observed hand " + str(old_hand))
             await asyncio.sleep(0.2 + random.random() * 0.1)
 
+            new_hand = (int(old_hand) + 2) % 3
             lock.acquire()
-            _, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum((int(hand) + 2) % 3))
+            hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand))
             if error_code == 0:
+                hManager.update_last_hand(room_id, bot_id, new_hand, hand_obj.score)
                 hand_data = {
                     "hand_list": read_hands(room_id, 6, db),
-                    "game_list": read_game(room_id, db)
+                    "game_list": read_game(room_id, db),
+                    "last_hand": hManager.get_last_hand_for_each_person(room_id)
                 }
                 lock.release()
                 task1 = asyncio.create_task(cManager.broadcast_json("hand", "hand_data", hand_data, room_id))
@@ -540,17 +583,20 @@ async def dumb_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db)):
             return
         elif room.start_time is not None:
             lock.acquire()
-            hand = crud.get_hands_from_last(db, room_id, 1)[0].hand
+            old_hand = crud.get_hands_from_last(db, room_id, 1)[0].hand
             lock.release()
-            print("dumb bot has observed hand " + str(hand))
+            print("dumb bot has observed hand " + str(old_hand))
             await asyncio.sleep(0.2 + random.random() * 0.6)
 
+            new_hand = (int(old_hand) + 1) % 3
             lock.acquire()
-            _, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum((int(hand) + 1) % 3))
+            hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand))
             if error_code == 0:
+                hManager.update_last_hand(room_id, bot_id, new_hand, hand_obj.score)
                 hand_data = {
                     "hand_list": read_hands(room_id, 6, db),
-                    "game_list": read_game(room_id, db)
+                    "game_list": read_game(room_id, db),
+                    "last_hand": hManager.get_last_hand_for_each_person(room_id)
                 }
                 lock.release()
                 task1 = asyncio.create_task(cManager.broadcast_json("hand", "hand_data", hand_data, room_id))
@@ -608,6 +654,7 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     await task2
 
     lock.acquire()
+    hManager.end_for_room(room_id)
     old_room = crud.update_room_to_end(db, room_id)    # 방을 End 페이즈로 바꾸고 모든 인원을 새 방으로 이동
     old_games = crud.get_games_in_room(db, room_id, True)
     lock.release()
@@ -652,7 +699,6 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
 async def run_game_for_room(room_id: int, time_offset: int, time_duration: int, db: Session = Depends(get_db)):
     # 봇 person을 봇 풀에서 가져오거나 중복되지 않게 새로 만들어 가져온다.
     # 스레드를 새로 만들어 그 스레드에서 skilled_bot_ai()를 돌린다??
-    # TODO 해당 봇들에 대한 Game 오브젝트 생성하기
     lock.acquire()
     room = crud.get_room(db, room_id)
     lock.release()
@@ -672,6 +718,10 @@ async def run_game_for_room(room_id: int, time_offset: int, time_duration: int, 
         if error_code != 0:
             print("dumb bot enter failed: error_code " + str(error_code))
         tasks.append(dumb_bot_ai(room_id, bot_id, db))
+        
+    games = crud.get_games_in_room(db, room_id, False)
+    #print(list(map(lambda g: g.person_id, games)))
+    hManager.initialize_for_room(room_id, list(map(lambda g: g.person_id, games)))
     lock.release()
 
     tasks.append(manage_time_for_room(room_id, time_offset, time_duration, db))
@@ -862,12 +912,16 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("hand", "error", "Bad request: hand", websocket)
                 continue
 
-            _, error_code = crud.create_hand(db, room_id=room_id, person_id=person_id, hand=schemas.HandEnum(hand))
+            hand_obj, error_code = crud.create_hand(db, room_id=room_id, person_id=person_id, hand=schemas.HandEnum(hand))
             if error_code == 0:
+                lock.acquire()
+                hManager.update_last_hand(room_id, person_id, hand, hand_obj.score)
                 hand_data = {
                     "hand_list": read_hands(room_id, 6, db),
-                    "game_list": read_game(room_id, db)
+                    "game_list": read_game(room_id, db),
+                    "last_hand": hManager.get_last_hand_for_each_person(room_id)
                 }
+                lock.release()
                 await cManager.broadcast_json("hand", "hand_data", hand_data, room_id)
             elif error_code == 1 or error_code == 11:
                 await ConnectionManager.send_text("hand", "error", "Room is not in a play mode", websocket)

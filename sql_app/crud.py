@@ -450,7 +450,9 @@ def get_hands_from_last(db: Session, room_id: int, limit: int = 6):
 def get_hands_by_person(db: Session, room_id: int, person_id: int):
     hands = db.query(models.Hand).filter(and_(models.Hand.room_id == room_id, \
         models.Hand.person_id == person_id)).all()
+    hands.sort(key=lambda e: e.time)
     return parse_obj_as(schemas.List[schemas.Hand], hands)
+    # 가장 오래 전에 입력된 손이 [0]번째 인덱스
 
 def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnum):
     # 시간 확인
@@ -472,6 +474,9 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
     hands = get_hands(db, room_id)
     if hands is None or len(hands) <= 0:
         return (None, 4)
+    #elif room.mode == schemas.RoomModeEnum.Limited: # TODO
+
+    
     
     score = hand_score(hand, hands[-1].hand)
     hands = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)

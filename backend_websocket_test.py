@@ -1742,12 +1742,13 @@ if __name__ == '__main__':
     print()
     test_websocket_reconnect(app)
     print()
+    """
     test_websocket_play_with_a_skilled_bot(app)
     print()
-    test_websocket_play_with_a_dumb_bot(app)
-    print()
-    """
-    test_websocket_play_with_many_bots(app)
-    print()
+    #test_websocket_play_with_a_dumb_bot(app)
+    #print()
+    
+    #test_websocket_play_with_many_bots(app)
+    #print()
     #test_websocket_play_with_so_many_bots(app)
     #print()
