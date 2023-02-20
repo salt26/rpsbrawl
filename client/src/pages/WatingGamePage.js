@@ -36,19 +36,30 @@ export default function WatingGamePage() {
   const { room_id } = useParams();
   const { state } = useLocation(); // 유저 목록 정보
 
-  const mode = useContext(LanguageContext);
+  //host인지 아닌지 판단
+  const _findHost = (users) => {
+    for (var user of users) {
+      if (user.name === my_name) {
+        if (user.is_host) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
 
+    return false;
+  };
+  const mode = useContext(LanguageContext);
+  const my_name = getUserName();
   const [numberOfUser, setNumberOfUser] = useState(state.game_list.length);
   const [users, setUsers] = useState(state.game_list);
   const [roomInfo, setRoomInfo] = useState(state.room); //Room정보
-
+  const [isAdmin, setIsAdmin] = useState(_findHost(users));
   const [settingModalVisible, setSettingModalVisible] = useState(false); //설정창
+  const [skilledBot, setSkilledBot] = useState(state.room.bot_skilled);
+  const [dumbBot, setDumbBot] = useState(state.room.bot_dumb);
 
-  const [myTeam, setMyTeam] = useState("red");
-
-  const isAuthorized = true;
-
-  console.log(isAuthorized);
   const person_id = getUserId();
   const person_name = getUserName();
   var navigate = useNavigate();
@@ -57,6 +68,7 @@ export default function WatingGamePage() {
   useEffect(() => {
     ws.onmessage = function (event) {
       const res = JSON.parse(event.data);
+      console.log(res);
 
       if (ready) {
         if (res?.response === "error") {
@@ -65,19 +77,28 @@ export default function WatingGamePage() {
         }
 
         switch (res?.type) {
-          case "game_list": // 팀 변경 요청에 대한 응답
+          case "game_list": // 팀 변경 요청에 대한 응답 , 접속 끊겼을때
             setUsers(res.data);
             break;
           case "room_list": // 룸 목록 갱신 요청에 대한 응답
             navigate("/rooms", { state: res.data });
             break;
-          case "init_data": // 게임 시작시 정보
-            navigate(`/rooms/${room_id}/game`, { state: res.data });
-            break;
+
           case "room": // 방 설정 변경 성공시
             setRoomInfo(res.data);
-            alert("방 설정이 성공적으로 변경되었습니다.");
 
+            setSkilledBot(res.data.bot_skilled);
+            setDumbBot(res.data.bot_dumb);
+            if (isAdmin) {
+              alert("방 설정이 성공적으로 변경되었습니다.");
+            }
+
+            break;
+          case "join_data": // 새로운 사람 입장시
+            setUsers(res.data.game_list);
+            break;
+          case "init_data": // 게임 시작시 정보
+            navigate(`/rooms/${room_id}/game`, { state: res.data });
             break;
         }
       }
@@ -147,7 +168,7 @@ export default function WatingGamePage() {
       <Row>
         <Sector>
           <Col>
-            <TeamSelection setMyTeam={setMyTeam} />
+            <TeamSelection />
 
             <Button text={Language[mode].quit} onClick={_quitGame} />
           </Col>
@@ -169,8 +190,10 @@ export default function WatingGamePage() {
                 onClick={() => setSettingModalVisible(true)}
               />
             </SettingContainer>
-            <AddBot />
-            {isAuthorized ? (
+
+            <AddBot skilledBot={skilledBot} dumbBot={dumbBot} />
+
+            {isAdmin ? (
               <Button
                 text={Language[mode].start}
                 onClick={_startGame}

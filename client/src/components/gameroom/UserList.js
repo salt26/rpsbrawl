@@ -6,6 +6,7 @@ import MyNameTag from "../common/MyNameTag";
 
 export default function UserList({ users }) {
   const my_name = getUserName();
+  console.log(users);
 
   const team_color = [
     "red",
@@ -29,7 +30,7 @@ export default function UserList({ users }) {
         } else if (name === my_name) {
           return (
             <Anim>
-              <MyNameTag key={idx} size="s" none>
+              <MyNameTag key={idx} size="s" color={team_color[team]} none>
                 {name}
               </MyNameTag>
             </Anim>
@@ -61,9 +62,11 @@ const Container = styled.div`
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: flex-start;
+  align-items: flex-start;
+  width: 100%;
 
   padding: 30px;
-  margin-right: 10px;
+
   gap: 40px 25px;
   height: 100%;
 

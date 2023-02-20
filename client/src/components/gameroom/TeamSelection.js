@@ -9,7 +9,7 @@ import { LanguageContext } from "../../utils/LanguageProvider";
 import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 
-function TeamSelection({ setMyTeam }) {
+function TeamSelection({}) {
   const teams = ["red", "orange", "yellow", "green", "blue", "navy", "purple"];
 
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
@@ -20,7 +20,6 @@ function TeamSelection({ setMyTeam }) {
       team: team_idx, // 0 이상 7 이하
     };
     ws.send(JSON.stringify(request));
-    setMyTeam(team_idx);
   };
 
   return (

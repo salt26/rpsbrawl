@@ -10,6 +10,8 @@ import { WebsocketContext } from "../../utils/WebSocketProvider";
 import useInterval from "../../utils/useInterval";
 import { COOL_TIME } from "../../Config";
 
+// 벌새 날개짓 ㅋㅋㅋ 흑우 ㅋㅋㅋ 소가 된 게이름
+
 function RPSSelection({ lastHand }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
 
@@ -17,15 +19,16 @@ function RPSSelection({ lastHand }) {
 
   const [coolTime, setCoolTime] = useState(false);
 
-  const [createSocketConnection, ready, res, send] =
-    useContext(WebsocketContext); //전역 소켓 불러오기
+  // 4개의 단계 스테이지 16개의 맵
+
+  const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
 
   const _addHand = useCallback((hand) => {
     let request = {
       request: "hand",
       hand: hand, // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
     };
-    send(JSON.stringify(request));
+    ws.send(JSON.stringify(request));
     console.log(coolTime);
     setCoolTime(true);
   }, []);

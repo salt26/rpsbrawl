@@ -10,26 +10,55 @@ import LeftArrowSrc from "../../assets/images/left-arrow.svg";
 import { LanguageContext } from "../../utils/LanguageProvider";
 import { useContext } from "react";
 import { Language } from "../../db/Language";
-function AddBot({}) {
-  const [skilledBot, setSkilledBot] = useState(5);
-  const [dumbBot, setDumbBot] = useState(10);
+import { WebsocketContext } from "../../utils/WebSocketProvider";
 
+function AddBot({ skilledBot, dumbBot }) {
+  const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
+  const _changeNumOfBot = (type, num) => {
+    let request = {
+      request: "setting",
+      bot_skilled: type === "skilled" ? num : skilledBot, // 0 이상 10 이하
+      bot_dumb: type === "dumb" ? num : dumbBot, // 0 이상 10 이하
+    };
+
+    ws.send(JSON.stringify(request));
+    console.log("봇변경 요청이 발송되었습니다.");
+  };
   const mode = useContext(LanguageContext);
 
   const _addSkilledBot = () => {
-    setSkilledBot((prev) => prev + 1);
+    _changeNumOfBot("skilled", skilledBot + 1);
+    if (skilledBot >= 10) {
+      alert("can not add more bot");
+    }
+    // setSkilledBot((prev) => prev + 1);
   };
 
   const _deductSkilledBot = () => {
-    setSkilledBot((prev) => prev - 1);
+    _changeNumOfBot("skilled", skilledBot - 1);
+    if (dumbBot <= 0) {
+      alert("The bot can no longer be deducted");
+    }
+
+    //setSkilledBot((prev) => prev - 1);
   };
 
   const _addDumbBot = () => {
-    setDumbBot((prev) => prev + 1);
+    if (dumbBot >= 10) {
+      alert("can not add more bot");
+    }
+
+    _changeNumOfBot("dumb", dumbBot + 1);
+    //setDumbBot((prev) => prev + 1);
   };
 
   const _deductDumbBot = () => {
-    setDumbBot((prev) => prev - 1);
+    if (dumbBot <= 0) {
+      alert("The bot can no longer be deducted");
+      return;
+    }
+    _changeNumOfBot("dumb", dumbBot - 1);
+    //setDumbBot((prev) => prev - 1);
   };
   return (
     <BgBox bgColor={"var(--light-purple)"} width="150px" height="400px">

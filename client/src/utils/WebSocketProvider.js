@@ -51,7 +51,6 @@ export const WebsocketProvider = ({ children }) => {
           setUserName(data.name);
 
           setUserId(data.person_id);
-          console.log("메시지 좀 바다");
           navigate(`/rooms`, { state: data.rooms });
           break;
       }
