@@ -12,44 +12,60 @@ import { useNavigate } from "react-router-dom";
 import { getUserName, getUserAffiliation } from "../utils/User";
 import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
+import { getUserId } from "../utils/User";
+import MessageBox from "../components/gameroom/MessageBox";
 export default function InGamePage() {
+  const SHOW_TIME = 1; // 메시지 나타나는 시간 초
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
+  const user_id = getUserId();
 
   const lastHand = useRef(state["hand_list"][state.hand_list.length - 1].hand);
 
   //const handList = useRef(state["hand_list"]);
   const [handList, setHandList] = useState(state["hand_list"]);
 
+  const [lastScore, setLastScore] = useState(null);
   const [isWaiting, setIsWaiting] = useState(true);
-  const [count, setCount] = useState(5); //게임 시작까지 남은 시간
+  const [count, setCount] = useState(state["room"].time_offset); //게임 시작까지 남은 시간
+  const [roomInfo, setRoomInfo] = useState(state["room"]);
+  const [msg, setMsg] = useState("");
+  const [showTime, setShowTime] = useState(false);
 
-  const _getTimeOffset = useCallback((room) => {
-    // 마운트 시에만 정의
-    // init_time 기준으로 카운트다운 sync 맞추기
-    // 형식 => 2023-01-03 00:35:41.029853 KST
+  const _getTimeOffset = (room) => {
     const current = new Date();
-    var init = new Date(room["init_time"].slice(0, 19));
-    var offset = current.getTime() - init.getTime();
-    const left = 5 - parseInt(offset / 1000);
-    if (left <= 0) {
+    var start = new Date(room["init_time"].slice(0, 19));
+    start.setSeconds(start.getSeconds() + room["time_offset"]);
+    var left = parseInt((start.getTime() - current.getTime()) / 1000);
+
+    if (left < 0) {
       // 화면 넘어가는데 지연이 너무 오래걸린 경우 바로 게임 시작
       setIsWaiting(false); //게임 시작
     } else {
-      setCount(room["time_offset"] - parseInt(offset / 1000)); //타이머 초깃값 세팅
+      setCount(left); //타이머 초깃값 세팅
     }
-  }, []);
+  };
 
   useInterval(
     () => {
+      // 로컬에서는 방법1이 더 정확한 것 같은데..
+
+      // 방법1. 매 초마다 현재시간과 동기화
+      _getTimeOffset(roomInfo);
+
+      // 방법2. 시작타임 fix 후 1씩 줄여나가기 (다만
+      // 이경우 useInterval이 지연간격을 보장하지 못할 수 있음)
+      /*
       setCount((prev) => {
         return prev - 1;
       });
+     
 
-      if (count === 1) {
+      if (count === -10) {
         setIsWaiting(false); //게임시작
       }
+  */
     },
-    isWaiting ? 1000 : null
+    isWaiting ? 500 : null // 타이머 갱신 간격을 짧게하면 좀 더 정확하게 카운트다운이 가능
   );
 
   const my_name = getUserName();
@@ -69,6 +85,14 @@ export default function InGamePage() {
     _getTimeOffset(state.room);
   }, []);
 
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setShowTime(false); //스코어 내리기
+    }, SHOW_TIME * 1000);
+
+    return () => clearInterval(id);
+  }, [showTime]);
+
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   useEffect(() => {
     ws.onmessage = function (event) {
@@ -77,11 +101,16 @@ export default function InGamePage() {
 
       if (ready) {
         if (res?.response === "error") {
+          if (
+            res.message === "Cannot play the same hand in a row (limited mode)"
+          ) {
+            setMsg("Cannot play the same hand in a row (limited mode)");
+            setShowTime(true);
+            return;
+          }
           alert(res.message);
           return;
         }
-
-        console.log(res.data);
 
         switch (res.request) {
           case "hand": // 게임 전적 정보 갱신
@@ -93,6 +122,7 @@ export default function InGamePage() {
 
               lastHand.current = res.data.hand_list[len - 1].hand; // 가장 최근에 입력된 손 갱신
               setHandList(res.data.hand_list);
+              setLastScore(res.data.last_hand[user_id][1]);
             }
             break;
 
@@ -103,6 +133,13 @@ export default function InGamePage() {
                 state: res.data, //room, hand_list, game_list
               });
             }
+            break;
+          case "start":
+            if (res.type === "room_start") {
+              setRoomInfo(res.data);
+            }
+
+            break;
         }
       }
     };
@@ -134,9 +171,11 @@ export default function InGamePage() {
   return (
     <CountDownWrapper isWaiting={isWaiting}>
       <Container>
+        {showTime && <MessageBox>{msg}</MessageBox>}
+
         <Left>
-          <TimeBar duration={state.room["time_duration"]} />
-          <RPSSelection lastHand={lastHand.current} />
+          <TimeBar roomInfo={roomInfo} />
+          <RPSSelection lastHand={lastHand.current} lastScore={lastScore} />
         </Left>
 
         <Right>

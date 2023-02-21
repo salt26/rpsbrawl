@@ -17,7 +17,17 @@ function RoomListPage() {
   const my_name = getUserName();
   var navigate = useNavigate();
   const { state } = useLocation(); // 방 목록 정보
-
+  const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
+  const _backToHome = () => {
+    if (ready) {
+      let request = {
+        request: "signout",
+      };
+      ws.send(JSON.stringify(request));
+      console.log(request);
+      navigate("/");
+    }
+  };
   //방만들기
   const [CreateRoomModalVisible, setCreateRoomModalVisible] = useState(false);
 
@@ -34,7 +44,7 @@ function RoomListPage() {
       <Medium shadow color="white" size="80px">
         {Language[mode].rooms}
       </Medium>
-      <Back onClick={() => navigate("/")} />
+      <Back onClick={_backToHome} />
       <MyNameTag size="m" color="var(--yellow)">
         {my_name}
       </MyNameTag>

@@ -1,6 +1,6 @@
 import React from "react";
 import TrophySrc from "../../assets/images/1st_trophy.svg";
-import { Medium } from "../../styles/font";
+import { Medium, GradientText } from "../../styles/font";
 import styled from "styled-components";
 import BgBox from "../common/BgBox";
 
@@ -16,18 +16,47 @@ export default function MyPlace({ place }) {
     "navy",
     "purple",
   ];
+  const getNameSize = (name) => {
+    console.log(name);
+    if (name.length <= 5) {
+      return "40px";
+    } else if (name.length <= 10) {
+      return "25px";
+    } else if (name.length <= 20) {
+      return "20px";
+    } else {
+      return "10px";
+    }
+  };
 
   return (
     <BgBox width={"350px"} height={"130px"}>
-      <Row>
-        <Rank rank={rank} />
-        <Col>
-          <Medium size="30px">{team_color[team]}</Medium>
+      <div style={{ padding: "10px", width: "100%" }}>
+        <Row>
+          <Rank rank={rank} />
+          <Col>
+            <Medium size="30px">{team_color[team]}</Medium>
 
-          <Medium size="40px">{name}</Medium>
-        </Col>
-        <Medium>{score >= 0 ? "+" + score : score}</Medium>
-      </Row>
+            <Medium size={getNameSize(name)}>{name}</Medium>
+          </Col>
+
+          {score >= 0 ? (
+            <GradientText
+              bg={
+                "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
+              }
+            >
+              +{score}
+            </GradientText>
+          ) : (
+            <GradientText
+              bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
+            >
+              {score}
+            </GradientText>
+          )}
+        </Row>
+      </div>
     </BgBox>
   );
 }

@@ -9,8 +9,12 @@ import { getUserId } from "../utils/User";
 import { CSVLink, CSVDownload } from "react-csv";
 import { useContext } from "react";
 import { WebsocketContext } from "../utils/WebSocketProvider";
+import { Language } from "../db/Language";
+import { LanguageContext } from "../utils/LanguageProvider";
+import { Medium } from "../styles/font";
 
 export default function GameResultPage() {
+  const mode = useContext(LanguageContext);
   const { room_id } = useParams();
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
   const person_id = getUserId();
@@ -53,10 +57,13 @@ export default function GameResultPage() {
   return (
     <Row>
       {/**<Button text="나가기" onClick={_quitGame} /> */}
+      <Medium color="white" size="25px">
+        {Language[mode].result_page_text}
+      </Medium>
       <ResultBoard result={state?.game_list} />;
       <Col>
         <CSVLink data={state?.game_list} filename="rps_brawl_game_result.csv">
-          <Button text="결과저장" />
+          <Button text={Language[mode].save_result} />
         </CSVLink>
       </Col>
     </Row>
@@ -68,7 +75,10 @@ const Row = styled.div`
   justify-content: space-around;
   align-items: flex-end;
   padding-bottom: 50px;
+  margin-left: 100px;
+
   height: 100%;
+  gap: 10%;
 `;
 const Col = styled.div`
   display: flex;

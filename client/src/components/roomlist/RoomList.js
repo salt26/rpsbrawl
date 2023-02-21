@@ -15,6 +15,7 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
   var navigate = useNavigate();
   const [roomLists, setRoomLists] = useState(rooms);
 
+  console.log(roomLists);
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   useEffect(() => {
     ws.onmessage = function (event) {
@@ -31,7 +32,7 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
             setRoomLists(res.data);
             break;
 
-          case "join_data": // 방장이 룸을 생성하거나 다른 유저가 입장 버튼 누를경우
+          case "join_data": // 방장이 룸을 생성하거나 유저가 입장(Join) 요청 보낸경우
             navigate(`./${res.data.room.id}/waiting`, { state: res.data });
 
             break;
@@ -45,6 +46,22 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
 
   const _quickStart = () => {
     // console.log("quick start success");
+    var enter_id = 0;
+    var room_num = 0;
+    do {
+      room_num = Math.floor(Math.random() * roomLists.length); // 0 ~ 방번호 중 랜덤 방번호 추첨
+      enter_id = roomLists[room_num].id; // 들어갈 방의 고유 id
+    } while (roomLists[room_num].has_password);
+
+    let request = {
+      request: "join",
+      room_id: enter_id,
+      password: "",
+    };
+
+    console.log(request);
+
+    ws.send(JSON.stringify(request));
   };
 
   const blueBtnStyle = {

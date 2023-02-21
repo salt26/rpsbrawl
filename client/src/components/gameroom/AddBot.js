@@ -36,7 +36,7 @@ function AddBot({ skilledBot, dumbBot }) {
   };
 
   const _deductSkilledBot = () => {
-    if (dumbBot <= 0) {
+    if (skilledBot <= 0) {
       alert("Cannot reduce the number of bots.");
       return;
     }

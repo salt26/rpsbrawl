@@ -13,6 +13,8 @@ import GradientBtn from "../roomlist/GradientBtn";
 import { Tooltip } from "react-tooltip";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useNavigate } from "react-router-dom";
+import { Language } from "../../db/Language";
+import { LanguageContext } from "../../utils/LanguageProvider";
 
 function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
   const [roomTitle, setRoomTitle] = useState(roomInfo.name);
@@ -21,6 +23,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
   const [password, setPassword] = useState("");
   const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
 
+  const mode = useContext(LanguageContext);
   const blueBtnStyle = {
     fontSize: "25px",
     width: "40%",
@@ -76,8 +79,8 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
       isOpen={modalVisible}
       style={{
         overlay: {
-          width: "30%",
-          height: "40%",
+          width: "500px",
+          height: "300px",
           top: "25%",
           left: "35%",
 
@@ -101,7 +104,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
     >
       <TitleBox>
         <Medium size="30px" color="white">
-          {"Setting"}
+          {Language[mode].settings}
         </Medium>
       </TitleBox>
       <Container>
@@ -122,7 +125,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
         <Row>
           <SvgIcon src={GameSrc} size="30px" />
           <Medium size="30px" color="black">
-            Mode
+            {Language[mode].mode}
           </Medium>
           {gameMode === 0 ? (
             <SvgIcon src={CheckSrc} size="20px" />
@@ -134,7 +137,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
             />
           )}
           <Medium size="25px" color="black">
-            Normal
+            {Language[mode].normal}
           </Medium>
 
           {gameMode === 1 ? (
@@ -147,7 +150,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
             />
           )}
           <Medium size="25px" color="black">
-            Limited
+            {Language[mode].limited}
           </Medium>
 
           <img
@@ -168,7 +171,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
         <Row>
           <SvgIcon src={LockSrc} size="30px" />
           <Medium size="30px" color="black">
-            Private room
+            {Language[mode].privateRoom}
           </Medium>
 
           {privateMode ? (

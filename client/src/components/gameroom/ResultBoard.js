@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import ClockSrc from "../../assets/images/clock.png";
 import { Medium } from "../../styles/font";
 import SvgIcon from "../common/SvgIcon";
@@ -9,8 +9,11 @@ import SilverSrc from "../../assets/images/2nd.svg";
 import BronzeSrc from "../../assets/images/3rd.svg";
 import SizedBox from "../common/SizedBox";
 import { getUserName, getUserAffiliation } from "../../utils/User";
+import { Language } from "../../db/Language";
+import { LanguageContext } from "../../utils/LanguageProvider";
+
 export default function ResultBoard({ result }) {
-  console.log(result);
+  const mode = useContext(LanguageContext);
   const [myPlace, setMyPlace] = useState({
     name: "이름",
     team: 0,
@@ -51,7 +54,7 @@ export default function ResultBoard({ result }) {
       <Col>
         <Title>
           <SvgIcon src={ClockSrc} size="80px" />
-          <Medium color={"var(--mint)"}>시간종료</Medium>
+          <Medium color={"var(--mint)"}>{Language[mode].time_over}</Medium>
         </Title>
         <SizedBox height={10} />
         <BgBox width="90%" height="10%" bgColor={"white"}>

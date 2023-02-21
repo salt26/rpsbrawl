@@ -11,11 +11,13 @@ import HTTP from "../../utils/HTTP";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useContext, useEffect } from "react";
 import "./networklog.css";
+import { Language } from "../../db/Language";
+import { LanguageContext } from "../../utils/LanguageProvider";
 
 //1등 점수 정보
 export default function NetworkLogs({ logs }) {
   var rpsDic = { 0: "rock", 1: "scissor", 2: "paper" };
-
+  const mode = useContext(LanguageContext);
   const scrollRef = useRef();
   useEffect(() => {
     // 스크롤 위치 하단 고정 -> 좀 부자연스러운 느낌?
@@ -44,7 +46,7 @@ export default function NetworkLogs({ logs }) {
   return (
     <div>
       <Medium size={"30px"} color={"white"}>
-        Network logs
+        {Language[mode].network_logs}
       </Medium>
       <SizedBox height={"10px"} />
       <BgBox width={"350px"} height={"300px"}>

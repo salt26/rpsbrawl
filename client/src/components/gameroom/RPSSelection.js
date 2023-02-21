@@ -9,16 +9,15 @@ import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import useInterval from "../../utils/useInterval";
 import { COOL_TIME } from "../../Config";
+import { GradientText } from "../../styles/font";
 
-// 벌새 날개짓 ㅋㅋㅋ 흑우 ㅋㅋㅋ 소가 된 게이름
-
-function RPSSelection({ lastHand }) {
+function RPSSelection({ lastHand, lastScore }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
 
   const { room_id } = useParams();
 
   const [coolTime, setCoolTime] = useState(false);
-
+  const [showTime, setShowTime] = useState(false);
   // 4개의 단계 스테이지 16개의 맵
 
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
@@ -31,18 +30,37 @@ function RPSSelection({ lastHand }) {
     ws.send(JSON.stringify(request));
     console.log(coolTime);
     setCoolTime(true);
+    setShowTime(true);
   }, []);
 
   useEffect(() => {
     const id = setTimeout(() => {
       setCoolTime(false); //쿨타임해제
+      setShowTime(false); //스코어 내리기
     }, COOL_TIME * 1000);
 
     return () => clearInterval(id);
-  }, [coolTime]);
+  }, [coolTime, showTime]);
 
   return (
     <>
+      <TextContainer showTime={showTime}>
+        {lastScore >= 0 ? (
+          <GradientText
+            bg={
+              "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
+            }
+          >
+            +{lastScore}
+          </GradientText>
+        ) : (
+          <GradientText
+            bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
+          >
+            {lastScore}
+          </GradientText>
+        )}
+      </TextContainer>
       <img src={rpsDic[lastHand]} width="500px" />
       <Row>
         <ImgBox coolTime={coolTime}>
@@ -85,19 +103,28 @@ function areEqual(prevProps, nextProps) {
 
 export default React.memo(RPSSelection, areEqual);
 
-const Wrapper = styled.div`
-  z-index: 3;
-  ${({ isWaiting }) =>
-    isWaiting &&
-    css`
-      filter: alpha(opacity=40);
-      opacity: 0.4;
-      -moz-opacity: 0.4;
-      background: rgba(217, 217, 217, 72) repeat;
-    `}
+const TextContainer = styled.text`
+  position: absolute;
+  top: 80%;
+  left: 45%;
+
+  ${({ showTime }) => {
+    if (showTime) {
+      css`
+        display: block;
+      `;
+    } else {
+      // showTime이 지나면
+
+      return css`
+        display: none;
+      `;
+    }
+  }}
 `;
 
 const Row = styled.div`
+  position: relative;
   display: flex;
   flex-direction: row;
   justify-content: space-around;

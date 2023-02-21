@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useContext } from "react";
 import TrophySrc from "../../assets/images/1st_trophy.svg";
-import { Medium } from "../../styles/font";
+import { Medium, GradientText } from "../../styles/font";
 import styled from "styled-components";
 import BgBox from "../common/BgBox";
 import SvgIcon from "../common/SvgIcon";
 import SizedBox from "../common/SizedBox";
-
+import { Language } from "../../db/Language";
+import { LanguageContext } from "../../utils/LanguageProvider";
 //1등 점수 정보
 export default function FirstPlace({ place }) {
   const { team, score, name } = place;
@@ -18,22 +19,40 @@ export default function FirstPlace({ place }) {
     "navy",
     "purple",
   ];
+
+  const mode = useContext(LanguageContext);
   return (
     <div>
       <Medium size={"30px"} color={"white"}>
-        Places
+        {Language[mode].places}
       </Medium>
       <SizedBox height={"10px"} />
       <BgBox width={"350px"} height={"100px"}>
-        <Row>
-          <SvgIcon src={TrophySrc} size={"80px"} />
-          <Col>
-            <Medium size="27px">{team_color[team]}</Medium>
+        <div style={{ padding: "10px", width: "100%" }}>
+          <Row>
+            <SvgIcon src={TrophySrc} size={"80px"} />
+            <Col>
+              <Medium size="27px">{team_color[team]}</Medium>
 
-            <Medium size="35px">{name}</Medium>
-          </Col>
-          <Medium size="40px">{score >= 0 ? "+" + score : score}</Medium>
-        </Row>
+              <Medium size="35px">{name}</Medium>
+            </Col>
+            {score >= 0 ? (
+              <GradientText
+                bg={
+                  "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
+                }
+              >
+                +{score}
+              </GradientText>
+            ) : (
+              <GradientText
+                bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
+              >
+                {score}
+              </GradientText>
+            )}
+          </Row>
+        </div>
       </BgBox>
     </div>
   );

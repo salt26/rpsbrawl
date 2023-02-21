@@ -53,6 +53,12 @@ export const WebsocketProvider = ({ children }) => {
           setUserId(data.person_id);
           navigate(`/rooms`, { state: data.rooms });
           break;
+        case "recon_data": //재접속시
+          setUserName(res.data.name);
+
+          setUserId(res.data.person_id);
+
+          navigate(`/rooms/${res.data.room.id}/game`, { state: res.data });
       }
     };
     ws.current = socket;

@@ -31,14 +31,35 @@ import SvgIcon from "../components/common/SvgIcon";
 import LockSrc from "../assets/images/lock.svg";
 import SettingSrc from "../assets/images/setting.svg";
 import SettingModal from "../components/gameroom/SettingModal";
+import { history } from "../utils/history";
 
 export default function WatingGamePage() {
   const { room_id } = useParams();
   const { state } = useLocation(); // 유저 목록 정보
+  useEffect(
+    () => {
+      const listenBackEvent = () => {
+        // 뒤로가기 할 때 수행할 동작을 적는다
+        _quitGame();
+      };
 
+      const unlistenHistoryEvent = history.listen(({ action }) => {
+        if (action === "POP") {
+          // 뒤로가기
+          listenBackEvent();
+        } else if (action === "PUSH") {
+          //앞으로가기
+        }
+      });
+
+      return unlistenHistoryEvent;
+    },
+    [
+      // effect에서 사용하는 state를 추가
+    ]
+  );
   //host인지 아닌지 판단
   const _findHost = (users) => {
-    console.log("내이름", my_name);
     for (var user of users) {
       if (user.name === my_name) {
         if (user.is_host) {
@@ -79,6 +100,7 @@ export default function WatingGamePage() {
         switch (res?.type) {
           case "game_list": // 팀 변경 요청에 대한 응답 , 접속 끊겼을때
             setUsers(res.data);
+            setIsAdmin(_findHost(res.data));
 
             if (res?.request === "quit") {
               setRoomInfo((prev) => {
