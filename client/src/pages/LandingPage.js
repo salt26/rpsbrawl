@@ -17,11 +17,10 @@ import { useNavigate } from "react-router-dom";
 import { useRef, createContext, useEffect } from "react";
 import { LanguageContext } from "../utils/LanguageProvider";
 import HTTP from "../utils/HTTP";
-import { getUserName } from "../utils/User";
+import { getUserName, setUserName } from "../utils/User";
 import { Language } from "../db/Language";
 import { BASE_WEBSOCKET_URL } from "../Config";
 import { WebsocketContext } from "../utils/WebSocketProvider";
-
 function RuleBox() {
   const mode = useContext(LanguageContext);
   return (
@@ -52,6 +51,10 @@ function LoginBox() {
   const _joinGame = () => {
     if (name === "") {
       alert("fill in the blank");
+      return;
+    }
+    if (name.length > 32) {
+      alert("Name can be no more than 32 letters");
       return;
     }
 

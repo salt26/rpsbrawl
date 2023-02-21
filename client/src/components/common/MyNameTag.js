@@ -3,15 +3,24 @@ import styled from "styled-components";
 import { Medium } from "../../styles/font";
 import { css } from "styled-components";
 import palette from "../../styles/palette";
-
+const getNameSize = (name) => {
+  if (name.length <= 10) {
+    return "25px";
+  } else if (name.length <= 20) {
+    return "20px";
+  } else {
+    return "15px";
+  }
+};
 function MyNameTag({ children, size, none, color }) {
   const fontsize = {
     s: "25px",
     m: "35px",
   };
+
   return (
     <Container size={size} none={none} bg={palette[color]}>
-      <Medium size={fontsize[size]} color={"white"}>
+      <Medium size={getNameSize(children)} color={"white"}>
         {children}
       </Medium>
     </Container>

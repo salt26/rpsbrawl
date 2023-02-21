@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
   const [roomTitle, setRoomTitle] = useState(roomInfo.name);
-  const [gameMode, setGameMode] = useState(roomInfo.state);
+  const [gameMode, setGameMode] = useState(roomInfo.mode);
   const [privateMode, setPrivateMode] = useState(roomInfo.has_password);
   const [password, setPassword] = useState("");
   const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
@@ -37,14 +37,20 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
   };
 
   const _modifyRoom = () => {
+    if (password.length > 20) {
+      alert("Please set the password  no more than 20 characters.");
+      return;
+    }
+
+    if (roomTitle.length > 32) {
+      alert("Please set the title  no more than 32 characters.");
+      return;
+    }
     let request = {
       request: "setting",
       name: roomTitle, // 빈 문자열이 아니고 32글자 이내여야 함
       mode: gameMode, // 0은 일반 모드, 1은 연속해서 같은 손을 입력할 수 없는 모드
       password: privateMode ? password : "", // 비밀번호를 없애는 경우 ""(빈 문자열) 전송할 것, 20글자 이내여야 함
-      bot_skilled: roomInfo.bot_skilled, // 0 이상 10 이하
-      bot_dumb: roomInfo.bot_dumb, // 0 이상 10 이하
-      max_persons: roomInfo.max_persons, // 30 이하, (모든 봇 수) + (현재 입장한 사람 수) <= max_persons
     };
 
     ws.send(JSON.stringify(request));
@@ -198,16 +204,16 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
         <SizedBox height={"15px"} />
         <Row>
           <GradientBtn
-            text={"Update"}
+            text="Cancel"
             style={blueBtnStyle}
             anim
-            onClick={_modifyRoom}
+            onClick={() => setModalVisible(false)}
           />
           <GradientBtn
-            text="Cancel"
+            text={"Update"}
             style={redBtnStyle}
             anim
-            onClick={() => setModalVisible(false)}
+            onClick={_modifyRoom}
           />
         </Row>
       </Container>

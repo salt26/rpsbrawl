@@ -13,13 +13,17 @@ import GradientBtn from "../roomlist/GradientBtn";
 import { Tooltip } from "react-tooltip";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useNavigate } from "react-router-dom";
+import { Language } from "../../db/Language";
 
-function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
-  const [roomTitle, setRoomTitle] = useState("");
+import { LanguageContext } from "../../utils/LanguageProvider";
+function CreateRoomModal({ modalVisible, setModalVisible }) {
+  const [roomTitle, setRoomTitle] = useState("Welcome!");
   const [gameMode, setGameMode] = useState(0);
   const [privateMode, setPrivateMode] = useState(false);
   const [password, setPassword] = useState("");
   const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
+
+  const mode = useContext(LanguageContext);
 
   var navigate = useNavigate();
   const blueBtnStyle = {
@@ -59,7 +63,7 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
   };
   useEffect(() => {
     ws.onmessage = function (event) {
-      const res = JSON.parse(event.data); // 전달된 json string을 object로 변환
+      const res = JSON.parse(event.data);
 
       if (ready) {
         if (res?.response === "error") {
@@ -75,8 +79,8 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
       isOpen={modalVisible}
       style={{
         overlay: {
-          width: "30%",
-          height: "40%",
+          width: "500px",
+          height: "300px",
           top: "25%",
           left: "35%",
 
@@ -100,7 +104,7 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
     >
       <TitleBox>
         <Medium size="30px" color="white">
-          {"Create Room"}
+          {Language[mode].create_room}
         </Medium>
       </TitleBox>
       <Container>
@@ -121,7 +125,7 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
         <Row>
           <SvgIcon src={GameSrc} size="30px" />
           <Medium size="30px" color="black">
-            Mode
+            {Language[mode].mode}
           </Medium>
           {gameMode === 0 ? (
             <SvgIcon src={CheckSrc} size="20px" />
@@ -133,7 +137,7 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
             />
           )}
           <Medium size="25px" color="black">
-            Normal
+            {Language[mode].normal}
           </Medium>
 
           {gameMode === 1 ? (
@@ -146,7 +150,7 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
             />
           )}
           <Medium size="25px" color="black">
-            Limited
+            {Language[mode].limited}
           </Medium>
 
           <img
@@ -167,7 +171,7 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
         <Row>
           <SvgIcon src={LockSrc} size="30px" />
           <Medium size="30px" color="black">
-            Private room
+            {Language[mode].privateRoom}
           </Medium>
 
           {privateMode ? (
@@ -203,13 +207,13 @@ function CreateRoomModal({ modalVisible, setModalVisible, mode }) {
         <SizedBox height={"15px"} />
         <Row>
           <GradientBtn
-            text={"Confirm"}
+            text={Language[mode].create}
             style={blueBtnStyle}
             anim
             onClick={_createRoom}
           />
           <GradientBtn
-            text="Cancel"
+            text={Language[mode].cancel}
             style={redBtnStyle}
             anim
             onClick={() => setModalVisible(false)}

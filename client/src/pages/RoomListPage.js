@@ -27,7 +27,6 @@ function RoomListPage() {
   return (
     <Col>
       <CreateRoomModal
-        mode="create"
         modalVisible={CreateRoomModalVisible}
         setModalVisible={setCreateRoomModalVisible}
       />
@@ -37,7 +36,6 @@ function RoomListPage() {
       </Medium>
       <Back onClick={() => navigate("/")} />
       <MyNameTag size="m" color="var(--yellow)">
-        {" "}
         {my_name}
       </MyNameTag>
       <RoomList

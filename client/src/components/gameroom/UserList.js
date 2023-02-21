@@ -22,11 +22,21 @@ export default function UserList({ users }) {
     <Container>
       {users.map(({ team, name, is_host }, idx) => {
         if (is_host) {
-          return (
-            <AdminTag key={idx} color={team_color[team]}>
-              {name}
-            </AdminTag>
-          );
+          if (name === my_name) {
+            return (
+              <Anim>
+                <AdminTag key={idx} color={team_color[team]}>
+                  {name}
+                </AdminTag>
+              </Anim>
+            );
+          } else {
+            return (
+              <AdminTag key={idx} color={team_color[team]}>
+                {name}
+              </AdminTag>
+            );
+          }
         } else if (name === my_name) {
           return (
             <Anim>

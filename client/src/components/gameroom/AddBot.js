@@ -27,25 +27,27 @@ function AddBot({ skilledBot, dumbBot }) {
   const mode = useContext(LanguageContext);
 
   const _addSkilledBot = () => {
-    _changeNumOfBot("skilled", skilledBot + 1);
     if (skilledBot >= 10) {
       alert("can not add more bot");
+      return;
     }
+    _changeNumOfBot("skilled", skilledBot + 1);
     // setSkilledBot((prev) => prev + 1);
   };
 
   const _deductSkilledBot = () => {
-    _changeNumOfBot("skilled", skilledBot - 1);
     if (dumbBot <= 0) {
-      alert("The bot can no longer be deducted");
+      alert("Cannot reduce the number of bots.");
+      return;
     }
-
+    _changeNumOfBot("skilled", skilledBot - 1);
     //setSkilledBot((prev) => prev - 1);
   };
 
   const _addDumbBot = () => {
     if (dumbBot >= 10) {
-      alert("can not add more bot");
+      alert("Cannot add more bots");
+      return;
     }
 
     _changeNumOfBot("dumb", dumbBot + 1);
@@ -54,7 +56,7 @@ function AddBot({ skilledBot, dumbBot }) {
 
   const _deductDumbBot = () => {
     if (dumbBot <= 0) {
-      alert("The bot can no longer be deducted");
+      alert("Cannot reduce the number of bots");
       return;
     }
     _changeNumOfBot("dumb", dumbBot - 1);

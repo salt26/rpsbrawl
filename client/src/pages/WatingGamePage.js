@@ -38,6 +38,7 @@ export default function WatingGamePage() {
 
   //host인지 아닌지 판단
   const _findHost = (users) => {
+    console.log("내이름", my_name);
     for (var user of users) {
       if (user.name === my_name) {
         if (user.is_host) {
@@ -60,8 +61,7 @@ export default function WatingGamePage() {
   const [skilledBot, setSkilledBot] = useState(state.room.bot_skilled);
   const [dumbBot, setDumbBot] = useState(state.room.bot_dumb);
 
-  const person_id = getUserId();
-  const person_name = getUserName();
+  console.log(_findHost(users));
   var navigate = useNavigate();
 
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
@@ -79,6 +79,15 @@ export default function WatingGamePage() {
         switch (res?.type) {
           case "game_list": // 팀 변경 요청에 대한 응답 , 접속 끊겼을때
             setUsers(res.data);
+
+            if (res?.request === "quit") {
+              setRoomInfo((prev) => {
+                const newRoomInfo = { ...prev };
+                newRoomInfo.num_persons -= 1; // 나간 인원 감소
+                return newRoomInfo;
+              });
+            }
+
             break;
           case "room_list": // 룸 목록 갱신 요청에 대한 응답
             navigate("/rooms", { state: res.data });
@@ -87,15 +96,18 @@ export default function WatingGamePage() {
           case "room": // 방 설정 변경 성공시
             setRoomInfo(res.data);
 
-            setSkilledBot(res.data.bot_skilled);
-            setDumbBot(res.data.bot_dumb);
+            /*
             if (isAdmin) {
               alert("방 설정이 성공적으로 변경되었습니다.");
             }
+            */
+            setSkilledBot(res.data.bot_skilled);
+            setDumbBot(res.data.bot_dumb);
 
             break;
           case "join_data": // 새로운 사람 입장시
             setUsers(res.data.game_list);
+            setRoomInfo(res.data.room);
             break;
           case "init_data": // 게임 시작시 정보
             navigate(`/rooms/${room_id}/game`, { state: res.data });
@@ -133,6 +145,16 @@ export default function WatingGamePage() {
 
     // navigate(`/rooms/1/game`);
   };
+
+  const getTitleSize = (roomTitle) => {
+    if (roomTitle.length <= 9) {
+      return "50px";
+    } else if (roomTitle.length <= 18) {
+      return "25px";
+    } else {
+      return "20px";
+    }
+  };
   return (
     <Container>
       <SettingModal
@@ -147,8 +169,10 @@ export default function WatingGamePage() {
           </Medium>
           {roomInfo.has_password && <SvgIcon src={LockSrc} size="20px" />}
         </Row2>
-        <BgBox bgColor={"white"} width="230px" height="50px">
-          <Medium color="#6E3D9D">{roomInfo.name}</Medium>
+        <BgBox bgColor={"white"} width="230px" height="60px">
+          <Medium color="#6E3D9D" size={getTitleSize(roomInfo.name)}>
+            {roomInfo.name}
+          </Medium>
         </BgBox>
       </TitleContainer>
       <Anim>
@@ -183,13 +207,15 @@ export default function WatingGamePage() {
 
         <Sector>
           <Col>
-            <SettingContainer>
-              <SvgIcon
-                src={SettingSrc}
-                size="40px"
-                onClick={() => setSettingModalVisible(true)}
-              />
-            </SettingContainer>
+            {isAdmin && (
+              <SettingContainer>
+                <SvgIcon
+                  src={SettingSrc}
+                  size="40px"
+                  onClick={() => setSettingModalVisible(true)}
+                />
+              </SettingContainer>
+            )}
 
             <AddBot skilledBot={skilledBot} dumbBot={dumbBot} />
 
@@ -197,7 +223,7 @@ export default function WatingGamePage() {
               <Button
                 text={Language[mode].start}
                 onClick={_startGame}
-                bgColor="var(--red)"
+                bg={`linear-gradient(180deg, #FA1515 0%, #F97916 100%);`}
               />
             ) : (
               <></>

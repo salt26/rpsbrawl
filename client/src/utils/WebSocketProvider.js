@@ -47,7 +47,7 @@ export const WebsocketProvider = ({ children }) => {
       switch (res?.type) {
         case "profile_and_room_list":
           const { data } = res;
-          console.log(data);
+
           setUserName(data.name);
 
           setUserId(data.person_id);
