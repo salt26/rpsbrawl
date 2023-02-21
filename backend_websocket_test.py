@@ -2067,6 +2067,7 @@ def test_websocket_limited_play_with_so_many_bots(app):
 
 
 # 프로젝트 루트 폴더(sql_app 폴더의 상위 폴더)에서 실행할 것!
+# 이 코드를 돌릴 때는 sql_app/crud.py 의 END_WAITING_TIME 값을 5 정도로 작게 주고 돌리는 것을 추천!
 if __name__ == '__main__':
     if __package__ is None:
         import sys
@@ -2085,8 +2086,8 @@ if __name__ == '__main__':
     #print()
     #test_websocket_normal_start_and_hand(app)
     #print()
-    #test_websocket_setting_and_many_hand(app)
-    #print()
+    test_websocket_setting_and_many_hand(app)
+    print()
     #test_websocket_error_and_disconnect(app)
     #print()
     #test_websocket_reconnect(app)
@@ -2104,7 +2105,7 @@ if __name__ == '__main__':
     #test_websocket_limited_mode(app)
     #print()
     
-    test_websocket_limited_play_with_many_bots(app)
-    print()
+    #test_websocket_limited_play_with_many_bots(app)
+    #print()
     #test_websocket_limited_play_with_so_many_bots(app)
     #print()

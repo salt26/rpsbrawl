@@ -518,13 +518,13 @@ async def skilled_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db
             #lock.acquire()
             bManager.release_bot(bot_id)
             #lock.release()
-            print("skilled_bot " + str(bot_id) + " in room " + str(room_id) + " has terminated")
+            #print("skilled_bot " + str(bot_id) + " in room " + str(room_id) + " has terminated")
             return
         elif room.start_time is not None:
             #lock.acquire()
             old_hand = crud.get_hands_from_last(db, room_id, 1)[0].hand
             #lock.release()
-            print("skilled bot has observed hand " + str(old_hand))
+            #print("skilled bot has observed hand " + str(old_hand))
             await asyncio.sleep(0.2 + random.random() * 0.1)
 
             new_hand = (int(old_hand) + 2) % 3
@@ -534,7 +534,7 @@ async def skilled_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db
 
             if room.mode == schemas.RoomModeEnum.Limited and last_hand == new_hand:
                 #lock.release()
-                print("skilled bot skip")
+                #print("skilled bot skip")
                 await asyncio.sleep(0.2 + random.random() * 0.1)
             else:
                 hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand), last_hand=last_hand)
@@ -552,7 +552,8 @@ async def skilled_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db
                     await task2
                 else:
                     #lock.release()
-                    print("skilled bot hand failed: error_code " + str(error_code))
+                    #print("skilled bot hand failed: error_code " + str(error_code))
+                    pass
         else:
             await asyncio.sleep(0.1 + random.random() * 1.4)
 
@@ -572,13 +573,13 @@ async def dumb_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db)):
             #lock.acquire()
             bManager.release_bot(bot_id)
             #lock.release()
-            print("dumb_bot " + str(bot_id) + " in room " + str(room_id) + " has terminated")
+            #print("dumb_bot " + str(bot_id) + " in room " + str(room_id) + " has terminated")
             return
         elif room.start_time is not None:
             #lock.acquire()
             old_hand = crud.get_hands_from_last(db, room_id, 1)[0].hand
             #lock.release()
-            print("dumb bot has observed hand " + str(old_hand))
+            #print("dumb bot has observed hand " + str(old_hand))
             await asyncio.sleep(0.2 + random.random() * 0.6)
 
             new_hand = (int(old_hand) + 1) % 3
@@ -588,7 +589,7 @@ async def dumb_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db)):
 
             if room.mode == schemas.RoomModeEnum.Limited and last_hand == new_hand:
                 #lock.release()
-                print("dumb bot skip")
+                #print("dumb bot skip")
                 await asyncio.sleep(0.2 + random.random() * 0.6)
             else:
                 hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand), last_hand=last_hand)
@@ -606,7 +607,8 @@ async def dumb_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db)):
                     await task2
                 else:
                     #lock.release()
-                    print("dumb bot hand failed: error_code " + str(error_code))
+                    #print("dumb bot hand failed: error_code " + str(error_code))
+                    pass
         else:
             await asyncio.sleep(0.1 + random.random() * 1.4)
 
@@ -691,6 +693,7 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
         if person_id != new_host_id:
             crud.update_room_to_enter(db, new_room.id, person_id, old_room.password)
         cManager.change_room_id(person_id, new_room.id)
+        crud.update_game_for_team(db, new_room.id, person_id, crud.get_game(db, room_id, person_id).team)
     # 해당 방 전체에게 입장 데이터(방 정보 및 전적(사람) 목록) 응답
     join_data = {"room": read_room(new_room.id, db), "game_list": read_game(new_room.id, db)}
     #lock.release()
@@ -716,6 +719,7 @@ async def run_game_for_room(room_id: int, time_offset: int, time_duration: int):
             _, error_code = crud.update_room_to_enter_bot(db, room_id, bot_id)
             if error_code != 0:
                 print("skilled bot enter failed: error_code " + str(error_code))
+                pass
             tasks.append(skilled_bot_ai(room_id, bot_id, db))
         for _ in range(room.bot_dumb):
             bot_id = bManager.get_dumb_bot(room_id, db).id
@@ -857,7 +861,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("setting", "error", "You are not in that room", websocket)
                 continue
             elif not game.is_host:
-                await ConnectionManager.send_text("setting", "error", "Forbidden", websocket)
+                await ConnectionManager.send_text("setting", "error", "Only the host can change the room settings", websocket)
                 continue
 
             mode = data.get("mode")
@@ -1010,7 +1014,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("start", "error", "You are not in that room", websocket)
                 continue
             elif not game.is_host:
-                await ConnectionManager.send_text("start", "error", "Forbidden", websocket)
+                await ConnectionManager.send_text("start", "error", "Only the host can start the game", websocket)
                 continue
 
             if room["state"] == schemas.RoomStateEnum.Wait:

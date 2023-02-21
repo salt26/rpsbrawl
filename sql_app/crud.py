@@ -16,7 +16,7 @@ import random
 # db_room.update({"state" : schemas.RoomStateEnum.Play})
 # print(db_room.first())  # None 이 출력된다!
 
-END_WAITING_TIME = 10
+END_WAITING_TIME = 20   # 기본값은 20초이지만, backend_websocket_test.py를 돌릴 때에는 5초 정도로 짧게 설정하면 좋음
 
 def hand_score(my_hand: schemas.HandEnum, prev_hand: schemas.HandEnum):
     if my_hand == prev_hand:
@@ -235,7 +235,6 @@ def update_room_to_enter_bot(db: Session, room_id: int, bot_id: int):
 def update_room_to_quit(db: Session, room_id: int, person_id: int):
     # 해당 방에서 사람 퇴장
     # 대기 방인 경우에만 퇴장 가능
-    print("update room to quit (DEBUG)")
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
     if db_room.first() is None:
         return (None, 1)
@@ -252,7 +251,6 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
     was_host = False
     if len(games_human) <= 1:
         # 만약 퇴장 후 사람이 아무도 남지 않는 경우 방 제거
-        print("delete room")
         db.delete(db_room.first())
         db.delete(db_game.first())
         db.commit()
@@ -263,7 +261,7 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
         # 만약 퇴장하는 사람이 방장일 경우, 해당 방에 남아있는 다른 사람 중 한 명을 방장으로 만듦
         was_host = True
         for next_host_id in [g.person_id for g in games_human if g.person_id != person_id][:1]:
-            print("next_host_id: " + str(next_host_id))
+            #print("next_host_id: " + str(next_host_id))
             db_game2 = db.query(models.Game).filter(and_(models.Game.room_id == room_id, models.Game.person_id == next_host_id))
             db_game2.update({
                 "is_host" : True
@@ -274,7 +272,7 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
     db.refresh(db_room.first())
     if was_host:
         db.refresh(db_game2.first())
-        print("refresh next_host_id")
+        #print("refresh next_host_id")
     return (schemas.Room.from_orm(db_room.first()), 0)
 
 def update_room_setting(db: Session, room_id: int, name: str or None = None, mode: schemas.RoomModeEnum or None = None, \
