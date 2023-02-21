@@ -847,6 +847,16 @@ hand error: 잘못된 손(0, 1, 2가 아닌 수)을 내거나 요청에 hand가 
 }
 ```
 
+hand error: limited 모드에서 같은 손을 두 번 이상 연달아 내려는 경우 다음 메시지 응답
+```
+{
+  request: "hand",
+  response: "error",
+  type: "message",
+  message: "Cannot play the same hand in a row (limited mode)"
+}
+```
+
 **hand broadcast**: 손 입력 성공 시 해당 방의 모든 사람들에게 업데이트된 손 목록과 전적 정보 응답
 ```
 {

@@ -82,15 +82,6 @@ class ConnectionManager:
             await connection[0].close()
             self.active_connections.remove(connection)
 
-    """
-    async def close_with_room_id(self, room_id: int):
-        # 한 방 전체의 사람들을 로그아웃시킴
-        for connection in self.find_all_connections_by_room_id(room_id):
-            await connection[0].close()
-            if connection in self.active_connections:
-                self.active_connections.remove(connection)
-    """
-
     async def send_text(request: str, response: str, message: str, websocket: WebSocket):
         obj = {}
         obj["request"] = request
@@ -304,15 +295,6 @@ def read_all_room(db: Session = Depends(get_db)):
     return rooms
     # TODO 최종 배포 시에는 반드시! 지워야 함!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-"""
-@app.get("/room", response_model=schemas.Room)
-def read_or_create_wait_room(db: Session = Depends(get_db)):
-    # 대기 중인 방이 있다면 그 방을 반환
-    # 없다면 새 대기 방을 만들어 그 방을 반환 (디버깅 용도)
-    room = crud.get_last_wait_room(db)
-    return room
-"""
-
 @app.get("/room/{room_id}")
 def read_room(room_id: int, db: Session = Depends(get_db)):
     # 해당 방 반환
@@ -440,17 +422,6 @@ def read_all_hands(room_id: int, db: Session = Depends(get_db)):
         })
     return ret
 
-"""
-def read_last_hand_for_each_person(room_id: int, db: Session = Depends(get_db)):
-    games = crud.get_games_in_room(db, room_id, False)
-    hands = crud.get_hands(db, room_id)
-    ret = {}
-    for game in games:
-        person = crud.get_person(db, person_id=game.person_id)
-        if hands.
-            ret[person.name] = None
-"""
-
 @app.get("/room/{room_id}/game")
 def read_game(room_id: int, db: Session = Depends(get_db)):
     # 해당 방의 사람들의 {순위, 팀 번호, 이름, 방장 여부, 점수, win, draw, lose, 방 번호} 반환
@@ -508,13 +479,6 @@ def read_persons(db: Session = Depends(get_db)):
     # (디버깅 용도)
     return crud.get_persons(db)
 
-@app.get("/person/find")
-def read_person_with_affiliation_and_name(affiliation: str, name: str, \
-    db: Session = Depends(get_db)):
-    # (디버깅 용도)
-    person = crud.get_person_by_affiliation_and_name(db, affiliation, name)
-    return person
-
 @app.get("/game/list")
 def read_all_games(db: Session = Depends(get_db)):
     # (디버깅 용도)
@@ -545,8 +509,15 @@ async def skilled_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db
             await asyncio.sleep(0.2 + random.random() * 0.1)
 
             new_hand = (int(old_hand) + 2) % 3
+
             lock.acquire()
-            hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand))
+            last_hands = hManager.get_last_hand_for_each_person(room_id)
+            if bot_id in last_hands and last_hands[bot_id] is not None:
+                last_hand = last_hands[bot_id][0]
+            else:
+                last_hand = -1
+            
+            hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand), last_hand=last_hand)
             if error_code == 0:
                 hManager.update_last_hand(room_id, bot_id, new_hand, hand_obj.score)
                 hand_data = {
@@ -589,8 +560,15 @@ async def dumb_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db)):
             await asyncio.sleep(0.2 + random.random() * 0.6)
 
             new_hand = (int(old_hand) + 1) % 3
+            
             lock.acquire()
-            hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand))
+            last_hands = hManager.get_last_hand_for_each_person(room_id)
+            if bot_id in last_hands and last_hands[bot_id] is not None:
+                last_hand = last_hands[bot_id][0]
+            else:
+                last_hand = -1
+
+            hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand), last_hand=last_hand)
             if error_code == 0:
                 hManager.update_last_hand(room_id, bot_id, new_hand, hand_obj.score)
                 hand_data = {
@@ -912,7 +890,14 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("hand", "error", "Bad request: hand", websocket)
                 continue
 
-            hand_obj, error_code = crud.create_hand(db, room_id=room_id, person_id=person_id, hand=schemas.HandEnum(hand))
+            lock.acquire()
+            last_hands = hManager.get_last_hand_for_each_person(room_id)
+            lock.release()
+            if person_id in last_hands and last_hands[person_id] is not None:
+                last_hand = last_hands[person_id][0]
+            else:
+                last_hand = -1
+            hand_obj, error_code = crud.create_hand(db, room_id=room_id, person_id=person_id, hand=schemas.HandEnum(hand), last_hand=last_hand)
             if error_code == 0:
                 lock.acquire()
                 hManager.update_last_hand(room_id, person_id, hand, hand_obj.score)
@@ -935,6 +920,8 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 await ConnectionManager.send_text("hand", "error", "Room not found", websocket)
             elif error_code == 6 or error_code == 16:
                 await ConnectionManager.send_text("hand", "error", "Game has ended", websocket)
+            elif error_code == 7:
+                await ConnectionManager.send_text("hand", "error", "Cannot play the same hand in a row (limited mode)", websocket)
                 
         elif request == "quit":
             # 나가기 요청
@@ -1007,7 +994,6 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
 
                 # https://tech.buzzvil.com/blog/asyncio-no-1-coroutine-and-eventloop/
                 # 멀티스레드를 사용하여, start 요청을 보낸 사람(방장)이 접속 종료 시 해당 방의 게임이 멈춰버리던 문제 해결
-                # manage_time_for_room_threading()의 인자로 db를 넘기지 '않음'으로써 새로운 SessionLocal을 생성하도록 함
                 threading.Thread(target=manage_time_for_room_threading, args=(room_id, data.get("time_offset", 5), data.get("time_duration", 60), db)).start()
             else:
                 await ConnectionManager.send_text("start", "error", "Room is not in a wait mode", websocket)

@@ -454,7 +454,7 @@ def get_hands_by_person(db: Session, room_id: int, person_id: int):
     return parse_obj_as(schemas.List[schemas.Hand], hands)
     # 가장 오래 전에 입력된 손이 [0]번째 인덱스
 
-def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnum):
+def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnum, last_hand: int = -1):
     # 시간 확인
     room = db.query(models.Room).filter(models.Room.id == room_id).first()
     if room is None:
@@ -474,9 +474,10 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
     hands = get_hands(db, room_id)
     if hands is None or len(hands) <= 0:
         return (None, 4)
-    #elif room.mode == schemas.RoomModeEnum.Limited: # TODO
-
     
+    if room.mode == schemas.RoomModeEnum.Limited:
+        if last_hand == int(hand):
+            return (None, 7)
     
     score = hand_score(hand, hands[-1].hand)
     hands = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)
