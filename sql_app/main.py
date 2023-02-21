@@ -180,6 +180,20 @@ class HandManager:
         else:
             return {}
 
+    def get_last_hand(self, room_id: int, person_id: int):
+        if room_id in self.active_rooms and self.active_rooms[room_id] is not None and \
+            person_id in self.active_rooms[room_id] and self.active_rooms[room_id][person_id] is not None:
+            return self.active_rooms[room_id][person_id][0]
+        else:
+            return -1
+
+    def get_last_score_gain(self, room_id: int, person_id: int):
+        if room_id in self.active_rooms and self.active_rooms[room_id] is not None and \
+            person_id in self.active_rooms[room_id] and self.active_rooms[room_id][person_id] is not None:
+            return self.active_rooms[room_id][person_id][1]
+        else:
+            return 0
+
     def update_last_hand(self, room_id: int, person_id: int, last_hand: int, last_score_gain: int):
         if last_hand in iter(schemas.HandEnum) and room_id in self.active_rooms and self.active_rooms[room_id] is not None:
             self.active_rooms[room_id][person_id] = (last_hand, last_score_gain)
@@ -486,8 +500,10 @@ def read_all_games(db: Session = Depends(get_db)):
 """
 
 async def skilled_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db)):
-    # 1. 손 입력 받기 시작 전에는 0.1 ~ 1초마다 방 상태를 보고, 손을 낼 수 있는 상황이 되면 2.의 과정으로 넘어간다. 아니면 1.을 반복한다.
-    # 2. 현재 보이는 마지막 손을 불러오고, 이로부터 또 0.2 ~ 0.3초 지났을 때 아까 불러온 손을 이기는 손을 낸다. 마지막 손을 내고 1.0 ~ 1.3초 지났을 때 2.를 반복한다.
+    # 1. 손 입력 받기 시작 전에는 0.1 ~ 1.5초마다 방 상태를 보고, 손을 낼 수 있는 상황이 되면 2.의 과정으로 넘어간다. 아니면 1.을 반복한다.
+    # 2.1. Normal 모드:  현재 보이는 마지막 손을 불러오고, 이로부터 또 0.2 ~ 0.3초 지났을 때 아까 불러온 손을 이기는 손을 낸다. 마지막 손을 내고 1.0 ~ 1.3초 지났을 때 2.를 반복한다.
+    # 2.2. Limited 모드: 현재 보이는 마지막 손을 불러오고, 이를 이기는 손을 낼 수 있는 상태이면 이로부터 0.2 ~ 0.3초 지났을 때 이기는 손을 낸 후에 1.0 ~ 1.3초 기다렸다가 2.를 반복한다.
+    #                                                    이를 이기는 손을 낼 수 없는 상태이면 0.2 ~ 0.3초 기다렸다가 2.를 반복한다.
     # 손을 불러오는 시점에 먼저 DB로부터 방(Room) 상태를 확인하여, 만약 end_time이 None이 아니거나 방이 End 상태이면 종료한다.
     # 종료할 때 해당 봇의 person 정보는 삭제되지 않는다.
     # 봇은 본질적으로 broadcast 등의 네트워크 응답을 일절 받을 수 없다.
@@ -511,34 +527,37 @@ async def skilled_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db
             new_hand = (int(old_hand) + 2) % 3
 
             lock.acquire()
-            last_hands = hManager.get_last_hand_for_each_person(room_id)
-            if bot_id in last_hands and last_hands[bot_id] is not None:
-                last_hand = last_hands[bot_id][0]
-            else:
-                last_hand = -1
-            
-            hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand), last_hand=last_hand)
-            if error_code == 0:
-                hManager.update_last_hand(room_id, bot_id, new_hand, hand_obj.score)
-                hand_data = {
-                    "hand_list": read_hands(room_id, 6, db),
-                    "game_list": read_game(room_id, db),
-                    "last_hand": hManager.get_last_hand_for_each_person(room_id)
-                }
+            last_hand = hManager.get_last_hand(room_id, bot_id)
+
+            if room.mode == schemas.RoomModeEnum.Limited and last_hand == new_hand:
                 lock.release()
-                task1 = asyncio.create_task(cManager.broadcast_json("hand", "hand_data", hand_data, room_id))
-                task2 = asyncio.create_task(asyncio.sleep(1.0 + random.random() * 0.3))
-                await task1
-                await task2
+                print("skilled bot skip")
+                await asyncio.sleep(0.2 + random.random() * 0.1)
             else:
-                lock.release()
-                print("skilled bot hand failed: error_code " + str(error_code))
+                hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand), last_hand=last_hand)
+                if error_code == 0:
+                    hManager.update_last_hand(room_id, bot_id, new_hand, hand_obj.score)
+                    hand_data = {
+                        "hand_list": read_hands(room_id, 6, db),
+                        "game_list": read_game(room_id, db),
+                        "last_hand": hManager.get_last_hand_for_each_person(room_id)
+                    }
+                    lock.release()
+                    task1 = asyncio.create_task(cManager.broadcast_json("hand", "hand_data", hand_data, room_id))
+                    task2 = asyncio.create_task(asyncio.sleep(1.0 + random.random() * 0.3))
+                    await task1
+                    await task2
+                else:
+                    lock.release()
+                    print("skilled bot hand failed: error_code " + str(error_code))
         else:
-            await asyncio.sleep(0.1 + random.random() * 0.9)
+            await asyncio.sleep(0.1 + random.random() * 1.4)
 
 async def dumb_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db)):
-    # 1. 손 입력 받기 시작 전에는 0.1 ~ 1초마다 방 상태를 보고, 손을 낼 수 있는 상황이 되면 2.의 과정으로 넘어간다. 아니면 1.을 반복한다.
-    # 2. 현재 보이는 마지막 손을 불러오고, 이로부터 또 0.2 ~ 0.8초 지났을 때 아까 불러온 손을 이기는 손을 낸다. 마지막 손을 내고 1.0 ~ 1.3초 지났을 때 2.를 반복한다.
+    # 1. 손 입력 받기 시작 전에는 0.1 ~ 1.5초마다 방 상태를 보고, 손을 낼 수 있는 상황이 되면 2.의 과정으로 넘어간다. 아니면 1.을 반복한다.
+    # 2.1. Normal 모드:  현재 보이는 마지막 손을 불러오고, 이로부터 또 0.2 ~ 0.8초 지났을 때 아까 불러온 손을 이기는 손을 낸다. 마지막 손을 내고 1.0 ~ 1.3초 지났을 때 2.를 반복한다.
+    # 2.2. Limited 모드: 현재 보이는 마지막 손을 불러오고, 이를 이기는 손을 낼 수 있는 상태이면 이로부터 0.2 ~ 0.8초 지났을 때 이기는 손을 낸 후에 1.0 ~ 1.3초 기다렸다가 2.를 반복한다.
+    #                                                    이를 이기는 손을 낼 수 없는 상태이면 0.2 ~ 0.8초 기다렸다가 2.를 반복한다.
     # 손을 불러오는 시점에 먼저 DB로부터 방(Room) 상태를 확인하여, 만약 end_time이 None이 아니거나 방이 End 상태이면 종료한다.
     # 종료할 때 해당 봇의 person 정보는 삭제되지 않는다.
     # 봇은 본질적으로 broadcast 등의 네트워크 응답을 일절 받을 수 없다.
@@ -562,30 +581,31 @@ async def dumb_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db)):
             new_hand = (int(old_hand) + 1) % 3
             
             lock.acquire()
-            last_hands = hManager.get_last_hand_for_each_person(room_id)
-            if bot_id in last_hands and last_hands[bot_id] is not None:
-                last_hand = last_hands[bot_id][0]
-            else:
-                last_hand = -1
+            last_hand = hManager.get_last_hand(room_id, bot_id)
 
-            hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand), last_hand=last_hand)
-            if error_code == 0:
-                hManager.update_last_hand(room_id, bot_id, new_hand, hand_obj.score)
-                hand_data = {
-                    "hand_list": read_hands(room_id, 6, db),
-                    "game_list": read_game(room_id, db),
-                    "last_hand": hManager.get_last_hand_for_each_person(room_id)
-                }
+            if room.mode == schemas.RoomModeEnum.Limited and last_hand == new_hand:
                 lock.release()
-                task1 = asyncio.create_task(cManager.broadcast_json("hand", "hand_data", hand_data, room_id))
-                task2 = asyncio.create_task(asyncio.sleep(1.0 + random.random() * 0.3))
-                await task1
-                await task2
+                print("dumb bot skip")
+                await asyncio.sleep(0.2 + random.random() * 0.6)
             else:
-                lock.release()
-                print("dumb bot hand failed: error_code " + str(error_code))
+                hand_obj, error_code = crud.create_hand(db, room_id, bot_id, schemas.HandEnum(new_hand), last_hand=last_hand)
+                if error_code == 0:
+                    hManager.update_last_hand(room_id, bot_id, new_hand, hand_obj.score)
+                    hand_data = {
+                        "hand_list": read_hands(room_id, 6, db),
+                        "game_list": read_game(room_id, db),
+                        "last_hand": hManager.get_last_hand_for_each_person(room_id)
+                    }
+                    lock.release()
+                    task1 = asyncio.create_task(cManager.broadcast_json("hand", "hand_data", hand_data, room_id))
+                    task2 = asyncio.create_task(asyncio.sleep(1.0 + random.random() * 0.3))
+                    await task1
+                    await task2
+                else:
+                    lock.release()
+                    print("dumb bot hand failed: error_code " + str(error_code))
         else:
-            await asyncio.sleep(0.1 + random.random() * 0.9)
+            await asyncio.sleep(0.1 + random.random() * 1.4)
 
 # 코루틴을 활용하여 방의 게임 시간을 관리
 # 하나의 방이 Playing 상태로 바뀔 때(start 요청을 받을 때) asyncio task를 생성하여 예약한 시간만큼 기다린다.
@@ -891,12 +911,8 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 continue
 
             lock.acquire()
-            last_hands = hManager.get_last_hand_for_each_person(room_id)
+            last_hand = hManager.get_last_hand(room_id, person_id)
             lock.release()
-            if person_id in last_hands and last_hands[person_id] is not None:
-                last_hand = last_hands[person_id][0]
-            else:
-                last_hand = -1
             hand_obj, error_code = crud.create_hand(db, room_id=room_id, person_id=person_id, hand=schemas.HandEnum(hand), last_hand=last_hand)
             if error_code == 0:
                 lock.acquire()
