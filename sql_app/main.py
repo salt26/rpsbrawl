@@ -80,7 +80,10 @@ class ConnectionManager:
         connection = self.find_connection_by_person_id(person_id)
         if connection:
             await connection[0].close()
-            self.active_connections.remove(connection)
+            try:
+                self.active_connections.remove(connection)
+            except:
+                pass
 
     async def send_text(request: str, response: str, message: str, websocket: WebSocket):
         obj = {}
