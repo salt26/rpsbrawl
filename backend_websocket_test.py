@@ -349,10 +349,10 @@ def test_websocket_setting_and_team(app):
             assert data["request"] == "setting" and data["response"] == "error"
 
             # 팀 변경 요청
-            print("\n21. send team 7")
+            print("\n21. send team 6")
             websocket.send_json({
                 'request': "team",
-                'team': 7
+                'team': 6
             })
             data = websocket.receive_json(mode='text')
             print(data)
@@ -605,7 +605,7 @@ def test_websocket_setting_and_many_hand(app):
             websocket.send_json({
                 'request': 'create',
                 'room_name': "Welcome!",
-                'mode': 0,
+                'mode': 1,
                 'password': ""
             })
             data = websocket.receive_json(mode='text')
@@ -613,11 +613,11 @@ def test_websocket_setting_and_many_hand(app):
             assert data["request"] == "create" and data["response"] == "success"
 
             # 설정 변경 요청: 봇 수를 제외한 모든 설정 변경
-            print("\n04. send setting name=\"Hello!\" mode=1 password=\"password\" max_p=25")
+            print("\n04. send setting name=\"Hello!\" mode=0 password=\"password\" max_p=25")
             websocket.send_json({
                 'request': "setting",
                 'name': "Hello!",
-                'mode': 1,
+                'mode': 0,
                 'password': "password",
                 'max_persons': 25
             })
@@ -791,10 +791,10 @@ def test_websocket_setting_and_many_hand(app):
             assert data["request"] == "refresh" and data["response"] == "success"
 
             # 팀 변경 요청
-            print("\n21. send team 7")
+            print("\n21. send team 6")
             websocket.send_json({
                 'request': "team",
-                'team': 7
+                'team': 6
             })
             data = websocket.receive_json(mode='text')
             print(data)
@@ -1617,7 +1617,457 @@ def test_websocket_play_with_many_bots(app):
 }
 """
 
+def test_websocket_play_with_so_many_bots(app):
+    client = TestClient(app)
+    print("----------------- Test 11: play with so many bots -----------------")
+    # 로그인 요청
+    print("01. send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
+        try:
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signin" and data["response"] == "success"
+
+            # 방 생성 요청
+            print("\n02. send create")
+            websocket.send_json({
+                'request': 'create',
+                'room_name': "Welcome!",
+                'mode': 0,
+                'password': ""
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "create" and data["response"] == "success"
+
+            # 설정 변경 요청: 봇 수 변경
+            print("\n03. send setting bot_s=10 bot_d=10")
+            websocket.send_json({
+                'request': "setting",
+                'bot_skilled': 10,
+                'bot_dumb': 10
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "setting" and data["response"] == "broadcast"
+
+            # 게임 시작 요청
+            print("\n04. send start 3 30")
+            websocket.send_json({
+                'request': 'start',
+                'time_offset': 3,
+                'time_duration': 30
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
+
+            # 손 입력을 받기 시작한다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n05. start response")
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room_start'
+
+            count = 0
+            # 게임이 끝날 때까지 응답 받기 반복
+            while True:
+                count += 1
+                data = websocket.receive_json(mode='text')
+                if data["request"] == "hand" and data["response"] == "broadcast":
+                    # 봇이 손을 입력했다는 응답
+                    print("\n06-" + str(count) + ". hand response by bot")
+                    print(data)
+                elif data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data':
+                    # 시간이 끝나 게임이 종료되었다는 응답
+                    print("\n07. end response hand_data")
+                    print(data)
+                    break
+                else:
+                    print("\n06-" + str(count) + ". unknown response")
+                    print(data)
+                    assert False
+
+            # 게임이 종료되고 10초 후 새로운 방에 재입장되었다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n08. end response join_data")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
+
+            time.sleep(1)
+            
+            # 퇴장 요청 -> 방에 혼자 있었으므로 방이 제거됨
+            print("\n09. send quit -> room removed")
+            websocket.send_json({
+                'request': 'quit'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "quit" and data["response"] == "success"
+
+            # 로그아웃 요청
+            print("\n10. send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signout" and data["response"] == "success"
+        except AssertionError:
+            print("assertion failed")
+            pass
+
+
+def test_websocket_limited_mode(app):
+    client = TestClient(app)
+    print("----------------- Test 12: limited mode -----------------")
+    # 로그인 요청
+    print("01. send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
+        try:
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signin" and data["response"] == "success"
+
+            # 방 생성 요청
+            print("\n02. send create")
+            websocket.send_json({
+                'request': 'create',
+                'room_name': "Limited",
+                'mode': 1,
+                'password': ""
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "create" and data["response"] == "success"
+
+            # 게임 시작 요청
+            print("\n03. send start 3 10")
+            websocket.send_json({
+                'request': 'start',
+                'time_offset': 3,
+                'time_duration': 10
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
+
+            # 손 입력을 받기 시작한다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n04. start response")
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room_start'
+
+            time.sleep(2)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청
+            print("\n05. send hand 0")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 같은 손 연속으로 입력 요청 -> 실패
+            print("\n06. send hand 0 -> limited")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "error"
+
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (이기는 손)
+            print("\n07. send hand 2")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 2
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 같은 손 연속으로 입력 요청 -> 실패
+            print("\n08. send hand 2 -> limited")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 2
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "error"
+
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 손 입력 요청 (지는 손)
+            print("\n09. send hand 0 -> lose")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+
+            time.sleep(1)
+
+            # 손 입력을 받기 시작한 후에 같은 손 연속으로 입력 요청 -> 실패
+            print("\n10. send hand 0 -> limited")
+            websocket.send_json({
+                'request': 'hand',
+                'hand': 0
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "hand" and data["response"] == "error"
+
+            # 시간이 끝나 게임이 종료되었다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n11. end response hand_data")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data'
+            
+            time.sleep(3)
+
+            # 게임이 종료되고 10초 후 새로운 방에 재입장되었다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n12. end response join_data")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
+
+            # 퇴장 요청 (방에 혼자 있었으므로 방이 제거됨)
+            print("\n13. send quit -> room removed")
+            websocket.send_json({
+                'request': 'quit'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "quit" and data["response"] == "success"
+
+            # 로그아웃 요청
+            print("\n14. send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signout" and data["response"] == "success"
+        except AssertionError:
+            print("assertion failed")
+            pass
+
+
+def test_websocket_limited_play_with_many_bots(app):
+    client = TestClient(app)
+    print("----------------- Test 13: limited play with many bots -----------------")
+    # 로그인 요청
+    print("01. send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
+        try:
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signin" and data["response"] == "success"
+
+            # 방 생성 요청
+            print("\n02. send create")
+            websocket.send_json({
+                'request': 'create',
+                'room_name': "Limited",
+                'mode': 1,
+                'password': ""
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "create" and data["response"] == "success"
+
+            # 설정 변경 요청: 봇 수 변경
+            print("\n03. send setting bot_s=2 bot_d=2")
+            websocket.send_json({
+                'request': "setting",
+                'bot_skilled': 2,
+                'bot_dumb': 2
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "setting" and data["response"] == "broadcast"
+
+            # 게임 시작 요청
+            print("\n04. send start 3 10")
+            websocket.send_json({
+                'request': 'start',
+                'time_offset': 3,
+                'time_duration': 10
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
+
+            # 손 입력을 받기 시작한다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n05. start response")
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room_start'
+
+            count = 0
+            # 게임이 끝날 때까지 응답 받기 반복
+            while True:
+                count += 1
+                data = websocket.receive_json(mode='text')
+                if data["request"] == "hand" and data["response"] == "broadcast":
+                    # 봇이 손을 입력했다는 응답
+                    print("\n06-" + str(count) + ". hand response by bot")
+                    print(data)
+                elif data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data':
+                    # 시간이 끝나 게임이 종료되었다는 응답
+                    print("\n07. end response hand_data")
+                    print(data)
+                    break
+                else:
+                    print("\n06-" + str(count) + ". unknown response")
+                    print(data)
+                    assert False
+
+            # 게임이 종료되고 10초 후 새로운 방에 재입장되었다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n08. end response join_data")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
+
+            time.sleep(1)
+            
+            # 퇴장 요청 -> 방에 혼자 있었으므로 방이 제거됨
+            print("\n09. send quit -> room removed")
+            websocket.send_json({
+                'request': 'quit'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "quit" and data["response"] == "success"
+
+            # 로그아웃 요청
+            print("\n10. send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signout" and data["response"] == "success"
+        except AssertionError:
+            print("assertion failed")
+            pass
+
+
+def test_websocket_limited_play_with_so_many_bots(app):
+    client = TestClient(app)
+    print("----------------- Test 14: limited play with so many bots -----------------")
+    # 로그인 요청
+    print("01. send signin")
+    with client.websocket_connect("/signin?name=test") as websocket:
+        try:
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signin" and data["response"] == "success"
+
+            # 방 생성 요청
+            print("\n02. send create")
+            websocket.send_json({
+                'request': 'create',
+                'room_name': "Limited",
+                'mode': 1,
+                'password': ""
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "create" and data["response"] == "success"
+
+            # 설정 변경 요청: 봇 수 변경
+            print("\n03. send setting bot_s=10 bot_d=10")
+            websocket.send_json({
+                'request': "setting",
+                'bot_skilled': 10,
+                'bot_dumb': 10
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "setting" and data["response"] == "broadcast"
+
+            # 게임 시작 요청
+            print("\n04. send start 3 30")
+            websocket.send_json({
+                'request': 'start',
+                'time_offset': 3,
+                'time_duration': 30
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'init_data'
+
+            # 손 입력을 받기 시작한다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n05. start response")
+            print(data)
+            assert data["request"] == "start" and data["response"] == "broadcast" and data["type"] == 'room_start'
+
+            count = 0
+            # 게임이 끝날 때까지 응답 받기 반복
+            while True:
+                count += 1
+                data = websocket.receive_json(mode='text')
+                if data["request"] == "hand" and data["response"] == "broadcast":
+                    # 봇이 손을 입력했다는 응답
+                    print("\n06-" + str(count) + ". hand response by bot")
+                    print(data)
+                elif data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data':
+                    # 시간이 끝나 게임이 종료되었다는 응답
+                    print("\n07. end response hand_data")
+                    print(data)
+                    break
+                else:
+                    print("\n06-" + str(count) + ". unknown response")
+                    print(data)
+                    assert False
+
+            # 게임이 종료되고 10초 후 새로운 방에 재입장되었다는 응답
+            data = websocket.receive_json(mode='text')
+            print("\n08. end response join_data")
+            print(data)
+            assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'join_data'
+
+            time.sleep(1)
+            
+            # 퇴장 요청 -> 방에 혼자 있었으므로 방이 제거됨
+            print("\n09. send quit -> room removed")
+            websocket.send_json({
+                'request': 'quit'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "quit" and data["response"] == "success"
+
+            # 로그아웃 요청
+            print("\n10. send signout")
+            websocket.send_json({
+                'request': 'signout'
+            })
+            data = websocket.receive_json(mode='text')
+            print(data)
+            assert data["request"] == "signout" and data["response"] == "success"
+        except AssertionError:
+            print("assertion failed")
+            pass
+
+
+
 # 프로젝트 루트 폴더(sql_app 폴더의 상위 폴더)에서 실행할 것!
+# 이 코드를 돌릴 때는 sql_app/crud.py 의 END_WAITING_TIME 값을 5 정도로 작게 주고 돌리는 것을 추천!
 if __name__ == '__main__':
     if __package__ is None:
         import sys
@@ -1627,23 +2077,35 @@ if __name__ == '__main__':
         from sql_app.main import app
     else:
         from .sql_app.main import app
-    test_websocket_signin_and_signout(app)
-    print()
-    test_websocket_create_and_quit(app)
-    print()
-    test_websocket_setting_and_team(app)
-    print()
-    test_websocket_normal_start_and_hand(app)
-    print()
+
+    #test_websocket_signin_and_signout(app)
+    #print()
+    #test_websocket_create_and_quit(app)
+    #print()
+    #test_websocket_setting_and_team(app)
+    #print()
+    #test_websocket_normal_start_and_hand(app)
+    #print()
     test_websocket_setting_and_many_hand(app)
     print()
-    test_websocket_error_and_disconnect(app)
-    print()
-    test_websocket_reconnect(app)
-    print()
-    test_websocket_play_with_a_skilled_bot(app)
-    print()
-    test_websocket_play_with_a_dumb_bot(app)
-    print()
-    test_websocket_play_with_many_bots(app)
-    print()
+    #test_websocket_error_and_disconnect(app)
+    #print()
+    #test_websocket_reconnect(app)
+    #print()
+
+    #test_websocket_play_with_a_skilled_bot(app)
+    #print()
+    #test_websocket_play_with_a_dumb_bot(app)
+    #print()
+    
+    #test_websocket_play_with_many_bots(app)
+    #print()
+    #test_websocket_play_with_so_many_bots(app)
+    #print()
+    #test_websocket_limited_mode(app)
+    #print()
+    
+    #test_websocket_limited_play_with_many_bots(app)
+    #print()
+    #test_websocket_limited_play_with_so_many_bots(app)
+    #print()
