@@ -16,7 +16,7 @@ import random
 # db_room.update({"state" : schemas.RoomStateEnum.Play})
 # print(db_room.first())  # None 이 출력된다!
 
-END_WAITING_TIME = 20   # 기본값은 20초이지만, backend_websocket_test.py를 돌릴 때에는 5초 정도로 짧게 설정하면 좋음
+END_WAITING_TIME = 20   # 기본값은 20초이지만, backend_websocket_test.py를 돌릴 때에는 10초 정도로 짧게 설정하면 좋음
 
 def hand_score(my_hand: schemas.HandEnum, prev_hand: schemas.HandEnum):
     if my_hand == prev_hand:
@@ -70,8 +70,13 @@ def check_person_playing(db: Session, person_id: int):
     for room in playing_rooms:
         for game in room.persons:
             if game.person_id == person_id:
-                return room.id
-    return -1
+                if room.end_time is not None:
+                    # 손 입력이 종료된 방(결과 화면을 보여주는 방)에 재접속하는 경우 반환값의 두 번째 값이 False
+                    return (room.id, False)
+                else:
+                    # 손 입력이 진행 중이거나 입력을 아직 받지 않는 방에 재접속하는 경우 반환값의 두 번째 값이 True
+                    return (room.id, True)
+    return (-1, False)
 
 def check_person_waiting_or_playing(db: Session, person_id: int):
     update_expired_rooms_to_end(db)

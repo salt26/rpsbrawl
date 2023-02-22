@@ -240,9 +240,8 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
     try:
         # 재접속(Play 중인 방에서 연결이 끊겼다가 다시 접속하는 경우)인지 확인
         # 이때 방 garbage collection(종료 시간이 넘었는데 여전히 Play 상태인 방들을 End 상태로 변경)도 일어남
-        recon_room_id = crud.check_person_playing(db, person.id)
+        (recon_room_id, is_hand_allowed) = crud.check_person_playing(db, person.id)
         if recon_room_id == -1:
-            #print("재접속 아님")
             profile_and_room_list = {
                 'name': person.name,
                 'person_id': person.id,
@@ -251,9 +250,8 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
             # 개인에게 프로필과 방 목록이 포함된 정보 응답
             await ConnectionManager.send_json("signin", "success", "profile_and_room_list", profile_and_room_list, websocket)
 
-        else:
-            # 재접속 시도
-            #print("재접속 시도")
+        elif is_hand_allowed:
+            # 재접속 시도 (손 입력을 받는 중이거나 손 입력 받기 전의 방)
             cManager.change_room_id(person.id, recon_room_id)
             recon_data = {
                 'name': person.name,
@@ -262,7 +260,19 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
                 'hand_list': read_hands(recon_room_id, 6, db),
                 'game_list': read_game(recon_room_id, db)
             }
-            await ConnectionManager.send_json("signin", 'reconnected', "recon_data", recon_data, websocket)
+            await ConnectionManager.send_json("signin", 'reconnected_game', "recon_data", recon_data, websocket)
+
+        else:
+            # 재접속 시도 (결과 창으로 넘어간 방)
+            cManager.change_room_id(person.id, recon_room_id)
+            recon_data = {
+                'name': person.name,
+                'person_id': person.id,
+                'room': read_room(recon_room_id, db),
+                'hand_list': read_all_hands(recon_room_id, db),
+                'game_list': read_game(recon_room_id, db)
+            }
+            await ConnectionManager.send_json("signin", 'reconnected_result', "recon_data", recon_data, websocket)
 
         # 무한 루프를 돌면서 클라이언트에게 요청을 받고 처리하고 응답
         await after_signin(websocket, person.id, db)
@@ -305,12 +315,14 @@ def read_connections():
         ret.append({'room_id': con[2], 'person_id': con[1]})
     return {"connections": ret}
 
+"""
 @app.get("/room/list", response_model=List[schemas.Room])
 def read_all_room(db: Session = Depends(get_db)):
     # 모든 방 목록 반환 (디버깅 용도)
     rooms = crud.get_rooms(db)
     return rooms
-    # TODO 최종 배포 시에는 반드시! 지워야 함!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # 최종 배포 시에는 반드시 이 함수를 지워야 함!
+"""
 
 @app.get("/room/{room_id}")
 def read_room(room_id: int, db: Session = Depends(get_db)):

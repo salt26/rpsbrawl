@@ -119,11 +119,11 @@ signin error: 같은 이름의 사람이 이미 접속하여 어떤 대기 방 �
 }
 ```
 
-**signin reconnected**: 로그인에 성공하였고 해당 사람이 직전에 플레이 중인 방에서 연결이 끊겼다가 재접속하는 경우 해당 개인에게 다음의 정보 응답
+**signin reconnected_game**: 로그인에 성공하였고 해당 사람이 직전에 플레이 중인 방에서 연결이 끊겼다가 재접속해서, 손 입력을 받고 있거나 아직 받지 않는 방에 입장하는 경우 해당 개인에게 다음의 정보 응답
 ```
 {
   request: "signin",
-  response: "reconnected",
+  response: "reconnected_game",
   type: "recon_data",
   data: {
     name: "이름",
@@ -154,7 +154,62 @@ signin error: 같은 이름의 사람이 이미 접속하여 어떤 대기 방 �
         score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
         time: "2022-12-25 03:24:42.610891 KST",
         room_id: 1
-      }  // 해당 방에서 재접속하는 순간까지 입력된 손 개수만큼 존재, 가장 최근에 입력된 손이 마지막 인덱스
+      }  // 해당 방에서 재접속하는 순간까지 입력된 손 개수만큼 존재, 가장 최근에 입력된 손이 마지막 인덱스, 최대 6개까지만 표시
+    ],
+    game_list: [
+      {
+        rank: 1,  // 순위는 점수가 가장 높은 사람이 1, 목록은 순위 순으로 정렬
+        team: 0,  // 0 이상 6 이하, 봇의 경우 -1
+        name: "이름",
+        is_admin: False,
+        is_human: True,
+        score: 13,
+        win: 18,
+        draw: 4,
+        lose: 5,
+        room_id: 1
+      },
+      ...  // 해당 방에서 플레이하는 사람 수만큼 존재
+    ]
+}
+```
+
+**signin reconnected_result**: 로그인에 성공하였고 해당 사람이 직전에 플레이 중인 방에서 연결이 끊겼다가 재접속해서, 손 입력이 끝난(결과 창을 보여주는) 방에 입장하는 경우 해당 개인에게 다음의 정보 응답
+```
+{
+  request: "signin",
+  response: "reconnected_result",
+  type: "recon_data",
+  data: {
+    name: "이름",
+    person_id: 1,
+    room: {
+      id: 1,
+      state: 1,                                     // Play
+      time_offset : 5,                              // 이때는 항상 0 이상의 정수이지만 대기 방에서는 -1
+      time_duration : 60,                           // 이때는 항상 1 이상의 정수이지만 대기 방에서는 -1
+      init_time: "2022-12-25 03:24:00.388157 KST",  // 한국 시간 기준
+      start_time: "2022-12-25 03:24:05.391465 KST",
+      end_time: "2022-12-25 03:25:05.400392 KST",   // 게임이 끝나서 빈 문자열이 아니게 됨
+      name: "Welcome!",
+      mode: 0,                                      // Normal
+      has_password: True,                           // 비밀번호 유무에 관계 없이 바로 재접속 가능
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 9                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    }, 
+    hand_list: [
+      ...,
+      {
+        team: 0,
+        name: "이름",
+        is_human: True,
+        hand: 0,    // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
+        score: -1,  // 1(이김) 또는 0(비김) 또는 -1(짐)
+        time: "2022-12-25 03:24:42.610891 KST",
+        room_id: 1
+      }  // 해당 방에서 재접속하는 순간까지 입력된 손 개수만큼 존재, 가장 최근에 입력된 손이 마지막 인덱스, 모두 표시
     ],
     game_list: [
       {
