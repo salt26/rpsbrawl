@@ -8,15 +8,24 @@ import { LanguageContext } from "../../utils/LanguageProvider";
 import { useContext } from "react";
 import RefreshBtn from "./RefreshBtn";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 function RoomList({ rooms, setCreateRoomModalVisible }) {
   const mode = useContext(LanguageContext);
 
   var navigate = useNavigate();
   const [roomLists, setRoomLists] = useState(rooms);
 
-  console.log(roomLists);
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
+  const _enterRoom = (id, pwd) => {
+    // 방 입장 요청
+    let request = {
+      request: "join",
+      room_id: id, // 입장하려는 방의 번호
+      password: pwd, // 문자열 (빈 문자열을 보내면 비밀번호가 없는 방에 입장 가능)
+    };
+    ws.send(JSON.stringify(request));
+  };
+
   useEffect(() => {
     ws.onmessage = function (event) {
       const res = JSON.parse(event.data);
@@ -26,7 +35,13 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
           alert(res.message);
           return;
         }
-
+        if (res.response === "error_refresh") {
+          const enteredPassword = prompt("please enter password");
+          if (enteredPassword !== null) {
+            // 취소를 누르면 null반환
+            _enterRoom(res.data.id, enteredPassword);
+          }
+        }
         switch (res?.type) {
           case "room_list": // 룸 목록 갱신 요청에 대한 응답
             setRoomLists(res.data);

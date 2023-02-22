@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
 import { Medium } from "../../styles/font";
 import LockSrc from "../../assets/images/lock.svg";
@@ -31,7 +31,7 @@ function Room({ room }) {
     bg: "linear-gradient(180deg, #FA1515 0%, #F97916 100%);",
   };
 
-  const _enterRoom = () => {
+  const _joinRoom = () => {
     // 방 입장 요청
     let request = {
       request: "join",
@@ -40,6 +40,7 @@ function Room({ room }) {
     };
     ws.send(JSON.stringify(request));
   };
+
   return (
     <Box>
       <Row>
@@ -56,7 +57,7 @@ function Room({ room }) {
           <GradientBtn
             text={Language[mode].join}
             style={joinBtnStyle}
-            onClick={() => _enterRoom(id)}
+            onClick={() => _joinRoom("")}
           />
         ) : (
           <GradientBtn

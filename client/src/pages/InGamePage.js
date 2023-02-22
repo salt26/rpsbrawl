@@ -52,8 +52,8 @@ export default function InGamePage() {
       // 방법1. 매 초마다 현재시간과 동기화
       _getTimeOffset(roomInfo);
 
-      // 방법2. 시작타임 fix 후 1씩 줄여나가기 (다만
-      // 이경우 useInterval이 지연간격을 보장하지 못할 수 있음)
+      // 방법2. 시작타임 맞추고 매초마다 1씩 줄여나가기 (다만이경우 useInterval이 지연간격을 보장하지 못할 수 있음)
+
       /*
       setCount((prev) => {
         return prev - 1;
@@ -72,9 +72,20 @@ export default function InGamePage() {
   const navigate = useNavigate();
 
   const { room_id } = useParams();
+
+  const _getMyTeam = (gameLists) => {
+    // 내 팀 구하기
+    for (var user of gameLists) {
+      if (user.name === my_name) {
+        return user.team;
+      }
+    }
+    return 0; // red팀 디폴트
+  };
+
   const myPlace = useRef({
     name: my_name,
-    team: 0,
+    team: _getMyTeam(state["game_list"]),
     rank: 0,
     score: 0,
   });
@@ -110,6 +121,12 @@ export default function InGamePage() {
           }
           alert(res.message);
           return;
+        }
+        if (res?.request === "disconnected") {
+          //기존 인원과 새인원 비교
+
+          setMsg("Cannot play the same hand in a row (limited mode)");
+          setShowTime(true);
         }
 
         switch (res.request) {

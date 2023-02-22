@@ -104,6 +104,18 @@ function Place({ rank, belong, name, score }) {
     img = <SvgIcon src={BronzeSrc} size="30px" />;
   }
 
+  const getNameSize = (name) => {
+    console.log(name);
+    if (name.length <= 5) {
+      return "30px";
+    } else if (name.length <= 10) {
+      return "20px";
+    } else if (name.length <= 20) {
+      return "10px";
+    } else {
+      return "2px";
+    }
+  };
   return (
     <Row>
       {/*<SvgIcon src={GoldSrc} size="30px" />*/}
@@ -115,7 +127,7 @@ function Place({ rank, belong, name, score }) {
         </Medium>
       </Sector>
       <Sector>
-        <Medium size={"30px"} color="black">
+        <Medium size={getNameSize(name)} color="black">
           {name}
         </Medium>
       </Sector>

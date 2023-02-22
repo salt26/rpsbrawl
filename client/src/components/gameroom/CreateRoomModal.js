@@ -60,6 +60,8 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
     ws.send(JSON.stringify(request));
     console.log(request);
     setModalVisible(false);
+
+    console.log(request);
   };
   useEffect(() => {
     ws.onmessage = function (event) {

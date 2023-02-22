@@ -19,7 +19,18 @@ export default function FirstPlace({ place }) {
     "navy",
     "purple",
   ];
-
+  const getNameSize = (name) => {
+    console.log(name);
+    if (name.length <= 5) {
+      return "35px";
+    } else if (name.length <= 10) {
+      return "20px";
+    } else if (name.length <= 20) {
+      return "15px";
+    } else {
+      return "8px";
+    }
+  };
   const mode = useContext(LanguageContext);
   return (
     <div>
@@ -34,7 +45,7 @@ export default function FirstPlace({ place }) {
             <Col>
               <Medium size="27px">{team_color[team]}</Medium>
 
-              <Medium size="35px">{name}</Medium>
+              <Medium size={getNameSize(name)}>{name}</Medium>
             </Col>
             {score >= 0 ? (
               <GradientText
@@ -61,6 +72,7 @@ const Row = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
+
   align-items: center;
   height: 100%;
   width: 100%;

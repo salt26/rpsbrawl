@@ -43,6 +43,7 @@ export default function NetworkLogs({ logs }) {
     "navy",
     "purple",
   ];
+
   return (
     <div>
       <Medium size={"30px"} color={"white"}>
@@ -75,11 +76,22 @@ function Log({ belong, name, rps, score }) {
     scissor: <Scissor size="50px" />,
     paper: <Paper size="50px" />,
   };
-
+  const getNameSize = (name) => {
+    console.log(name);
+    if (name.length <= 5) {
+      return "30px";
+    } else if (name.length <= 10) {
+      return "25px";
+    } else if (name.length <= 20) {
+      return "20px";
+    } else {
+      return "10px";
+    }
+  };
   return (
     <Row>
       <Medium size={"30px"}>{belong}</Medium>
-      <Medium size={"30px"}>{name}</Medium>
+      <Medium size={getNameSize(name)}>{name}</Medium>
       {rpsDic[rps]}
       {score >= 0 ? (
         <Medium color="var(--mint)" size={"30px"}>
