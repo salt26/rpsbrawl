@@ -985,7 +985,7 @@ def test_websocket_error_and_disconnect(app):
         try:
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "signin" and data["response"] == "reconnected"
+            assert data["request"] == "signin" and data["response"] == "reconnected_game"
 
             # 손 입력을 받기 시작한다는 응답
             data = websocket.receive_json(mode='text')
@@ -1028,7 +1028,7 @@ def test_websocket_error_and_disconnect(app):
         try:
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "signin" and data["response"] == "reconnected"
+            assert data["request"] == "signin" and data["response"] == "reconnected_game"
 
             time.sleep(1)
 
@@ -1062,7 +1062,7 @@ def test_websocket_error_and_disconnect(app):
         try:
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "signin" and data["response"] == "reconnected"
+            assert data["request"] == "signin" and data["response"] == "reconnected_result"
 
             time.sleep(3)
 
@@ -1144,7 +1144,7 @@ def test_websocket_reconnect(app):
         try:
             data = websocket.receive_json(mode='text')
             print(data)
-            assert data["request"] == "signin" and data["response"] == "reconnected"
+            assert data["request"] == "signin" and data["response"] == "reconnected_game"
 
             time.sleep(3)
 
@@ -1165,13 +1165,13 @@ def test_websocket_reconnect(app):
             assert data["request"] == "end" and data["response"] == "broadcast" and data["type"] == 'hand_data'
 
             time.sleep(5)
-            print("\n09. disconnect")
+            print("\n09. disconnect -> wait for 16 seconds and try to reconnect")
 
         except AssertionError:
             print("assertion failed")
             pass
 
-    time.sleep(5)
+    time.sleep(15)
     # 새 방으로 입장되었다는 응답은 접속이 끊어진 상태라서 받지 못함
     print("\n10. end response join_data -> cannot receive")
 
@@ -2086,12 +2086,12 @@ if __name__ == '__main__':
     #print()
     #test_websocket_normal_start_and_hand(app)
     #print()
-    test_websocket_setting_and_many_hand(app)
-    print()
+    #test_websocket_setting_and_many_hand(app)
+    #print()
     #test_websocket_error_and_disconnect(app)
     #print()
-    #test_websocket_reconnect(app)
-    #print()
+    test_websocket_reconnect(app)
+    print()
 
     #test_websocket_play_with_a_skilled_bot(app)
     #print()
