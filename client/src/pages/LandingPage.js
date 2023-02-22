@@ -21,6 +21,7 @@ import { getUserName, setUserName } from "../utils/User";
 import { Language } from "../db/Language";
 import { BASE_WEBSOCKET_URL } from "../Config";
 import { WebsocketContext } from "../utils/WebSocketProvider";
+import { useMediaQuery } from "react-responsive";
 function RuleBox() {
   const mode = useContext(LanguageContext);
   return (
@@ -103,10 +104,11 @@ function LoginBox() {
 
 export default function LandingPage() {
   const mode = useContext(LanguageContext);
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
   return (
     <Container>
-      <SizedBox height={"20px"} />
+      <SizedBox height={"50px"} />
 
       <Anim2 delay={5}>
         <Logo />
@@ -125,10 +127,15 @@ export default function LandingPage() {
         </Anim>
       </RPSBox>
 
-      <SizedBox height={"20px"} />
+      <SizedBox height={"10px"} />
       <Row>
-        <RuleBox />
-        <SizedBox width={"150px"} />
+        {!isMobile && (
+          <>
+            <RuleBox />
+
+            <SizedBox width={"150px"} />
+          </>
+        )}
 
         <LoginBox />
       </Row>
@@ -140,6 +147,13 @@ export default function LandingPage() {
 https://apes0113.postype.com/post/2620
 linear | ease | ease-in | ease-out | ease-in-out | step-start | step-end | steps(int,start|end) | cubic-bezier(n,n,n,n)
 */
+
+const Responsive = styled.div`
+  @media (max-width: 767px) {
+    //모바일
+    display: none;
+  }
+`;
 const Anim = styled.div`
   animation: anim1 5s infinite ease-in-out;
   animation-delay: ${({ delay }) => delay}s;
@@ -180,12 +194,24 @@ const Anim2 = styled.div`
   }
 `;
 const Container = styled.div`
-  height: 100vh;
   display: flex;
   flex-direction: column;
 
-  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  padding-bottom: 50px;
+
   align-items: center;
+
+  @media (max-width: 767px) {
+    //모바일
+    justify-content: space-between;
+  }
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    height: 100vh;
+    justify-content: center;
+  }
 `;
 
 const Row = styled.div`

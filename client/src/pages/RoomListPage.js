@@ -28,6 +28,7 @@ function RoomListPage() {
       navigate("/");
     }
   };
+
   //방만들기
   const [CreateRoomModalVisible, setCreateRoomModalVisible] = useState(false);
 
@@ -60,6 +61,7 @@ const Col = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  height: 100vh;
 `;
 
 export default RoomListPage;

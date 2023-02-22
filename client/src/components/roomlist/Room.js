@@ -77,9 +77,20 @@ const Box = styled.div`
   justify-content: space-between;
   background: #7b78d5;
   border-radius: 10px;
-  width: 45%;
-  height: 25%;
+
   padding: 20px;
+
+  @media (max-width: 767px) {
+    //모바일
+    width: 100%;
+    height: 25%;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    width: 45%;
+    height: 25%;
+  }
 `;
 
 const Row = styled.div`

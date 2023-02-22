@@ -11,7 +11,7 @@ import SizedBox from "../common/SizedBox";
 import { getUserName, getUserAffiliation } from "../../utils/User";
 import { Language } from "../../db/Language";
 import { LanguageContext } from "../../utils/LanguageProvider";
-
+import { useMediaQuery } from "react-responsive";
 export default function ResultBoard({ result }) {
   const mode = useContext(LanguageContext);
   const [myPlace, setMyPlace] = useState({
@@ -49,8 +49,14 @@ export default function ResultBoard({ result }) {
     "navy",
     "purple",
   ];
+
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   return (
-    <BgBox width="30%" height="90%" bgColor={"var(--light-purple)"}>
+    <BgBox
+      width={isMobile ? "100%" : "30%"}
+      height={isMobile ? "70%" : "90%"}
+      bgColor={"var(--light-purple)"}
+    >
       <Col>
         <Title>
           <SvgIcon src={ClockSrc} size="80px" />

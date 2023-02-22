@@ -15,6 +15,7 @@ import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useNavigate } from "react-router-dom";
 import { Language } from "../../db/Language";
 import { LanguageContext } from "../../utils/LanguageProvider";
+import { useMediaQuery } from "react-responsive";
 
 function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
   const [roomTitle, setRoomTitle] = useState(roomInfo.name);
@@ -23,6 +24,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
   const [password, setPassword] = useState("");
   const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
 
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const mode = useContext(LanguageContext);
   const blueBtnStyle = {
     fontSize: "25px",
@@ -39,6 +41,10 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
     bg: "linear-gradient(180deg, #FA1515 0%, #F97916 100%);",
   };
 
+  const _cancel = () => {
+    setModalVisible(false);
+  };
+
   const _modifyRoom = () => {
     if (password.length > 20) {
       alert("Please set the password  no more than 20 characters.");
@@ -48,6 +54,10 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
     if (roomTitle.length > 32) {
       alert("Please set the title  no more than 32 characters.");
       return;
+    }
+
+    if (password === "") {
+      setPrivateMode(false);
     }
     let request = {
       request: "setting",
@@ -73,34 +83,65 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
       }
     };
   }, [ready]);
+  if (isMobile) {
+    alert(" 안녕!");
+  }
   return (
     <ReactModal
       ariaHideApp={false}
       isOpen={modalVisible}
-      style={{
-        overlay: {
-          width: "500px",
-          height: "300px",
-          top: "25%",
-          left: "35%",
+      style={
+        isMobile
+          ? {
+              overlay: {
+                top: "0",
+                left: "0",
 
-          backgroundColor: "transparent",
-        },
-        content: {
-          width: "100%",
-          height: "100%",
-          padding: 0,
-          borderRadius: "10px",
-          backgroundColor: "white",
+                width: "90%",
+                height: "40%",
 
-          border: "3px solid transparent",
-          backgroundImage: `linear-gradient(#fff, #fff),
-    linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
+                backgroundColor: "red",
+              },
+              content: {
+                width: "100%",
+                height: "100%",
+                padding: 0,
+                borderRadius: "10px",
+                backgroundColor: "white",
 
-          backgroundOrigin: `border-box`,
-          backgroundClip: `content-box, border-box`,
-        },
-      }}
+                border: "3px solid transparent",
+                backgroundImage: `linear-gradient(#fff, #fff),
+  linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
+
+                backgroundOrigin: `border-box`,
+                backgroundClip: `content-box, border-box`,
+              },
+            }
+          : {
+              overlay: {
+                width: "500px",
+                height: "300px",
+                top: "25%",
+                left: "35%",
+
+                backgroundColor: "transparent",
+              },
+              content: {
+                width: "100%",
+                height: "100%",
+                padding: 0,
+                borderRadius: "10px",
+                backgroundColor: "white",
+
+                border: "3px solid transparent",
+                backgroundImage: `linear-gradient(#fff, #fff),
+  linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
+
+                backgroundOrigin: `border-box`,
+                backgroundClip: `content-box, border-box`,
+              },
+            }
+      }
     >
       <TitleBox>
         <Medium size="30px" color="white">
@@ -207,13 +248,13 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
         <SizedBox height={"15px"} />
         <Row>
           <GradientBtn
-            text="Cancel"
+            text={Language[mode].cancel}
             style={blueBtnStyle}
             anim
-            onClick={() => setModalVisible(false)}
+            onClick={_cancel}
           />
           <GradientBtn
-            text={"Update"}
+            text={Language[mode].update}
             style={redBtnStyle}
             anim
             onClick={_modifyRoom}
@@ -231,8 +272,17 @@ const Container = styled.div`
 
   align-items: center;
 
-  padding-left: 50px;
-  padding-right: 50px;
+  @media (max-width: 767px) {
+    //모바일
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    padding-left: 50px;
+    padding-right: 50px;
+  }
 `;
 
 const Row = styled.div`

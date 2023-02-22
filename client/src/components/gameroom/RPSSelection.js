@@ -43,25 +43,33 @@ function RPSSelection({ lastHand, lastScore }) {
   }, [coolTime, showTime]);
 
   return (
-    <>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       <TextContainer showTime={showTime}>
         {lastScore >= 0 ? (
           <GradientText
             bg={
               "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
             }
+            size="80px"
           >
             +{lastScore}
           </GradientText>
         ) : (
           <GradientText
             bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
+            size="80px"
           >
             {lastScore}
           </GradientText>
         )}
       </TextContainer>
-      <img src={rpsDic[lastHand]} width="500px" />
+      <img src={rpsDic[lastHand]} width="80%" height={"auto"} />
       <Row>
         <ImgBox coolTime={coolTime}>
           <img
@@ -93,7 +101,7 @@ function RPSSelection({ lastHand, lastScore }) {
           />
         </ImgBox>
       </Row>
-    </>
+    </div>
   );
 }
 // 같은 lastHand 값이 들어오면 재렌더링 진행하지 않기
@@ -121,6 +129,18 @@ const TextContainer = styled.text`
       `;
     }
   }}
+
+  @media (max-width: 767px) {
+    //모바일
+    top: 50%;
+    left: 50%;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    top: 80%;
+    left: 45%;
+  }
 `;
 
 const Row = styled.div`
@@ -129,10 +149,11 @@ const Row = styled.div`
   flex-direction: row;
   justify-content: space-around;
 
-  width: 50%;
+  width: 80%;
+
   align-items: center;
 
-  z-index: 10000;
+  z-index: 10;
 `;
 
 const ImgBox = styled.div`

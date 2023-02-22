@@ -41,7 +41,7 @@ export const MediumOutline = styled.text`
   color: ${({ color }) => (color ? color : "black")};
   -webkit-text-stroke: 1px white;
   font-weight: 400;
-  line-height: 17px;
+  line-height: 50px;
   text-align: center;
   flex-direction: row;
   display: flex;

@@ -14,11 +14,14 @@ import "./networklog.css";
 import { Language } from "../../db/Language";
 import { LanguageContext } from "../../utils/LanguageProvider";
 
+import { useMediaQuery } from "react-responsive";
+
 //1등 점수 정보
 export default function NetworkLogs({ logs }) {
   var rpsDic = { 0: "rock", 1: "scissor", 2: "paper" };
   const mode = useContext(LanguageContext);
   const scrollRef = useRef();
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   useEffect(() => {
     // 스크롤 위치 하단 고정 -> 좀 부자연스러운 느낌?
     /*https://velog.io/@matajeu/React-div-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EB%A7%A8-%EB%B0%91%EC%9C%BC%EB%A1%9C-%EB%82%B4%EB%A6%AC%EA%B8%B0-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EC%9C%84%EC%B9%98-%EC%A1%B0%EC%9E%91%ED%95%98%EA%B8%B0*/
@@ -50,7 +53,8 @@ export default function NetworkLogs({ logs }) {
         {Language[mode].network_logs}
       </Medium>
       <SizedBox height={"10px"} />
-      <BgBox width={"350px"} height={"300px"}>
+
+      <BgBox width={"350px"} height={isMobile ? "150px" : "300px"}>
         <ScrollView ref={scrollRef} id="log_container">
           {/*네트워크 로그*/}
 

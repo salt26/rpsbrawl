@@ -18,7 +18,7 @@ const getNameSize = (name) => {
 function NameTag({ color, children }) {
   return (
     <BorderBox
-      width="150px"
+      width="130px"
       height="50px"
       borderColor={color}
       bg={palette[color]}
@@ -36,7 +36,7 @@ function NameTag({ color, children }) {
 function AdminTag({ children, color }) {
   return (
     <BorderBox
-      width="150px"
+      width="130px"
       height="50px"
       borderColor={color}
       bg={palette[color]}

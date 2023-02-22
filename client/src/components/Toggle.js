@@ -32,13 +32,15 @@ function Toggle({ mode, setMode }) {
 
 const Wrapper = styled.div`
   display: flex;
+  z-index: 5;
   align-items: center;
   position: absolute;
-  left: 90%;
+  right: 3%;
   top: 3%;
 `;
 
 const ToggleBtn = styled.button`
+  z-index: 5;
   width: 90px;
   height: 35px;
   border-radius: 30px;

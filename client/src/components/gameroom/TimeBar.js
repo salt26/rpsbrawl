@@ -11,11 +11,14 @@ import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
+import { useMediaQuery } from "react-responsive";
 
 export default function TimeBar({ roomInfo }) {
   const { time_duration, start_time } = roomInfo;
   const [sec, setSec] = useState(time_duration);
   const [isRunning, setIsRunning] = useState(false);
+
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
   const [createSocketConnection, ready, res, send] =
     useContext(WebsocketContext); //전역 소켓 불러오기
@@ -63,13 +66,13 @@ export default function TimeBar({ roomInfo }) {
 
   return (
     <Row>
-      <SvgIcon src={ClockSrc} size="100px" />
+      <SvgIcon src={ClockSrc} size={isMobile ? "50px" : "100px"} />
       <SizedBox width={"50px"} />
       <ProgressBar
         completed={String((sec * 100) / time_duration)}
         customLabel=" "
         bgColor={sec / time_duration <= 0.2 ? "var(--red)" : "#BDFF00"}
-        width="550px"
+        width={isMobile ? "250px" : "550px"}
         height="40px"
       />
       <SizedBox width={"10px"} />

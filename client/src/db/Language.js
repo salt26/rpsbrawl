@@ -22,6 +22,7 @@ export const Language = [
     privateRoom: "Private room",
     create: "Create",
     cancel: "Cancel",
+    update: "Update",
     settings: "Settings",
 
     ingame_title_text: "Thinking about which hand to play...",
@@ -36,6 +37,7 @@ export const Language = [
     time_over: "time over",
     save_result: "Save result",
     result_page_text: "You will move to the waiting room in a few seconds...",
+    no_room_text: "Create new room to play!😁",
   },
   {
     title: "RPS Brawl",
@@ -56,10 +58,11 @@ export const Language = [
     quick_start: "빠른 시작",
     mode: "모드",
     normal: "일반",
-    limited: "한손모드",
+    limited: "한 손 제한",
     privateRoom: "비밀방",
     create: "생성",
     cancel: "취소",
+    update: "변경",
     settings: "설정",
     ingame_title_text: "무엇을 낼지 고민하는 중..",
     ingame_describe_text: (num) => {
@@ -67,11 +70,12 @@ export const Language = [
     },
     team: "팀",
     add_bot: "봇 추가",
-    skilled: "숙련봇",
-    dumb: "트롤 봇",
+    skilled: "실력봇",
+    dumb: "트롤봇",
     teams: ["빨강", "오렌지", "노랑", "초록", "파랑", "네이비", "보라"],
     time_over: "시간 종료",
     save_result: "결과 저장",
     result_page_text: "잠시 후에 방으로 이동됩니다...",
+    no_room_text: "방을 생성하고 게임을 즐기세요!😁",
   },
 ];

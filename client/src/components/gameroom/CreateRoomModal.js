@@ -14,6 +14,7 @@ import { Tooltip } from "react-tooltip";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useNavigate } from "react-router-dom";
 import { Language } from "../../db/Language";
+import { useMediaQuery } from "react-responsive";
 
 import { LanguageContext } from "../../utils/LanguageProvider";
 function CreateRoomModal({ modalVisible, setModalVisible }) {
@@ -24,6 +25,8 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
   const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
 
   const mode = useContext(LanguageContext);
+
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
   var navigate = useNavigate();
   const blueBtnStyle = {
@@ -79,30 +82,57 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
     <ReactModal
       ariaHideApp={false}
       isOpen={modalVisible}
-      style={{
-        overlay: {
-          width: "500px",
-          height: "300px",
-          top: "25%",
-          left: "35%",
+      style={
+        isMobile
+          ? {
+              overlay: {
+                top: "25%",
 
-          backgroundColor: "transparent",
-        },
-        content: {
-          width: "100%",
-          height: "100%",
-          padding: 0,
-          borderRadius: "10px",
-          backgroundColor: "white",
+                width: "90%",
+                height: "40%",
 
-          border: "3px solid transparent",
-          backgroundImage: `linear-gradient(#fff, #fff),
+                backgroundColor: "transparent",
+              },
+              content: {
+                width: "100%",
+                height: "100%",
+                padding: 0,
+                borderRadius: "10px",
+                backgroundColor: "white",
+
+                border: "3px solid transparent",
+                backgroundImage: `linear-gradient(#fff, #fff),
     linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
 
-          backgroundOrigin: `border-box`,
-          backgroundClip: `content-box, border-box`,
-        },
-      }}
+                backgroundOrigin: `border-box`,
+                backgroundClip: `content-box, border-box`,
+              },
+            }
+          : {
+              overlay: {
+                width: "500px",
+                height: "300px",
+                top: "25%",
+                left: "35%",
+
+                backgroundColor: "transparent",
+              },
+              content: {
+                width: "100%",
+                height: "100%",
+                padding: 0,
+                borderRadius: "10px",
+                backgroundColor: "white",
+
+                border: "3px solid transparent",
+                backgroundImage: `linear-gradient(#fff, #fff),
+    linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
+
+                backgroundOrigin: `border-box`,
+                backgroundClip: `content-box, border-box`,
+              },
+            }
+      }
     >
       <TitleBox>
         <Medium size="30px" color="white">
@@ -163,7 +193,7 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
           />
           {/** <Tooltip
             anchorId="my-anchor-element"
-            content="You can not throw same hand in succession."
+            content="You can not throw same hand in a row."
             place="right"
             style={{ zIndex: 100 }}
             
@@ -233,13 +263,23 @@ const Container = styled.div`
 
   align-items: center;
 
-  padding-left: 50px;
-  padding-right: 50px;
+  @media (max-width: 767px) {
+    //모바일
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    padding-left: 50px;
+    padding-right: 50px;
+  }
 `;
 
 const Row = styled.div`
   display: flex;
   width: 100%;
+
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
