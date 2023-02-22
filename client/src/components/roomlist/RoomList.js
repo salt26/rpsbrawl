@@ -9,6 +9,8 @@ import { useContext } from "react";
 import RefreshBtn from "./RefreshBtn";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useNavigate, useParams } from "react-router-dom";
+import { Medium } from "../../styles/font";
+import { useMediaQuery } from "react-responsive";
 function RoomList({ rooms, setCreateRoomModalVisible }) {
   const mode = useContext(LanguageContext);
 
@@ -100,10 +102,20 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
       ws.send(JSON.stringify(request));
     }
   };
+
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
+
   return (
-    <BgBox>
+    <BgBox width="100%">
       <Row>
-        <div style={{ display: "flex", flexDirection: "row", gap: "30px" }}>
+        <div
+          style={{
+            display: "flex",
+            width: isMobile ? "100%" : "auto",
+            flexDirection: "row",
+            gap: "30px",
+          }}
+        >
           <GradientBtn
             text={Language[mode].create_room}
             onClick={_openCreateRoomModal}
@@ -118,9 +130,18 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
             anim
           />
         </div>
-        <RefreshBtn onClick={_refreshRoomList} />
+        <div>
+          <RefreshBtn onClick={_refreshRoomList} />
+        </div>
       </Row>
       <SizedBox width="100%" height={"30px"} />
+      {roomLists.length === 0 && (
+        <Anim>
+          <Medium color="white" size="30px">
+            {Language[mode].no_room_text}
+          </Medium>
+        </Anim>
+      )}
       <RoomContainer>
         {roomLists.map((room) => (
           <Room room={room} key={room.id} />
@@ -129,7 +150,17 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
     </BgBox>
   );
 }
-
+const Anim = styled.div`
+  animation: ani 0.5s infinite alternate;
+  @keyframes ani {
+    0% {
+      transform: translate(0, 0);
+    }
+    100% {
+      transform: translate(0, -5px);
+    }
+  }
+`;
 const BgBox = styled.div`
   display: flex;
   flex-direction: row;
@@ -140,11 +171,20 @@ const BgBox = styled.div`
   margin: auto;
   margin-top: 5%;
   background: rgba(123, 120, 213, 0.22);
-
-  width: 50%;
+  width: 100%;
   height: 500px;
   padding: 40px;
   border-radius: 10px;
+
+  @media (max-width: 767px) {
+    //모바일
+    width: 80%;
+    height: 65%;
+  }
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    width: 50%;
+  }
 `;
 
 const RoomContainer = styled.div`
@@ -155,7 +195,11 @@ const RoomContainer = styled.div`
   width: 100%;
   height: 90%;
   overflow-y: auto;
-  padding-right: 15px;
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    padding-right: 15px;
+  }
   grid-gap: 30px 20px;
   ::-webkit-scrollbar {
     width: 15px; /* 스크롤바의 너비 */
@@ -175,6 +219,7 @@ const RoomContainer = styled.div`
 const Row = styled.div`
   width: 100%;
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row;
   justify-content: space-between;
 

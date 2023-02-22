@@ -32,10 +32,14 @@ import LockSrc from "../assets/images/lock.svg";
 import SettingSrc from "../assets/images/setting.svg";
 import SettingModal from "../components/gameroom/SettingModal";
 import { history } from "../utils/history";
+import { useMediaQuery } from "react-responsive";
 
 export default function WatingGamePage() {
   const { room_id } = useParams();
   const { state } = useLocation(); // 유저 목록 정보
+
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
+
   useEffect(
     () => {
       const listenBackEvent = () => {
@@ -85,6 +89,7 @@ export default function WatingGamePage() {
   console.log(_findHost(users));
   var navigate = useNavigate();
 
+  useEffect(() => {}, []);
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   useEffect(() => {
     ws.onmessage = function (event) {
@@ -177,6 +182,51 @@ export default function WatingGamePage() {
       return "20px";
     }
   };
+
+  console.log(isAdmin);
+
+  if (isMobile) {
+    return (
+      <Container>
+        <TitleContainer>
+          <Row2>
+            <Medium color="white" size="25px">
+              {roomInfo.num_persons} / {roomInfo.max_persons}
+            </Medium>
+            {roomInfo.has_password && <SvgIcon src={LockSrc} size="20px" />}
+          </Row2>
+
+          <BgBox bgColor={"white"} width="230px" height="60px">
+            <Medium color="#6E3D9D" size={getTitleSize(roomInfo.name)}>
+              {roomInfo.name}
+            </Medium>
+          </BgBox>
+        </TitleContainer>
+        {isAdmin && (
+          <SvgIcon
+            src={SettingSrc}
+            size="40px"
+            onClick={() => setSettingModalVisible(true)}
+          />
+        )}
+        <BgBox width="100%" height={"70%"} bgColor={"var(--light-purple)"}>
+          <UserList users={users} />
+        </BgBox>
+
+        <Row2>
+          {" "}
+          {isAdmin && (
+            <Button
+              text={Language[mode].start}
+              onClick={_startGame}
+              bg={`linear-gradient(180deg, #FA1515 0%, #F97916 100%);`}
+            />
+          )}
+          <Button text={Language[mode].quit} onClick={_quitGame} />
+        </Row2>
+      </Container>
+    );
+  }
   return (
     <Container>
       <SettingModal
@@ -184,44 +234,50 @@ export default function WatingGamePage() {
         setModalVisible={setSettingModalVisible}
         roomInfo={roomInfo}
       />
-      <TitleContainer>
-        <Row2>
-          <Medium color="white" size="25px">
-            {roomInfo.num_persons} / {roomInfo.max_persons}
-          </Medium>
+      <Row2>
+        <TitleContainer>
+          <Row2>
+            <Medium color="white" size="25px">
+              {roomInfo.num_persons} / {roomInfo.max_persons}
+            </Medium>
+          </Row2>
+          <BgBox bgColor={"white"} width="230px" height="60px">
+            <Medium color="#6E3D9D" size={getTitleSize(roomInfo.name)}>
+              {roomInfo.name}
+            </Medium>
+          </BgBox>
           {roomInfo.has_password && <SvgIcon src={LockSrc} size="20px" />}
-        </Row2>
-        <BgBox bgColor={"white"} width="230px" height="60px">
-          <Medium color="#6E3D9D" size={getTitleSize(roomInfo.name)}>
-            {roomInfo.name}
-          </Medium>
-        </BgBox>
-      </TitleContainer>
-      <Anim>
-        <MediumOutline color="#6E3D9D" size={"60px"}>
-          {Language[mode].ingame_title_text}
-        </MediumOutline>
-      </Anim>
-
-      <MediumOutline
-        color="
-#6E3D9D"
-        size={"30px"}
+        </TitleContainer>
+      </Row2>
+      <div
+        style={{
+          display: isMobile ? "none" : "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
       >
-        {Language[mode].ingame_describe_text(numberOfUser)}
-      </MediumOutline>
+        <Anim>
+          <MediumOutline color="#6E3D9D" size={"60px"}>
+            {Language[mode].ingame_title_text}
+          </MediumOutline>
+        </Anim>
 
-      <Row>
+        <SizedBox height={"50px"} />
+
+        <MediumOutline color="#6E3D9D" size={isMobile ? "15px" : "30px"}>
+          {Language[mode].ingame_describe_text(numberOfUser)}
+        </MediumOutline>
+      </div>
+      <Box>
         <Sector>
           <Col>
             <TeamSelection />
-
             <Button text={Language[mode].quit} onClick={_quitGame} />
           </Col>
         </Sector>
-        <SizedBox width={"50px"} />
+        <SizedBox height={"50px"} />
         <Sector>
-          <BgBox bgColor={"var(--light-purple)"} width="950px" height="500px">
+          <BgBox width="950px" height={"500px"} bgColor={"var(--light-purple)"}>
             <UserList users={users} />
           </BgBox>
         </Sector>
@@ -230,29 +286,28 @@ export default function WatingGamePage() {
         <Sector>
           <Col>
             {isAdmin && (
-              <SettingContainer>
-                <SvgIcon
-                  src={SettingSrc}
-                  size="40px"
-                  onClick={() => setSettingModalVisible(true)}
-                />
-              </SettingContainer>
+              <SvgIcon
+                src={SettingSrc}
+                size="40px"
+                onClick={() => setSettingModalVisible(true)}
+              />
             )}
 
             <AddBot skilledBot={skilledBot} dumbBot={dumbBot} />
-
-            {isAdmin ? (
-              <Button
-                text={Language[mode].start}
-                onClick={_startGame}
-                bg={`linear-gradient(180deg, #FA1515 0%, #F97916 100%);`}
-              />
-            ) : (
-              <></>
-            )}
+            <BottomRight>
+              {isAdmin ? (
+                <Button
+                  text={Language[mode].start}
+                  onClick={_startGame}
+                  bg={`linear-gradient(180deg, #FA1515 0%, #F97916 100%);`}
+                />
+              ) : (
+                <></>
+              )}
+            </BottomRight>
           </Col>
         </Sector>
-      </Row>
+      </Box>
     </Container>
   );
 }
@@ -270,32 +325,53 @@ const Anim = styled.div`
 const TitleContainer = styled.div`
   position: absolute;
   z-index: 1;
-  left: 0;
-  top: 50px;
+
+  @media (max-width: 767px) {
+    //모바일
+    position: relative;
+    margin-bottom: 20px;
+  }
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    left: 5%;
+    top: 5%;
+  }
 `;
 
 const SettingContainer = styled.div`
+  background-color: red;
   position: absolute;
-  z-index: 1;
-  right: 0;
-  top: -130px;
 `;
+
 const Container = styled.div`
   height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 30px;
-  justify-content: space-around;
+
+  @media (max-width: 767px) {
+    //모바일
+    justify-content: space-around;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    justify-content: space-around;
+  }
   align-items: center;
 `;
 
-const Row = styled.div`
+const Box = styled.div`
   display: flex;
 
   width: 100%;
-  flex-direction: row;
-  align-items: flex-end;
-  justify-content: center;
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+  }
 `;
 
 const Row2 = styled.div`
@@ -308,16 +384,41 @@ const Row2 = styled.div`
 
 const Col = styled.div`
   display: flex;
-
+  position: relative;
   flex-direction: column;
   height: 500px;
-  position: relative;
+
   align-items: center;
   justify-content: space-between;
 `;
 const Sector = styled.div`
-  flex: 0.3;
   display: flex;
+
   justify-content: center;
   align-items: center;
+  width: 100%;
+`;
+
+const BottomLeft = styled.div`
+  @media (max-width: 767px) {
+    //모바일
+    position: absolute;
+    bottom: 5%;
+    left: 5%;
+  }
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+  }
+`;
+
+const BottomRight = styled.div`
+  @media (max-width: 767px) {
+    //모바일
+    position: absolute;
+    bottom: 5%;
+    right: 5%;
+  }
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+  }
 `;

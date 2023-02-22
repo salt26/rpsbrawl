@@ -14,10 +14,18 @@ import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
 import { getUserId } from "../utils/User";
 import MessageBox from "../components/gameroom/MessageBox";
+import { useMediaQuery } from "react-responsive";
+import { Language } from "../db/Language";
+import { LanguageContext } from "../utils/LanguageProvider";
+import { Medium } from "../styles/font";
+import SizedBox from "../components/common/SizedBox";
 export default function InGamePage() {
   const SHOW_TIME = 1; // 메시지 나타나는 시간 초
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
   const user_id = getUserId();
+
+  const mode = useContext(LanguageContext);
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
   const lastHand = useRef(state["hand_list"][state.hand_list.length - 1].hand);
 
@@ -184,6 +192,25 @@ export default function InGamePage() {
 
     return { name: "없음", team: "찾을수없음", rank: 0 };
   };
+  if (isMobile) {
+    return (
+      <CountDownWrapper isWaiting={isWaiting}>
+        <Col>
+          {showTime && <MessageBox>{msg}</MessageBox>}
+
+          <TimeBar roomInfo={roomInfo} />
+
+          <Row>
+            <FirstPlace place={firstPlace.current} />
+            <MyPlace place={myPlace.current} />
+          </Row>
+          <RPSSelection lastHand={lastHand.current} lastScore={lastScore} />
+          <NetworkLogs logs={handList} />
+        </Col>
+        <Count isWaiting={isWaiting}>{count}</Count>
+      </CountDownWrapper>
+    );
+  }
 
   return (
     <CountDownWrapper isWaiting={isWaiting}>
@@ -196,8 +223,15 @@ export default function InGamePage() {
         </Left>
 
         <Right>
+          <TextContainer>
+            <Medium size={"30px"} color={"white"}>
+              {Language[mode].places}
+            </Medium>
+          </TextContainer>
+          <SizedBox height={"10px"} />
           <FirstPlace place={firstPlace.current} />
           <MyPlace place={myPlace.current} />
+
           <NetworkLogs logs={handList} />
         </Right>
       </Container>
@@ -208,8 +242,10 @@ export default function InGamePage() {
 
 const CountDownWrapper = styled.div`
   position: relative;
+  width: 100%;
   pointer-events: ${({ isWaiting }) =>
     isWaiting ? "none" : "auto"}; // 터치 불가능하도록
+  height: 100%;
 
   z-index: 3;
   ${({ isWaiting }) =>
@@ -224,20 +260,42 @@ const CountDownWrapper = styled.div`
 
 const Count = styled.text`
   position: absolute;
-  font-size: 500px;
+
   display: ${({ isWaiting }) => (isWaiting ? "inline" : "none")};
 
-  top: 20%;
-  left: 45%;
   font-family: "KOTRAHOPE";
   color: red;
   z-index: 5;
+
+  @media (max-width: 767px) {
+    //모바일
+    font-size: 300px;
+    top: 25%;
+    left: 30%;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    font-size: 500px;
+    top: 20%;
+    left: 45%;
+  }
 `;
 const Container = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+`;
+const Col = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
 `;
 
 const Left = styled.div`
@@ -250,10 +308,31 @@ const Left = styled.div`
   justify-content: space-around;
   align-items: center;
 `;
+
+const Row = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  height: 100px;
+`;
+
+const TextContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+
+  justify-content: flex-start;
+  align-items: center;
+
+  width: 60%;
+`;
 const Right = styled.div`
   display: flex;
   flex: 0.4;
   height: 100vh;
+  width: 100%;
+
   flex-direction: column;
   justify-content: space-around;
   align-items: center;

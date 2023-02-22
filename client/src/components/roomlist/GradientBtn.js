@@ -30,6 +30,7 @@ const Box = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  text-align: center;
   ${({ disabled }) =>
     disabled ||
     css`

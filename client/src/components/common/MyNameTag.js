@@ -12,6 +12,7 @@ const getNameSize = (name) => {
     return "15px";
   }
 };
+
 function MyNameTag({ children, size, none, color }) {
   const fontsize = {
     s: "25px",
@@ -29,7 +30,7 @@ function MyNameTag({ children, size, none, color }) {
 
 const sizes = {
   s: {
-    width: "150px",
+    width: "130px",
     height: "50px",
   },
   m: {
@@ -47,9 +48,18 @@ const Container = styled.div`
   ${({ none }) =>
     !none &&
     css`
-      position: absolute;
-      left: 80%;
-      top: 5%;
+      @media (max-width: 767px) {
+        //모바일
+        position: absolute;
+        right: 10%;
+        bottom: 5%;
+      }
+      @media (min-width: 1200px) {
+        // 데스크탑 일반
+        position: absolute;
+        left: 80%;
+        top: 5%;
+      }
     `};
 
   width: ${({ size }) => sizes[size].width};

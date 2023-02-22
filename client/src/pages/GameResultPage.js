@@ -12,6 +12,8 @@ import { WebsocketContext } from "../utils/WebSocketProvider";
 import { Language } from "../db/Language";
 import { LanguageContext } from "../utils/LanguageProvider";
 import { Medium } from "../styles/font";
+import { useMediaQuery } from "react-responsive";
+import SizedBox from "../components/common/SizedBox";
 
 export default function GameResultPage() {
   const mode = useContext(LanguageContext);
@@ -19,7 +21,7 @@ export default function GameResultPage() {
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
   const person_id = getUserId();
   const navigate = useNavigate();
-
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   const _quitGame = () => {
     let request1 = {
@@ -55,34 +57,54 @@ export default function GameResultPage() {
     };
   }, [ready]);
   return (
-    <Row>
+    <Box>
       {/**<Button text="나가기" onClick={_quitGame} /> */}
-      <Medium color="white" size="25px">
+      <Medium color="white" size={isMobile ? "25px" : "30px"}>
         {Language[mode].result_page_text}
       </Medium>
+      {isMobile && <SizedBox height={"50px"} />}
       <ResultBoard result={state?.game_list} />;
       <Col>
         <CSVLink data={state?.game_list} filename="rps_brawl_game_result.csv">
           <Button text={Language[mode].save_result} />
         </CSVLink>
       </Col>
-    </Row>
+    </Box>
   );
 }
-const Row = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  align-items: flex-end;
-  padding-bottom: 50px;
-  margin-left: 100px;
 
+const Box = styled.div`
+  display: flex;
+
+  width: 100%;
   height: 100%;
-  gap: 10%;
+
+  @media (max-width: 767px) {
+    //모바일
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    padding-bottom: 50px;
+
+    flex-direction: row;
+    justify-content: center;
+
+    align-items: flex-end;
+    gap: 10%;
+  }
 `;
 const Col = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin-left: -20%;
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    margin-left: -20%;
+  }
 `;

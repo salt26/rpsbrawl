@@ -3,7 +3,7 @@
 }
 
 ::-webkit-scrollbar {
-  width: 15px; /* 스크롤바의 너비 */
+  width: 10px; /* 스크롤바의 너비 */
 }
 
 ::-webkit-scrollbar-thumb {

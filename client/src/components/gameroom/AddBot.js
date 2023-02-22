@@ -11,9 +11,12 @@ import { LanguageContext } from "../../utils/LanguageProvider";
 import { useContext } from "react";
 import { Language } from "../../db/Language";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
+import { useMediaQuery } from "react-responsive";
 
 function AddBot({ skilledBot, dumbBot }) {
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
+
   const _changeNumOfBot = (type, num) => {
     let request = {
       request: "setting",
@@ -28,7 +31,7 @@ function AddBot({ skilledBot, dumbBot }) {
 
   const _addSkilledBot = () => {
     if (skilledBot >= 10) {
-      alert("can not add more bot");
+      alert("Cannot add more bots");
       return;
     }
     _changeNumOfBot("skilled", skilledBot + 1);
@@ -63,54 +66,64 @@ function AddBot({ skilledBot, dumbBot }) {
     //setDumbBot((prev) => prev - 1);
   };
   return (
-    <BgBox bgColor={"var(--light-purple)"} width="150px" height="400px">
-      <TextContainer>
-        <MediumOutline color="#6E3D9D" size={"40px"}>
-          {Language[mode].add_bot}
-        </MediumOutline>
-      </TextContainer>
-      <Col>
-        <BotBox>
-          <Medium color="white" size="30px">
-            {Language[mode].skilled}
-          </Medium>
-          <BgBox bgColor={"white"} width="130px" height="50px">
-            <Anim>
-              <SvgIcon src={SkilledSrc} size="40px" />
-            </Anim>
-          </BgBox>
-          <Row>
-            <SvgIcon
-              src={LeftArrowSrc}
-              size="25px"
-              onClick={_deductSkilledBot}
-            />
-            <Medium color="white" size="35px">
-              {skilledBot}
+    <div style={{ display: isMobile ? "none" : "block" }}>
+      <BgBox bgColor={"var(--light-purple)"} width="150px" height="400px">
+        <TextContainer>
+          <MediumOutline color="#6E3D9D" size={"40px"}>
+            {Language[mode].add_bot}
+          </MediumOutline>
+        </TextContainer>
+        <Col>
+          <BotBox>
+            <Medium color="white" size="30px">
+              {Language[mode].skilled}
             </Medium>
+            <BgBox bgColor={"white"} width="130px" height="50px">
+              <Anim>
+                <SvgIcon src={SkilledSrc} size="40px" />
+              </Anim>
+            </BgBox>
+            <Row>
+              <SvgIcon
+                src={LeftArrowSrc}
+                size="25px"
+                onClick={_deductSkilledBot}
+              />
+              <Medium color="white" size="35px">
+                {skilledBot}
+              </Medium>
 
-            <SvgIcon src={RightArrowSrc} size="25px" onClick={_addSkilledBot} />
-          </Row>
-        </BotBox>
-        <BotBox>
-          <Medium color="white" size="30px">
-            {Language[mode].dumb}
-          </Medium>
-          <BgBox bgColor={"white"} width="130px" height="50px">
-            <Anim>
-              <SvgIcon src={DumbSrc} size="40px" />
-            </Anim>
-          </BgBox>
-          <Row>
-            <SvgIcon src={LeftArrowSrc} size="25px" onClick={_deductDumbBot} />
-            <Medium color="white" size="35px">
-              {dumbBot}
+              <SvgIcon
+                src={RightArrowSrc}
+                size="25px"
+                onClick={_addSkilledBot}
+              />
+            </Row>
+          </BotBox>
+          <BotBox>
+            <Medium color="white" size="30px">
+              {Language[mode].dumb}
             </Medium>
-            <SvgIcon src={RightArrowSrc} size="25px" onClick={_addDumbBot} />
-          </Row>
-        </BotBox>
-      </Col>
-    </BgBox>
+            <BgBox bgColor={"white"} width="130px" height="50px">
+              <Anim>
+                <SvgIcon src={DumbSrc} size="40px" />
+              </Anim>
+            </BgBox>
+            <Row>
+              <SvgIcon
+                src={LeftArrowSrc}
+                size="25px"
+                onClick={_deductDumbBot}
+              />
+              <Medium color="white" size="35px">
+                {dumbBot}
+              </Medium>
+              <SvgIcon src={RightArrowSrc} size="25px" onClick={_addDumbBot} />
+            </Row>
+          </BotBox>
+        </Col>
+      </BgBox>
+    </div>
   );
 }
 const TextContainer = styled.div`

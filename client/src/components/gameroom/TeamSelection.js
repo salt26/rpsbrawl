@@ -8,10 +8,12 @@ import { Language } from "../../db/Language";
 import { LanguageContext } from "../../utils/LanguageProvider";
 import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
-
+import { useMediaQuery } from "react-responsive";
 function TeamSelection({}) {
   const teams = ["red", "orange", "yellow", "green", "blue", "navy", "purple"];
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
+  console.log(isMobile);
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   const mode = useContext(LanguageContext);
   const _changeMyTeam = (team_idx) => {
@@ -23,20 +25,22 @@ function TeamSelection({}) {
   };
 
   return (
-    <BgBox bgColor={"var(--light-purple)"} width="150px" height="400px">
-      <TextContainer>
-        <MediumOutline color="#6E3D9D" size={"40px"}>
-          {Language[mode].team}
-        </MediumOutline>
-      </TextContainer>
+    <div style={{ display: isMobile ? "none" : "block" }}>
+      <BgBox bgColor={"var(--light-purple)"} width="150px" height="400px">
+        <TextContainer>
+          <MediumOutline color="#6E3D9D" size={"40px"}>
+            {Language[mode].team}
+          </MediumOutline>
+        </TextContainer>
 
-      <Col>
-        {" "}
-        {teams.map((team, idx) => (
-          <TeamBtn color={team} onClick={() => _changeMyTeam(idx)} />
-        ))}
-      </Col>
-    </BgBox>
+        <Col>
+          {" "}
+          {teams.map((team, idx) => (
+            <TeamBtn color={team} onClick={() => _changeMyTeam(idx)} />
+          ))}
+        </Col>
+      </BgBox>
+    </div>
   );
 }
 function TeamBtn({ color, onClick }) {
