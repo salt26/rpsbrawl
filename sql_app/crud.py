@@ -16,7 +16,7 @@ import random
 # db_room.update({"state" : schemas.RoomStateEnum.Play})
 # print(db_room.first())  # None 이 출력된다!
 
-END_WAITING_TIME = 20   # 기본값은 20초이지만, backend_websocket_test.py를 돌릴 때에는 10초 정도로 짧게 설정하면 좋음
+END_WAITING_TIME = 20   # 기본값은 20초이지만, backend_websocket_test.py를 돌릴 때에는 10초로 설정해야 의도한 대로 잘 돌아감
 
 def hand_score(my_hand: schemas.HandEnum, prev_hand: schemas.HandEnum):
     if my_hand == prev_hand:

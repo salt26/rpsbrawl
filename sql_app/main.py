@@ -555,7 +555,8 @@ async def skilled_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db
                     hand_data = {
                         "hand_list": read_hands(room_id, 6, db),
                         "game_list": read_game(room_id, db),
-                        "last_hand": hManager.get_last_hand_for_each_person(room_id)
+                        "last_hand": hManager.get_last_hand_for_each_person(room_id),
+                        "hand_person_id": bot_id
                     }
                     #lock.release()
                     task1 = asyncio.create_task(cManager.broadcast_json("hand", "hand_data", hand_data, room_id))
@@ -610,7 +611,8 @@ async def dumb_bot_ai(room_id: int, bot_id: int, db: Session = Depends(get_db)):
                     hand_data = {
                         "hand_list": read_hands(room_id, 6, db),
                         "game_list": read_game(room_id, db),
-                        "last_hand": hManager.get_last_hand_for_each_person(room_id)
+                        "last_hand": hManager.get_last_hand_for_each_person(room_id),
+                        "hand_person_id": bot_id
                     }
                     #lock.release()
                     task1 = asyncio.create_task(cManager.broadcast_json("hand", "hand_data", hand_data, room_id))
@@ -945,7 +947,8 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 hand_data = {
                     "hand_list": read_hands(room_id, 6, db),
                     "game_list": read_game(room_id, db),
-                    "last_hand": hManager.get_last_hand_for_each_person(room_id)
+                    "last_hand": hManager.get_last_hand_for_each_person(room_id),
+                    "hand_person_id": person_id
                 }
                 #lock.release()
                 await cManager.broadcast_json("hand", "hand_data", hand_data, room_id)
