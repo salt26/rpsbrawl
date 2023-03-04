@@ -67,12 +67,12 @@ export default function TimeBar({ roomInfo }) {
   return (
     <Row>
       <SvgIcon src={ClockSrc} size={isMobile ? "50px" : "100px"} />
-      <SizedBox width={"50px"} />
+      <SizedBox width={"30px"} />
       <ProgressBar
         completed={String((sec * 100) / time_duration)}
         customLabel=" "
         bgColor={sec / time_duration <= 0.2 ? "var(--red)" : "#BDFF00"}
-        width={isMobile ? "250px" : "550px"}
+        width={isMobile ? `250px` : "550px"}
         height="40px"
       />
       <SizedBox width={"10px"} />

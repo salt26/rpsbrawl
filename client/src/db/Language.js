@@ -36,7 +36,9 @@ export const Language = [
     teams: ["red", "orange", "yellow", "green", "blue", "navy", "purple"],
     time_over: "time over",
     save_result: "Save result",
-    result_page_text: "You will move to the waiting room in a few seconds...",
+    result_page_text: (count) => {
+      return `You'll be moved to the room in ${count} seconds...`;
+    },
     no_room_text: "Create new room to play!😁",
   },
   {
@@ -64,6 +66,8 @@ export const Language = [
     cancel: "취소",
     update: "변경",
     settings: "설정",
+    limited_explain_text: " ",
+
     ingame_title_text: "무엇을 낼지 고민하는 중..",
     ingame_describe_text: (num) => {
       return `난투가 곧 시작됩니다. ( 현재 : ${num}명 ) `;
@@ -75,7 +79,9 @@ export const Language = [
     teams: ["빨강", "오렌지", "노랑", "초록", "파랑", "네이비", "보라"],
     time_over: "시간 종료",
     save_result: "결과 저장",
-    result_page_text: "잠시 후에 방으로 이동됩니다...",
+    result_page_text: (count) => {
+      return `${count} 초 후에 대기실로 이동됩니다...`;
+    },
     no_room_text: "방을 생성하고 게임을 즐기세요!😁",
   },
 ];

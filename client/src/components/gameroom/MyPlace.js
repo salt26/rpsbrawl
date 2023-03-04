@@ -20,23 +20,36 @@ export default function MyPlace({ place }) {
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const getNameSize = (name) => {
     console.log(name);
-    if (name.length <= 5) {
-      return "40px";
-    } else if (name.length <= 10) {
-      return "25px";
-    } else if (name.length <= 20) {
-      return "20px";
+
+    if (isMobile) {
+      if (name.length <= 5) {
+        return "35px";
+      } else if (name.length <= 10) {
+        return "20px";
+      } else if (name.length <= 20) {
+        return "15px";
+      } else {
+        return "8px";
+      }
     } else {
-      return "10px";
+      if (name.length <= 5) {
+        return "40px";
+      } else if (name.length <= 10) {
+        return "25px";
+      } else if (name.length <= 20) {
+        return "20px";
+      } else {
+        return "10px";
+      }
     }
   };
 
   return (
-    <BgBox width={isMobile ? "45%" : "60%"} height={isMobile ? "80%" : "20%"}>
+    <BgBox width={isMobile ? "45%" : "60%"} height={isMobile ? "80%" : "150px"}>
       <Row>
         <Rank rank={rank} isMobile={isMobile} />
         <Col>
-          <Medium size={isMobile ? "27px" : "30px"}>{team_color[team]}</Medium>
+          <Medium size={isMobile ? "20px" : "30px"}>{team_color[team]}</Medium>
 
           <Medium size={getNameSize(name)}>{name}</Medium>
         </Col>

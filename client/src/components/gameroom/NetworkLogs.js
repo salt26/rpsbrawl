@@ -48,13 +48,22 @@ export default function NetworkLogs({ logs }) {
   ];
 
   return (
-    <div>
+    <div
+      style={{
+        width: isMobile ? "90%" : "60%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
+      }}
+    >
       <Medium size={"30px"} color={"white"}>
         {Language[mode].network_logs}
       </Medium>
       <SizedBox height={"10px"} />
 
-      <BgBox width={"350px"} height={isMobile ? "150px" : "300px"}>
+      <BgBox width={"100%"} height={isMobile ? "100%" : "300px"}>
         <ScrollView ref={scrollRef} id="log_container">
           {/*네트워크 로그*/}
 
@@ -112,6 +121,7 @@ function Log({ belong, name, rps, score }) {
 const ScrollView = styled.div`
   width: 100%;
   height: 100%;
+  background-color: red;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -127,11 +137,4 @@ const Row = styled.div`
   align-items: center;
   width: 100%;
   gap: 20px;
-`;
-
-const Col = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
 `;

@@ -74,20 +74,9 @@ const Container = styled.div`
   flex-wrap: wrap;
   justify-content: flex-start;
   align-items: flex-start;
-  height: 100%;
-
-  @media (max-width: 767px) {
-    //모바일
-    padding: 20px;
-    gap: 10px 10px;
-  }
-
-  @media (min-width: 1200px) {
-    // 데스크탑 일반
-
-    padding: 30px;
-    gap: 40px 25px;
-  }
+  align-self: flex-start;
+  padding: 20px;
+  gap: 30px 15px;
 
   overflow-x: hidden;
   overflow-y: scroll;

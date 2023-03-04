@@ -5,6 +5,9 @@ import {
   WatingGamePage,
   GameRoomPage,
   RoomListPage,
+  MobileLandingScreen,
+  MobileGameRoomScreen,
+  MobileRoomListScreen,
 } from "./pages";
 import { Route, Routes } from "react-router-dom";
 import { BASE_WEBSOCKET_URL } from "./Config";
@@ -16,8 +19,9 @@ import { WebsocketProvider } from "./utils/WebSocketProvider";
 import { LanguageContext } from "./utils/LanguageProvider";
 import Toggle from "./components/Toggle";
 import { useLocation } from "react-router-dom";
+import { BrowserView, MobileView } from "react-device-detect";
 import WatingMusicSrc from "../src/assets/bgm/Melody_of_travel_fluttering_ver..mp3";
-import GameMusic from "../src/assets/bgm/Melody_of_tongtong.mp3";
+import GameMusicSrc from "../src/assets/bgm/Melody_of_tongtong.mp3";
 const Background = styled.div`
   width: 100%;
   height: 100vh;
@@ -29,32 +33,59 @@ function App() {
   const [mode, setMode] = useState(0);
   const { pathname } = useLocation();
 
-  console.log(pathname);
-  const isInGame = () => {
-    if (pathname == "/" || pathname == "/rooms") return false;
-    else return true;
-  };
+  const params = pathname.split("/");
+
+  const [inGame, setInGame] = useState(false);
+
+  useEffect(() => {
+    if (isNaN(params[2]) === false) {
+      setInGame(true);
+    } else {
+      setInGame(false);
+    }
+  });
+
   return (
     <WebsocketProvider>
       <LanguageContext.Provider value={mode}>
-        <Background>
-          {pathname == "/" && <Toggle mode={mode} setMode={setMode} />}
+        <audio
+          src={WatingMusicSrc}
+          autoPlay={true}
+          loop={true}
+          muted={inGame}
+        ></audio>
+        <audio
+          src={GameMusicSrc}
+          autoPlay={true}
+          loop={true}
+          muted={!inGame}
+        ></audio>
+        <BrowserView>
+          <Background>
+            {pathname == "/" && <Toggle mode={mode} setMode={setMode} />}
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/rooms/:room_id/*" element={<GameRoomPage />} />
 
-          {isInGame || (
-            <audio src={WatingMusicSrc} autoPlay={true} loop={true}></audio>
-          )}
+              <Route path="/rooms" element={<RoomListPage />} />
+            </Routes>
+          </Background>
+        </BrowserView>
+        <MobileView>
+          <Background>
+            {pathname == "/" && <Toggle mode={mode} setMode={setMode} />}
 
-          {isInGame && (
-            <audio src={GameMusic} autoPlay={true} loop={true}></audio>
-          )}
+            <Routes>
+              <Route path="/" element={<MobileLandingScreen />} />
+              <Route
+                path="/rooms/:room_id/*"
+                element={<MobileGameRoomScreen />}
+              />
 
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/rooms/:room_id/*" element={<GameRoomPage />} />
-
-            <Route path="/rooms" element={<RoomListPage />} />
-          </Routes>
-        </Background>
+              <Route path="/rooms" element={<MobileRoomListScreen />} />
+            </Routes>
+          </Background>
+        </MobileView>
       </LanguageContext.Provider>
     </WebsocketProvider>
   );

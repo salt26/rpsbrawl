@@ -86,19 +86,20 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
         isMobile
           ? {
               overlay: {
-                top: "25%",
-
-                width: "90%",
-                height: "40%",
-
                 backgroundColor: "transparent",
               },
               content: {
-                width: "100%",
-                height: "100%",
+                width: "90%",
+                height: "35%",
+                display: "flex",
+                backgroundColor: "orange",
+                flexDirection: "column",
+                justifyContent: "space-between",
+
+                top: "30%",
+                left: "5%",
                 padding: 0,
                 borderRadius: "10px",
-                backgroundColor: "white",
 
                 border: "3px solid transparent",
                 backgroundImage: `linear-gradient(#fff, #fff),
@@ -155,87 +156,103 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
         />
         <SizedBox height={"15px"} />
         <Row>
-          <SvgIcon src={GameSrc} size="30px" />
-          <Medium size="30px" color="black">
-            {Language[mode].mode}
-          </Medium>
-          {gameMode === 0 ? (
-            <SvgIcon src={CheckSrc} size="20px" />
-          ) : (
-            <SvgIcon
-              src={UnCheckSrc}
-              size="20px"
-              onClick={() => setGameMode(0)}
-            />
-          )}
-          <Medium size="25px" color="black">
-            {Language[mode].normal}
-          </Medium>
+          <Row2>
+            <SvgIcon src={GameSrc} size="30px" />
 
-          {gameMode === 1 ? (
-            <SvgIcon src={CheckSrc} size="20px" />
-          ) : (
-            <SvgIcon
-              src={UnCheckSrc}
-              size="20px"
-              onClick={() => setGameMode(1)}
-            />
-          )}
-          <Medium size="25px" color="black">
-            {Language[mode].limited}
-          </Medium>
+            <Medium size="30px" color="black">
+              {Language[mode].mode}
+            </Medium>
+          </Row2>
+          <Row2>
+            {gameMode === 0 ? (
+              <SvgIcon src={CheckSrc} size="20px" />
+            ) : (
+              <SvgIcon
+                src={UnCheckSrc}
+                size="20px"
+                onClick={() => setGameMode(0)}
+              />
+            )}
 
+            <Medium size="25px" color="black">
+              {Language[mode].normal}
+            </Medium>
+          </Row2>
+          <Row2>
+            {gameMode === 1 ? (
+              <SvgIcon src={CheckSrc} size="20px" />
+            ) : (
+              <SvgIcon
+                src={UnCheckSrc}
+                size="20px"
+                onClick={() => setGameMode(1)}
+              />
+            )}
+            <Medium size="25px" color="black">
+              {Language[mode].limited}
+            </Medium>
+          </Row2>
           <img
             src={QuestionSrc}
             width="20px"
             height="20px"
             id="my-anchor-element"
           />
-          {/** <Tooltip
+
+          <Tooltip
             anchorId="my-anchor-element"
             content="You can not throw same hand in a row."
             place="right"
             style={{ zIndex: 100 }}
-            
-          />*/}
+          />
         </Row>
         <SizedBox height={"5px"} />
-        <Row>
-          <SvgIcon src={LockSrc} size="30px" />
-          <Medium size="30px" color="black">
-            {Language[mode].privateRoom}
-          </Medium>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
+          <Row2>
+            <SvgIcon src={LockSrc} size="30px" />
 
-          {privateMode ? (
-            <SvgIcon
-              src={CheckSrc}
-              size="20px"
-              onClick={() => setPrivateMode((prev) => !prev)}
-            />
-          ) : (
-            <SvgIcon
-              src={UnCheckSrc}
-              size="20px"
-              onClick={() => setPrivateMode((prev) => !prev)}
-            />
-          )}
-          {privateMode ? (
-            <input
-              type={"password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: "30%",
-                height: "30px",
-                borderColor: "var(--border)",
-                fontFamily: "KOTRAHOPE",
-                fontSize: "20px",
-              }}
-            />
-          ) : (
-            <div style={{ width: "30%", height: "30px" }}></div>
-          )}
-        </Row>
+            <Medium size="30px" color="black">
+              {Language[mode].privateRoom}
+            </Medium>
+
+            {privateMode ? (
+              <SvgIcon
+                src={CheckSrc}
+                size="20px"
+                onClick={() => setPrivateMode((prev) => !prev)}
+              />
+            ) : (
+              <SvgIcon
+                src={UnCheckSrc}
+                size="20px"
+                onClick={() => setPrivateMode((prev) => !prev)}
+              />
+            )}
+
+            {privateMode && (
+              <input
+                type={"password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  width: "30%",
+                  height: "30px",
+                  borderColor: "var(--border)",
+                  fontFamily: "KOTRAHOPE",
+                  fontSize: "20px",
+                }}
+              />
+            )}
+          </Row2>
+        </div>
         <SizedBox height={"15px"} />
         <Row>
           <GradientBtn
@@ -252,15 +269,22 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
           />
         </Row>
       </Container>
+      <SizedBox height={"15px"} />
     </ReactModal>
   );
 }
+
+const Row2 = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+`;
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
-
   align-items: center;
 
   @media (max-width: 767px) {
@@ -294,8 +318,4 @@ const TitleBox = styled.div`
   align-items: center;
 `;
 
-const Hover = styled.div`
-  &:hover {
-  }
-`;
 export default CreateRoomModal;

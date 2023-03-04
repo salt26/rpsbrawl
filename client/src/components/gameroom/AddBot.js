@@ -130,7 +130,7 @@ const TextContainer = styled.div`
   position: absolute;
   z-index: 1;
   align-self: center;
-  top: -8px;
+  top: -20px;
 `;
 
 const Anim = styled.div`

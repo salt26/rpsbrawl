@@ -106,7 +106,7 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
   return (
-    <BgBox width="100%">
+    <BgBox width="100%" height="80%">
       <Row>
         <div
           style={{
@@ -130,11 +130,10 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
             anim
           />
         </div>
-        <div>
-          <RefreshBtn onClick={_refreshRoomList} />
-        </div>
+
+        <RefreshBtn onClick={_refreshRoomList} />
       </Row>
-      <SizedBox width="100%" height={"30px"} />
+      <SizedBox width="100%" height={"20px"} />
       {roomLists.length === 0 && (
         <Anim>
           <Medium color="white" size="30px">
@@ -193,7 +192,7 @@ const RoomContainer = styled.div`
   justify-content: space-between;
   flex-wrap: wrap;
   width: 100%;
-  height: 90%;
+  height: 70%;
   overflow-y: auto;
 
   @media (min-width: 1200px) {

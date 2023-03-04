@@ -22,22 +22,85 @@ import { Language } from "../db/Language";
 import { BASE_WEBSOCKET_URL } from "../Config";
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
-function RuleBox() {
+
+function Tabs({ currentTab, setCurrentTab }) {
   const mode = useContext(LanguageContext);
   return (
-    <BgBox width="250px" height="300px" color="white">
-      <Col>
-        <Row>
-          {" "}
+    <RowBetween>
+      {currentTab == 0 ? (
+        <SelectedTab>
           <MediumOutline size="30px" color="var(--purple)">
             {Language[mode].rule}
           </MediumOutline>
-        </Row>
+        </SelectedTab>
+      ) : (
+        <Tab onClick={() => setCurrentTab(0)}>
+          <MediumOutline size="30px" color="var(--purple)">
+            {Language[mode].rule}
+          </MediumOutline>
+        </Tab>
+      )}
+      {currentTab == 1 ? (
+        <SelectedTab>
+          <MediumOutline size="30px" color="var(--purple)">
+            {Language[mode].start}
+          </MediumOutline>
+        </SelectedTab>
+      ) : (
+        <Tab onClick={() => setCurrentTab(1)}>
+          <MediumOutline size="30px" color="var(--purple)">
+            {Language[mode].start}
+          </MediumOutline>
+        </Tab>
+      )}
+    </RowBetween>
+  );
+}
+
+const RowBetween = styled.div`
+  display: flex;
+  width: 80%;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  height: 30px;
+`;
+
+const Tab = styled.div`
+  // 미클릭
+  background-color: white;
+  border-radius: 10px;
+  width: 45%;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+`;
+
+const SelectedTab = styled.div`
+  //선택
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  background-color: white;
+
+  width: 50%;
+`;
+
+function RuleBox() {
+  const mode = useContext(LanguageContext);
+  return (
+    <BgBox width="80%" height="40%" color="white">
+      <Center>
         <SizedBox height={"50px"} />
         <Medium size="23px" color="var(--purple)">
           {Language[mode].explanation}
         </Medium>
-      </Col>
+      </Center>
     </BgBox>
   );
 }
@@ -62,16 +125,10 @@ function LoginBox() {
     createWebSocketConnection(name); // Socket Connection 생성
   };
   return (
-    <BgBox width="250px" height="300px" color="white">
+    <BgBox width="80%" height="40%" color="white">
       <Col>
-        <Row>
-          <MediumOutline size="30px" color="var(--purple)">
-            {Language[mode].entrance}
-          </MediumOutline>
-        </Row>
-        <SizedBox height={"20px"} />
+        <SizedBox height={"60px"} />
 
-        <SizedBox height={"40px"} />
         <Row>
           {" "}
           <Medium size="25px" color="var(--purple)">
@@ -102,10 +159,9 @@ function LoginBox() {
   );
 }
 
-export default function LandingPage() {
+export default function MobileLandingScreen() {
   const mode = useContext(LanguageContext);
-  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
-
+  const [currentTab, setCurrentTab] = useState(1);
   return (
     <Container>
       <SizedBox height={"50px"} />
@@ -127,14 +183,11 @@ export default function LandingPage() {
         </Anim>
       </RPSBox>
 
+      <Tabs currentTab={currentTab} setCurrentTab={setCurrentTab} />
+
+      {currentTab === 0 ? <RuleBox /> : <LoginBox />}
+
       <SizedBox height={"10px"} />
-      <Row>
-        <RuleBox />
-
-        <SizedBox width={"150px"} />
-
-        <LoginBox />
-      </Row>
     </Container>
   );
 }
@@ -167,6 +220,13 @@ const Anim = styled.div`
 const Anim2 = styled.div`
   animation: anim2 5s infinite ease-in-out;
   animation-delay: ${({ delay }) => delay}s;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  justify-content: center;
+
   @keyframes anim2 {
     0% {
       transform: scale(1);
@@ -193,8 +253,7 @@ const Container = styled.div`
 
   align-items: center;
 
-  height: 100vh;
-  justify-content: center;
+  justify-content: space-between;
 `;
 
 const Row = styled.div`
@@ -203,6 +262,14 @@ const Row = styled.div`
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
+`;
+
+const Center = styled.div`
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+  padding: 50px;
 `;
 const RPSBox = styled.div`
   display: flex;

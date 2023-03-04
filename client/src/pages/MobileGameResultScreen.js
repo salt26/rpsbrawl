@@ -14,9 +14,10 @@ import { LanguageContext } from "../utils/LanguageProvider";
 import { Medium } from "../styles/font";
 import { useMediaQuery } from "react-responsive";
 import SizedBox from "../components/common/SizedBox";
-import useInterval from "../utils/useInterval";
 import { RESULT_TIME } from "../Config";
-export default function GameResultPage() {
+import useInterval from "../utils/useInterval";
+
+export default function MobileGameResultScreen() {
   const mode = useContext(LanguageContext);
   const { room_id } = useParams();
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
@@ -34,6 +35,8 @@ export default function GameResultPage() {
 
     if (left < 0) {
       // 남은 시간이 지난경우
+      alert("게임이 이미 종료된 방입니다.");
+      navigate(`/rooms`);
     } else {
       setCount(left); //타이머 초깃값 세팅
     }
@@ -54,7 +57,7 @@ export default function GameResultPage() {
         }
 
         switch (res?.type) {
-          case "join_data": // 게임 시작 후 20초 지나면 다시 대기방으로
+          case "join_data": // 게임 시작 후 10초 지나면 다시 대기방으로
             navigate(`/rooms/${room_id}/waiting`, { state: res.data });
             break;
 
@@ -70,6 +73,7 @@ export default function GameResultPage() {
       <Medium color="white" size={isMobile ? "25px" : "30px"}>
         {Language[mode].result_page_text(count)}
       </Medium>
+      {isMobile && <SizedBox height={"50px"} />}
       <ResultBoard result={state?.game_list} />;
       <Col>
         <CSVLink data={state?.game_list} filename="rps_brawl_game_result.csv">
@@ -86,19 +90,14 @@ const Box = styled.div`
   width: 100%;
   height: 100%;
 
-  // 데스크탑 일반
-  padding-bottom: 50px;
-
-  flex-direction: row;
-  justify-content: space-around;
-
-  align-items: flex-end;
+  //모바일
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 `;
 const Col = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
-
-  // 데스크탑 일반
-  margin-left: -20%;
 `;

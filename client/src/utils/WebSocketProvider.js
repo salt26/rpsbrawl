@@ -32,6 +32,7 @@ export const WebsocketProvider = ({ children }) => {
     socket.onclose = (event) => {
       console.log("onclose!", event);
       setIsReady(false);
+      navigate("/");
     };
 
     socket.onmessage = function (event) {

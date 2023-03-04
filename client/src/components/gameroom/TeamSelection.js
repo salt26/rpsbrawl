@@ -13,7 +13,6 @@ function TeamSelection({}) {
   const teams = ["red", "orange", "yellow", "green", "blue", "navy", "purple"];
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
-  console.log(isMobile);
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   const mode = useContext(LanguageContext);
   const _changeMyTeam = (team_idx) => {
@@ -78,7 +77,7 @@ const Col = styled.div`
 const TextContainer = styled.div`
   position: absolute;
   align-self: center;
-  top: -8px;
+  top: -20px;
 `;
 
 const Container = styled.div`

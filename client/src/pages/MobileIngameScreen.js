@@ -19,7 +19,7 @@ import { Language } from "../db/Language";
 import { LanguageContext } from "../utils/LanguageProvider";
 import { Medium } from "../styles/font";
 import SizedBox from "../components/common/SizedBox";
-export default function InGamePage() {
+export default function MobileInGameScreen() {
   const SHOW_TIME = 1; // 메시지 나타나는 시간 초
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
   const user_id = getUserId();
@@ -31,7 +31,7 @@ export default function InGamePage() {
 
   //const handList = useRef(state["hand_list"]);
   const [handList, setHandList] = useState(state["hand_list"]);
-  const [flag, setFlag] = useState(0); // 0<->1 (새로운 점수가 들어올때마다)
+  const [flag, setFlag] = useState(0);
   const [lastScore, setLastScore] = useState(null);
   const [isWaiting, setIsWaiting] = useState(true);
   const [count, setCount] = useState(state["room"].time_offset); //게임 시작까지 남은 시간
@@ -196,32 +196,22 @@ export default function InGamePage() {
 
   return (
     <CountDownWrapper isWaiting={isWaiting}>
-      <Container>
+      <Col>
         {showTime && <MessageBox>{msg}</MessageBox>}
 
-        <Left>
-          <TimeBar roomInfo={roomInfo} />
-          <RPSSelection
-            lastHand={lastHand.current}
-            lastScore={lastScore}
-            flag={flag}
-          />
-        </Left>
+        <TimeBar roomInfo={roomInfo} />
 
-        <Right>
-          <TextContainer>
-            <Medium size={"30px"} color={"white"}>
-              {Language[mode].places}
-            </Medium>
-          </TextContainer>
-          <SizedBox height={"10px"} />
+        <Row>
           <FirstPlace place={firstPlace.current} />
-          <SizedBox height={"20px"} />
           <MyPlace place={myPlace.current} />
-          <SizedBox height={"20px"} />
-          <NetworkLogs logs={handList} />
-        </Right>
-      </Container>
+        </Row>
+        <RPSSelection
+          lastHand={lastHand.current}
+          lastScore={lastScore}
+          flag={flag}
+        />
+        <NetworkLogs logs={handList} />
+      </Col>
       <Count isWaiting={isWaiting}>{count}</Count>
     </CountDownWrapper>
   );
@@ -254,27 +244,30 @@ const Count = styled.text`
   color: red;
   z-index: 5;
 
-  // 데스크탑 일반
-  font-size: 500px;
-  top: 20%;
-  left: 45%;
-`;
-const Container = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
+  //모바일
+  font-size: 300px;
+  top: 25%;
+  left: 30%;
 `;
 
-const Left = styled.div`
-  flex: 0.6;
-  width: 100%;
-  height: 100vh;
+const Col = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 30px;
+  justify-content: space-around;
+
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  padding: 10px;
+`;
+
+const Row = styled.div`
+  display: flex;
+  flex-direction: row;
   justify-content: space-around;
   align-items: center;
+  width: 100%;
+  height: 100px;
 `;
 
 const TextContainer = styled.div`
@@ -289,8 +282,10 @@ const TextContainer = styled.div`
 const Right = styled.div`
   display: flex;
   flex: 0.4;
-  flex-direction: column;
-  justify-content: flex-start;
+  height: 100vh;
+  width: 100%;
 
+  flex-direction: column;
+  justify-content: space-around;
   align-items: center;
 `;

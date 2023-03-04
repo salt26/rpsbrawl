@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import styled, { css } from "styled-components";
 import RockSrc from "../../assets/images/rock.png";
 import ScissorSrc from "../../assets/images/scissor.png";
@@ -11,7 +11,7 @@ import useInterval from "../../utils/useInterval";
 import { COOL_TIME } from "../../Config";
 import { GradientText } from "../../styles/font";
 
-function RPSSelection({ lastHand, lastScore }) {
+function RPSSelection({ lastHand, lastScore, flag }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
 
   const { room_id } = useParams();
@@ -22,21 +22,26 @@ function RPSSelection({ lastHand, lastScore }) {
 
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
 
+  // 점수 획득 -> 마지막점수
   const _addHand = useCallback((hand) => {
     let request = {
       request: "hand",
       hand: hand, // 0(Rock) 또는 1(Scissor) 또는 2(Paper)
     };
     ws.send(JSON.stringify(request));
-    console.log(coolTime);
+
     setCoolTime(true);
-    setShowTime(true);
   }, []);
+  useEffect(() => {
+    if (coolTime && !showTime) {
+      setShowTime(true);
+    }
+  }, [flag]); // 새로운 점수 정보가 도착하면
 
   useEffect(() => {
     const id = setTimeout(() => {
-      setCoolTime(false); //쿨타임해제
       setShowTime(false); //스코어 내리기
+      setCoolTime(false); //쿨타임해제
     }, COOL_TIME * 1000);
 
     return () => clearInterval(id);
@@ -113,8 +118,6 @@ export default React.memo(RPSSelection, areEqual);
 
 const TextContainer = styled.text`
   position: absolute;
-  top: 80%;
-  left: 45%;
 
   ${({ showTime }) => {
     if (showTime) {
@@ -132,7 +135,7 @@ const TextContainer = styled.text`
 
   @media (max-width: 767px) {
     //모바일
-    top: 50%;
+    top: 30%;
     left: 50%;
   }
 

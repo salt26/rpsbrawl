@@ -35,7 +35,7 @@ export default function FirstPlace({ place }) {
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const mode = useContext(LanguageContext);
   return (
-    <BgBox width={isMobile ? "45%" : "60%"} height={isMobile ? "80%" : "10%"}>
+    <BgBox width={isMobile ? "45%" : "60%"} height={isMobile ? "80%" : "100px"}>
       <Row>
         <SvgIcon src={TrophySrc} size={isMobile ? "50px" : "80px"} />
         <Col>
@@ -67,7 +67,7 @@ export default function FirstPlace({ place }) {
 const Row = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: space-evenly;
+  justify-content: space-around;
   padding: 5px;
   align-items: center;
   height: 100%;

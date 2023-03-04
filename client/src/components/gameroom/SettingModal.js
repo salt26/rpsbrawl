@@ -83,9 +83,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
       }
     };
   }, [ready]);
-  if (isMobile) {
-    alert(" 안녕!");
-  }
+
   return (
     <ReactModal
       ariaHideApp={false}
@@ -94,24 +92,24 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
         isMobile
           ? {
               overlay: {
-                top: "0",
-                left: "0",
-
-                width: "90%",
-                height: "40%",
-
-                backgroundColor: "red",
+                backgroundColor: "transparent",
               },
               content: {
-                width: "100%",
-                height: "100%",
+                width: "90%",
+                height: "35%",
+                display: "flex",
+
+                flexDirection: "column",
+                justifyContent: "space-between",
+
+                top: "30%",
+                left: "5%",
                 padding: 0,
                 borderRadius: "10px",
-                backgroundColor: "white",
 
                 border: "3px solid transparent",
                 backgroundImage: `linear-gradient(#fff, #fff),
-  linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
+    linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
 
                 backgroundOrigin: `border-box`,
                 backgroundClip: `content-box, border-box`,
@@ -119,23 +117,24 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
             }
           : {
               overlay: {
-                width: "500px",
-                height: "300px",
-                top: "25%",
-                left: "35%",
-
                 backgroundColor: "transparent",
               },
               content: {
-                width: "100%",
-                height: "100%",
+                width: "500px",
+                height: "300px",
+                display: "flex",
+
+                flexDirection: "column",
+                justifyContent: "space-between",
+
+                top: "25%",
+                left: "35%",
                 padding: 0,
                 borderRadius: "10px",
-                backgroundColor: "white",
 
                 border: "3px solid transparent",
                 backgroundImage: `linear-gradient(#fff, #fff),
-  linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
+    linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
 
                 backgroundOrigin: `border-box`,
                 backgroundClip: `content-box, border-box`,
@@ -149,7 +148,6 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
         </Medium>
       </TitleBox>
       <Container>
-        <SizedBox height={"15px"} />
         <input
           type={"text"}
           value={roomTitle}
@@ -164,52 +162,65 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
         />
         <SizedBox height={"15px"} />
         <Row>
-          <SvgIcon src={GameSrc} size="30px" />
-          <Medium size="30px" color="black">
-            {Language[mode].mode}
-          </Medium>
-          {gameMode === 0 ? (
-            <SvgIcon src={CheckSrc} size="20px" />
-          ) : (
-            <SvgIcon
-              src={UnCheckSrc}
-              size="20px"
-              onClick={() => setGameMode(0)}
-            />
-          )}
-          <Medium size="25px" color="black">
-            {Language[mode].normal}
-          </Medium>
-
-          {gameMode === 1 ? (
-            <SvgIcon src={CheckSrc} size="20px" />
-          ) : (
-            <SvgIcon
-              src={UnCheckSrc}
-              size="20px"
-              onClick={() => setGameMode(1)}
-            />
-          )}
-          <Medium size="25px" color="black">
-            {Language[mode].limited}
-          </Medium>
-
+          <Row2>
+            <SvgIcon src={GameSrc} size="30px" />
+            <Medium size="30px" color="black">
+              {Language[mode].mode}
+            </Medium>
+          </Row2>
+          <Row2>
+            {gameMode === 0 ? (
+              <SvgIcon src={CheckSrc} size="20px" />
+            ) : (
+              <SvgIcon
+                src={UnCheckSrc}
+                size="20px"
+                onClick={() => setGameMode(0)}
+              />
+            )}
+            <Medium size="25px" color="black">
+              {Language[mode].normal}
+            </Medium>
+          </Row2>
+          <Row2>
+            {gameMode === 1 ? (
+              <SvgIcon src={CheckSrc} size="20px" />
+            ) : (
+              <SvgIcon
+                src={UnCheckSrc}
+                size="20px"
+                onClick={() => setGameMode(1)}
+              />
+            )}
+            <Medium size="25px" color="black">
+              {Language[mode].limited}
+            </Medium>
+          </Row2>
           <img
             src={QuestionSrc}
             width="20px"
             height="20px"
             id="my-anchor-element"
           />
-          {/** <Tooltip
+
+          <Tooltip
             anchorId="my-anchor-element"
-            content="You can not throw same hand in succession."
+            content="You can not throw same hand in a."
             place="right"
             style={{ zIndex: 100 }}
-            
-          />*/}
+          />
         </Row>
         <SizedBox height={"5px"} />
-        <Row>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            gap: "10px",
+            width: "100%",
+          }}
+        >
           <SvgIcon src={LockSrc} size="30px" />
           <Medium size="30px" color="black">
             {Language[mode].privateRoom}
@@ -228,7 +239,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
               onClick={() => setPrivateMode((prev) => !prev)}
             />
           )}
-          {privateMode ? (
+          {privateMode && (
             <input
               type={"password"}
               value={password}
@@ -241,10 +252,8 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
                 fontSize: "20px",
               }}
             />
-          ) : (
-            <div style={{ width: "30%", height: "30px" }}></div>
           )}
-        </Row>
+        </div>
         <SizedBox height={"15px"} />
         <Row>
           <GradientBtn
@@ -260,6 +269,7 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
             onClick={_modifyRoom}
           />
         </Row>
+        <SizedBox height={"10px"} />
       </Container>
     </ReactModal>
   );
@@ -290,6 +300,13 @@ const Row = styled.div`
   width: 100%;
   flex-direction: row;
   justify-content: space-between;
+  align-items: center;
+`;
+
+const Row2 = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
   align-items: center;
 `;
 const TitleBox = styled.div`
