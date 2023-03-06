@@ -79,6 +79,12 @@ function LoginBox() {
           </Medium>
           <input
             type={"text"}
+            onKeyUp={(e) => {
+              if (e.key === "Enter") {
+                // 엔터키를 누르면
+                _joinGame();
+              }
+            }}
             value={name}
             onChange={(e) => setName(e.target.value)}
             style={{

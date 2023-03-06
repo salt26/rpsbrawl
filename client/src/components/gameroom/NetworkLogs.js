@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import TrophySrc from "../../assets/images/1st_trophy.svg";
-import { Medium } from "../../styles/font";
+import { GradientText, Medium } from "../../styles/font";
 import styled from "styled-components";
 import BgBox from "../common/BgBox";
 import { Rock, Paper, Scissor } from "./RPS.js";
@@ -13,7 +13,7 @@ import { useContext, useEffect } from "react";
 import "./networklog.css";
 import { Language } from "../../db/Language";
 import { LanguageContext } from "../../utils/LanguageProvider";
-
+import palette from "../../styles/palette";
 import { useMediaQuery } from "react-responsive";
 
 //1등 점수 정보
@@ -66,17 +66,20 @@ export default function NetworkLogs({ logs }) {
       <BgBox width={"100%"} height={isMobile ? "100%" : "300px"}>
         <ScrollView ref={scrollRef} id="log_container">
           {/*네트워크 로그*/}
-
-          {logs &&
-            logs.map(({ team, name, hand, score }, idx) => (
-              <Log
-                belong={team === -1 ? "Bot" : team_color[team]}
-                key={idx}
-                name={name}
-                rps={rpsDic[hand]}
-                score={score}
-              />
-            ))}
+          <table>
+            <tbody>
+              {logs &&
+                logs.map(({ team, name, hand, score }, idx) => (
+                  <Log
+                    belong={team === -1 ? "bot" : team_color[team]}
+                    key={idx}
+                    name={name}
+                    rps={rpsDic[hand]}
+                    score={score}
+                  />
+                ))}
+            </tbody>
+          </table>
         </ScrollView>
       </BgBox>
     </div>
@@ -89,35 +92,39 @@ function Log({ belong, name, rps, score }) {
     scissor: <Scissor size="50px" />,
     paper: <Paper size="50px" />,
   };
-  const getNameSize = (name) => {
-    console.log(name);
-    if (name.length <= 5) {
-      return "30px";
-    } else if (name.length <= 10) {
-      return "25px";
-    } else if (name.length <= 20) {
-      return "20px";
-    } else {
-      return "10px";
-    }
-  };
+
   return (
     <Row>
-      <Medium size={"30px"}>{belong}</Medium>
-      <Medium size={getNameSize(name)}>{name}</Medium>
-      {rpsDic[rps]}
-      {score >= 0 ? (
-        <Medium color="var(--mint)" size={"30px"}>
-          +{score}
-        </Medium>
-      ) : (
-        <Medium color="var(--red)" size={"30px"}>
-          {score}
-        </Medium>
-      )}
+      <Td flex={0.3}>
+        <GradientText size="30px" bg={palette[belong]}>
+          {belong}
+        </GradientText>
+      </Td>
+      <Td flex={0.5}>
+        {/*String(30 - 6 * (name.length % 7)) + "px"*/}
+        <Medium size={"15px"}>{name}</Medium>
+      </Td>
+      <Td flex={0.1}>{rpsDic[rps]}</Td>
+      <Td flex={0.1}>
+        {score >= 0 ? (
+          <Medium color="var(--mint)" size={"30px"}>
+            +{score}
+          </Medium>
+        ) : (
+          <Medium color="var(--red)" size={"30px"}>
+            {score}
+          </Medium>
+        )}
+      </Td>
     </Row>
   );
 }
+const Td = styled.td`
+  flex: ${({ flex }) => (flex ? flex : 0.3)};
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+`;
 const ScrollView = styled.div`
   width: 100%;
   height: 100%;
@@ -127,14 +134,17 @@ const ScrollView = styled.div`
   justify-content: flex-start;
   background-color: white;
   border-radius: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
   overflow-x: hidden;
   overflow-y: scroll;
 `;
-const Row = styled.div`
+const Row = styled.tr`
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
   width: 100%;
+
   gap: 20px;
 `;

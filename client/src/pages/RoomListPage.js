@@ -13,11 +13,8 @@ import CreateRoomModal from "../components/gameroom/CreateRoomModal";
 import { useLocation } from "react-router-dom";
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { getUserName } from "../utils/User";
+import { history } from "../utils/history";
 function RoomListPage() {
-  const my_name = getUserName();
-  var navigate = useNavigate();
-  const { state } = useLocation(); // 방 목록 정보
-  const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   const _backToHome = () => {
     if (ready) {
       let request = {
@@ -28,6 +25,34 @@ function RoomListPage() {
       navigate("/");
     }
   };
+  useEffect(
+    () => {
+      const listenBackEvent = () => {
+        // 뒤로가기 할 때 수행할 동작을 적는다
+
+        _backToHome();
+      };
+
+      const unlistenHistoryEvent = history.listen(({ action }) => {
+        if (action === "POP") {
+          // 뒤로가기
+          listenBackEvent();
+        } else if (action === "PUSH") {
+          //앞으로가기
+        }
+      });
+
+      return unlistenHistoryEvent;
+    },
+    [
+      // effect에서 사용하는 state를 추가
+    ]
+  );
+
+  const my_name = getUserName();
+  var navigate = useNavigate();
+  const { state } = useLocation(); // 방 목록 정보
+  const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
 
   //방만들기
   const [CreateRoomModalVisible, setCreateRoomModalVisible] = useState(false);

@@ -7,6 +7,7 @@ const palette = {
   blue: "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%, #2F508E 100%);",
   navy: "linear-gradient(180deg, #567BDA 0%, #275ABC 48.45%, #0D40A3 100%);",
   purple: "linear-gradient(180deg, #E768EA 0%, #9C12BF 100%);",
+  bot: "linear-gradient(180deg, #D9D9D9 0%, #666565 99.99%, rgba(217, 217, 217, 0) 100%);",
 };
 
 export default palette;

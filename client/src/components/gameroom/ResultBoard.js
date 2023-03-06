@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import ClockSrc from "../../assets/images/clock.png";
-import { Medium } from "../../styles/font";
+import { Medium, GradientText } from "../../styles/font";
 import SvgIcon from "../common/SvgIcon";
 import BgBox from "../common/BgBox";
 import styled from "styled-components";
@@ -12,6 +12,8 @@ import { getUserName, getUserAffiliation } from "../../utils/User";
 import { Language } from "../../db/Language";
 import { LanguageContext } from "../../utils/LanguageProvider";
 import { useMediaQuery } from "react-responsive";
+import palette from "../../styles/palette";
+
 export default function ResultBoard({ result }) {
   const mode = useContext(LanguageContext);
   const [myPlace, setMyPlace] = useState({
@@ -79,7 +81,7 @@ export default function ResultBoard({ result }) {
             <Place
               key={idx}
               rank={rank}
-              belong={team === -1 ? "Bot" : team_color[team]}
+              belong={team === -1 ? "bot" : team_color[team]}
               name={name}
               score={score}
             />
@@ -110,30 +112,19 @@ function Place({ rank, belong, name, score }) {
     img = <SvgIcon src={BronzeSrc} size="30px" />;
   }
 
-  const getNameSize = (name) => {
-    console.log(name);
-    if (name.length <= 5) {
-      return "30px";
-    } else if (name.length <= 10) {
-      return "20px";
-    } else if (name.length <= 20) {
-      return "10px";
-    } else {
-      return "2px";
-    }
-  };
   return (
     <Row>
       {/*<SvgIcon src={GoldSrc} size="30px" />*/}
       <Sector>{img}</Sector>
 
       <Sector>
-        <Medium size={"30px"} color="black">
+        <GradientText size="30px" bg={palette[belong]}>
           {belong}
-        </Medium>
+        </GradientText>
+        <Medium size={"30px"} color="black"></Medium>
       </Sector>
       <Sector>
-        <Medium size={getNameSize(name)} color="black">
+        <Medium size={"15px"} color="black">
           {name}
         </Medium>
       </Sector>

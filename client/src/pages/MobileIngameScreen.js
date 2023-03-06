@@ -17,8 +17,9 @@ import MessageBox from "../components/gameroom/MessageBox";
 import { useMediaQuery } from "react-responsive";
 import { Language } from "../db/Language";
 import { LanguageContext } from "../utils/LanguageProvider";
-import { Medium } from "../styles/font";
+import { Medium, GradientText } from "../styles/font";
 import SizedBox from "../components/common/SizedBox";
+
 export default function MobileInGameScreen() {
   const SHOW_TIME = 1; // 메시지 나타나는 시간 초
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
@@ -31,7 +32,7 @@ export default function MobileInGameScreen() {
 
   //const handList = useRef(state["hand_list"]);
   const [handList, setHandList] = useState(state["hand_list"]);
-  const [flag, setFlag] = useState(0);
+  const [scoreTime, setScoreTime] = useState(0);
   const [lastScore, setLastScore] = useState(null);
   const [isWaiting, setIsWaiting] = useState(true);
   const [count, setCount] = useState(state["room"].time_offset); //게임 시작까지 남은 시간
@@ -123,7 +124,7 @@ export default function MobileInGameScreen() {
           if (
             res.message === "Cannot play the same hand in a row (limited mode)"
           ) {
-            setMsg("Cannot play the same hand in a row (limited mode)");
+            setMsg(Language[mode].limited_text);
             setShowTime(true);
             return;
           }
@@ -147,9 +148,16 @@ export default function MobileInGameScreen() {
 
               lastHand.current = res.data.hand_list[len - 1].hand; // 가장 최근에 입력된 손 갱신
               setHandList(res.data.hand_list);
-              setLastScore(res.data.last_hand[user_id][1]);
-              setFlag((prev) => !prev);
+              if (res.data.hand_person_id == user_id) {
+                //내가 득점한 정보
+                setLastScore(res.data.last_hand[user_id][1]);
+                setScoreTime(true);
+                const id = setTimeout(() => {
+                  setScoreTime(false); //쿨타임해제
+                }, 1000);
+              }
             }
+
             break;
 
           case "end": // 게임 종료 신호
@@ -205,18 +213,62 @@ export default function MobileInGameScreen() {
           <FirstPlace place={firstPlace.current} />
           <MyPlace place={myPlace.current} />
         </Row>
-        <RPSSelection
-          lastHand={lastHand.current}
-          lastScore={lastScore}
-          flag={flag}
-        />
+        <RPSSelection lastHand={lastHand.current} />
+        <ScoreContainer scoreTime={scoreTime}>
+          {lastScore >= 0 ? (
+            <GradientText
+              bg={
+                "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
+              }
+              size="90px"
+            >
+              +{lastScore}
+            </GradientText>
+          ) : (
+            <GradientText
+              bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
+              size="90px"
+            >
+              {lastScore}
+            </GradientText>
+          )}
+        </ScoreContainer>
         <NetworkLogs logs={handList} />
       </Col>
       <Count isWaiting={isWaiting}>{count}</Count>
     </CountDownWrapper>
   );
 }
+const ScoreContainer = styled.text`
+  position: absolute;
+  z-index: 5;
 
+  ${({ scoreTime }) => {
+    if (scoreTime) {
+      css`
+        display: block;
+      `;
+    } else {
+      // scoreTime이 지나면
+
+      return css`
+        display: none;
+      `;
+    }
+  }}
+
+  @media (max-width: 767px) {
+    //모바일
+    top: 30%;
+    left: 50%;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    top: 80%;
+    left: 45%;
+  }
+`;
 const CountDownWrapper = styled.div`
   position: relative;
   width: 100%;

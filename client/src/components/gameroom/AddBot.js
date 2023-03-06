@@ -66,8 +66,12 @@ function AddBot({ skilledBot, dumbBot }) {
     //setDumbBot((prev) => prev - 1);
   };
   return (
-    <div style={{ display: isMobile ? "none" : "block" }}>
-      <BgBox bgColor={"var(--light-purple)"} width="150px" height="400px">
+    <Box>
+      <BgBox
+        bgColor={isMobile ? "#BAB8F4" : "var(--light-purple)"}
+        width="150px"
+        height="400px"
+      >
         <TextContainer>
           <MediumOutline color="#6E3D9D" size={"40px"}>
             {Language[mode].add_bot}
@@ -123,7 +127,7 @@ function AddBot({ skilledBot, dumbBot }) {
           </BotBox>
         </Col>
       </BgBox>
-    </div>
+    </Box>
   );
 }
 const TextContainer = styled.div`
@@ -132,7 +136,21 @@ const TextContainer = styled.div`
   align-self: center;
   top: -20px;
 `;
+const Box = styled.div`
+  @media (max-width: 767px) {
+    //모바일
+    position: absolute;
 
+    align-self: center;
+
+    z-index: 5;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    position: relative;
+  }
+`;
 const Anim = styled.div`
   animation: ani 1s infinite alternate;
   @keyframes ani {

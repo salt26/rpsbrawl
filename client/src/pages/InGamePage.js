@@ -19,6 +19,8 @@ import { Language } from "../db/Language";
 import { LanguageContext } from "../utils/LanguageProvider";
 import { Medium } from "../styles/font";
 import SizedBox from "../components/common/SizedBox";
+import { GradientText } from "../styles/font";
+
 export default function InGamePage() {
   const SHOW_TIME = 1; // 메시지 나타나는 시간 초
   const { state } = useLocation(); // 손 목록 정보, 게임 전적 정보
@@ -31,14 +33,27 @@ export default function InGamePage() {
 
   //const handList = useRef(state["hand_list"]);
   const [handList, setHandList] = useState(state["hand_list"]);
-  const [flag, setFlag] = useState(0); // 0<->1 (새로운 점수가 들어올때마다)
-  const [lastScore, setLastScore] = useState(null);
+  const [lastScore, setLastScore] = useState(0);
   const [isWaiting, setIsWaiting] = useState(true);
   const [count, setCount] = useState(state["room"].time_offset); //게임 시작까지 남은 시간
   const [roomInfo, setRoomInfo] = useState(state["room"]);
   const [msg, setMsg] = useState("");
   const [showTime, setShowTime] = useState(false);
+  const [scoreTime, setScoreTime] = useState(false); //스코어 점수
+  const preventGoBack = () => {
+    alert("Can not quit from the game");
+    window.history.pushState(null, "", window.location.href);
+  };
 
+  useEffect(() => {
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", preventGoBack); // 뒤로가기를 누르면
+
+    return () => {
+      window.removeEventListener("popstate", preventGoBack);
+      //handleCloseDrawer();
+    };
+  }, []);
   const _getTimeOffset = (room) => {
     const current = new Date();
     var start = new Date(room["init_time"].slice(0, 19));
@@ -106,7 +121,7 @@ export default function InGamePage() {
 
   useEffect(() => {
     const id = setTimeout(() => {
-      setShowTime(false); //스코어 내리기
+      setShowTime(false); // 메시지 내리기
     }, SHOW_TIME * 1000);
 
     return () => clearInterval(id);
@@ -123,17 +138,17 @@ export default function InGamePage() {
           if (
             res.message === "Cannot play the same hand in a row (limited mode)"
           ) {
-            setMsg("Cannot play the same hand in a row (limited mode)");
+            setMsg(res.message);
             setShowTime(true);
             return;
           }
-          alert(res.message);
+
           return;
         }
         if (res?.request === "disconnected") {
           //기존 인원과 새인원 비교
 
-          setMsg("Cannot play the same hand in a row (limited mode)");
+          setMsg(Language[mode].limited_text);
           setShowTime(true);
         }
 
@@ -147,8 +162,15 @@ export default function InGamePage() {
 
               lastHand.current = res.data.hand_list[len - 1].hand; // 가장 최근에 입력된 손 갱신
               setHandList(res.data.hand_list);
-              setLastScore(res.data.last_hand[user_id][1]);
-              setFlag((prev) => !prev);
+
+              if (res.data.hand_person_id == user_id) {
+                //내가 득점한 정보
+                setLastScore(res.data.last_hand[user_id][1]);
+                setScoreTime(true);
+                const id = setTimeout(() => {
+                  setScoreTime(false); //쿨타임해제
+                }, 1000);
+              }
             }
             break;
 
@@ -197,15 +219,36 @@ export default function InGamePage() {
   return (
     <CountDownWrapper isWaiting={isWaiting}>
       <Container>
-        {showTime && <MessageBox>{msg}</MessageBox>}
+        {showTime && (
+          <MsgBox>
+            <Medium size="30px" color="red">
+              {msg}
+            </Medium>
+          </MsgBox>
+        )}
 
         <Left>
           <TimeBar roomInfo={roomInfo} />
-          <RPSSelection
-            lastHand={lastHand.current}
-            lastScore={lastScore}
-            flag={flag}
-          />
+          <RPSSelection lastHand={lastHand.current} />
+          <ScoreContainer scoreTime={scoreTime}>
+            {lastScore >= 0 ? (
+              <GradientText
+                bg={
+                  "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
+                }
+                size="100px"
+              >
+                +{lastScore}
+              </GradientText>
+            ) : (
+              <GradientText
+                bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
+                size="100px"
+              >
+                {lastScore}
+              </GradientText>
+            )}
+          </ScoreContainer>
         </Left>
 
         <Right>
@@ -226,6 +269,42 @@ export default function InGamePage() {
     </CountDownWrapper>
   );
 }
+
+const MsgBox = styled.div`
+  position: absolute;
+  z-index: 101;
+  top: 20%;
+  left: 20%;
+`;
+const ScoreContainer = styled.text`
+  position: absolute;
+
+  ${({ scoreTime }) => {
+    if (scoreTime) {
+      css`
+        display: block;
+      `;
+    } else {
+      // scoreTime이 지나면
+
+      return css`
+        display: none;
+      `;
+    }
+  }}
+
+  @media (max-width: 767px) {
+    //모바일
+    top: 30%;
+    left: 50%;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    top: 80%;
+    left: 45%;
+  }
+`;
 
 const CountDownWrapper = styled.div`
   position: relative;

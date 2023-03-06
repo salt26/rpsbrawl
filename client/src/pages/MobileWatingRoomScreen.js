@@ -36,9 +36,48 @@ import NormalIconSrc from "../assets/images/normal.png";
 import BanIconSrc from "../assets/images/ban.png";
 import { useMediaQuery } from "react-responsive";
 
+function TeamsBtn({ setTeamSelectionVisible }) {
+  const _toggleTeamSelection = () => {
+    setTeamSelectionVisible((prev) => !prev);
+  };
+  const mode = useContext(LanguageContext);
+  return (
+    <BgBox
+      bgColor={"var(--light-purple)"}
+      width="45%"
+      height="30px"
+      onClick={_toggleTeamSelection}
+    >
+      <MediumOutline color="#6E3D9D" size={"20px"}>
+        {Language[mode].team}
+      </MediumOutline>
+    </BgBox>
+  );
+}
+
+function AddBotBtn({ setAddBotVisible }) {
+  const mode = useContext(LanguageContext);
+  const _toggleAddBot = () => {
+    setAddBotVisible((prev) => !prev);
+  };
+  return (
+    <BgBox
+      bgColor={"var(--light-purple)"}
+      width="45%"
+      height="30px"
+      onClick={_toggleAddBot}
+    >
+      <MediumOutline color="#6E3D9D" size={"20px"}>
+        {Language[mode].add_bot}
+      </MediumOutline>
+    </BgBox>
+  );
+}
 export default function MobileWatingRoomScreen() {
   const { room_id } = useParams();
   const { state } = useLocation(); // 유저 목록 정보
+  const [teamSelectionVisible, setTeamSelectionVisible] = useState(false);
+  const [addBotVisible, setAddBotVisible] = useState(false);
 
   useEffect(
     () => {
@@ -78,7 +117,6 @@ export default function MobileWatingRoomScreen() {
   };
   const mode = useContext(LanguageContext);
   const my_name = getUserName();
-  const [numberOfUser, setNumberOfUser] = useState(state.game_list.length);
   const [users, setUsers] = useState(state.game_list);
   const [roomInfo, setRoomInfo] = useState(state.room); //Room정보
   const [isAdmin, setIsAdmin] = useState(_findHost(users));
@@ -89,7 +127,6 @@ export default function MobileWatingRoomScreen() {
   console.log(_findHost(users));
   var navigate = useNavigate();
 
-  useEffect(() => {}, []);
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   useEffect(() => {
     ws.onmessage = function (event) {
@@ -185,12 +222,15 @@ export default function MobileWatingRoomScreen() {
 
   return (
     <Container>
+      {teamSelectionVisible && <TeamSelection />}
+      {addBotVisible && <AddBot skilledBot={skilledBot} dumbBot={dumbBot} />}
       <TitleContainer>
         <SettingModal
           modalVisible={settingModalVisible}
           setModalVisible={setSettingModalVisible}
           roomInfo={roomInfo}
         />
+
         <Row2>
           <Medium color="white" size="25px">
             {roomInfo.num_persons} / {roomInfo.max_persons}
@@ -210,19 +250,19 @@ export default function MobileWatingRoomScreen() {
             {roomInfo.name}
           </Medium>
         </BgBox>
+        <SizedBox height={"10px"} />
+        <Row2>
+          <TeamsBtn setTeamSelectionVisible={setTeamSelectionVisible} />
+          <AddBotBtn setAddBotVisible={setAddBotVisible} />
+        </Row2>
       </TitleContainer>
-      {isAdmin && (
-        <SvgIcon
-          src={SettingSrc}
-          size="40px"
-          onClick={() => setSettingModalVisible(true)}
-        />
-      )}
+
       <BgBox width="100%" height={"70%"} bgColor={"var(--light-purple)"}>
         <UserList users={users} />
       </BgBox>
       <SizedBox height={"10px"} />
       <Row2>
+        <Button text={Language[mode].quit} onClick={_quitGame} />
         {isAdmin && (
           <Button
             text={Language[mode].start}
@@ -230,23 +270,20 @@ export default function MobileWatingRoomScreen() {
             bg={`linear-gradient(180deg, #FA1515 0%, #F97916 100%);`}
           />
         )}
-        <Button text={Language[mode].quit} onClick={_quitGame} />
       </Row2>
+      <SettingContainer>
+        {isAdmin && (
+          <SvgIcon
+            src={SettingSrc}
+            size="40px"
+            onClick={() => setSettingModalVisible(true)}
+          />
+        )}
+      </SettingContainer>
     </Container>
   );
 }
 
-const Anim = styled.div`
-  animation: ani 0.5s infinite alternate;
-  @keyframes ani {
-    0% {
-      transform: translate(0, 0);
-    }
-    100% {
-      transform: translate(0, -5px);
-    }
-  }
-`;
 const TitleContainer = styled.div`
   position: absolute;
   z-index: 1;
@@ -256,8 +293,10 @@ const TitleContainer = styled.div`
 `;
 
 const SettingContainer = styled.div`
-  background-color: red;
   position: absolute;
+  z-index: 1;
+  right: 30px;
+  top: 20px;
 `;
 
 const Container = styled.div`
@@ -271,46 +310,10 @@ const Container = styled.div`
   align-items: center;
 `;
 
-const Box = styled.div`
-  display: flex;
-
-  width: 100%;
-`;
-
 const Row2 = styled.div`
   display: flex;
   width: 100%;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-`;
-
-const Col = styled.div`
-  display: flex;
-  position: relative;
-  flex-direction: column;
-  height: 500px;
-
-  align-items: center;
-  justify-content: space-between;
-`;
-const Sector = styled.div`
-  display: flex;
-
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-`;
-
-const BottomLeft = styled.div`
-  //모바일
-  position: absolute;
-  bottom: 5%;
-  left: 5%;
-`;
-
-const BottomRight = styled.div`
-  position: absolute;
-  bottom: 5%;
-  right: 5%;
 `;

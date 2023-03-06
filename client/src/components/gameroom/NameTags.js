@@ -4,16 +4,6 @@ import styled from "styled-components";
 import CrownSrc from "../../assets/images/crown.svg";
 import palette from "../../styles/palette";
 
-const getNameSize = (name) => {
-  if (name.length <= 10) {
-    return "25px";
-  } else if (name.length <= 20) {
-    return "15px";
-  } else {
-    return "10px";
-  }
-};
-
 //일반 네임택 -> 외곽선 그라데이션 O
 function NameTag({ color, children }) {
   return (
@@ -24,7 +14,10 @@ function NameTag({ color, children }) {
       bg={palette[color]}
     >
       <Center>
-        <GradientText size={getNameSize(children)} bg={palette[color]}>
+        <GradientText
+          size={String(30 - 6 * (children.length / 7)) + "px"}
+          bg={palette[color]}
+        >
           {children}
         </GradientText>
       </Center>
@@ -44,7 +37,10 @@ function AdminTag({ children, color }) {
       <Image src={CrownSrc} />
 
       <Center>
-        <GradientText size={getNameSize(children)} bg={palette[color]}>
+        <GradientText
+          size={String(30 - 6 * (children.length / 7)) + "px"}
+          bg={palette[color]}
+        >
           {children}
         </GradientText>
       </Center>

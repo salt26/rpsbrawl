@@ -33,7 +33,7 @@ export default function UserList({ users }) {
           } else {
             return (
               <AdminTag key={idx} color={team_color[team]}>
-                {name}
+                {name}ss
               </AdminTag>
             );
           }

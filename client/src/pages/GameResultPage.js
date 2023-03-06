@@ -16,6 +16,7 @@ import { useMediaQuery } from "react-responsive";
 import SizedBox from "../components/common/SizedBox";
 import useInterval from "../utils/useInterval";
 import { RESULT_TIME } from "../Config";
+
 export default function GameResultPage() {
   const mode = useContext(LanguageContext);
   const { room_id } = useParams();
@@ -24,6 +25,20 @@ export default function GameResultPage() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
+  const preventGoBack = () => {
+    alert("Can not quit from the game");
+    window.history.pushState(null, "", window.location.href);
+  };
+
+  useEffect(() => {
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", preventGoBack); // 뒤로가기를 누르면
+
+    return () => {
+      window.removeEventListener("popstate", preventGoBack);
+      //handleCloseDrawer();
+    };
+  }, []);
 
   const [count, setCount] = useState(20); // 게임 종료까지 남은 시간
   const _getTimeOffset = (room) => {
@@ -67,11 +82,13 @@ export default function GameResultPage() {
   }, [ready]);
   return (
     <Box>
-      <Medium color="white" size={isMobile ? "25px" : "30px"}>
-        {Language[mode].result_page_text(count)}
-      </Medium>
+      <Col flex={0.5}>
+        <Medium color="white" size={isMobile ? "25px" : "30px"}>
+          {Language[mode].result_page_text(count)}
+        </Medium>
+      </Col>
       <ResultBoard result={state?.game_list} />;
-      <Col>
+      <Col flex={0.3}>
         <CSVLink data={state?.game_list} filename="rps_brawl_game_result.csv">
           <Button text={Language[mode].save_result} />
         </CSVLink>
@@ -98,7 +115,5 @@ const Col = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
-
-  // 데스크탑 일반
-  margin-left: -20%;
+  flex: ${({ flex }) => (flex ? flex : 0.3)};
 `;

@@ -11,7 +11,7 @@ import useInterval from "../../utils/useInterval";
 import { COOL_TIME } from "../../Config";
 import { GradientText } from "../../styles/font";
 
-function RPSSelection({ lastHand, lastScore, flag }) {
+function RPSSelection({ lastHand }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
 
   const { room_id } = useParams();
@@ -32,20 +32,14 @@ function RPSSelection({ lastHand, lastScore, flag }) {
 
     setCoolTime(true);
   }, []);
-  useEffect(() => {
-    if (coolTime && !showTime) {
-      setShowTime(true);
-    }
-  }, [flag]); // 새로운 점수 정보가 도착하면
 
   useEffect(() => {
     const id = setTimeout(() => {
-      setShowTime(false); //스코어 내리기
       setCoolTime(false); //쿨타임해제
     }, COOL_TIME * 1000);
 
     return () => clearInterval(id);
-  }, [coolTime, showTime]);
+  }, [coolTime]);
 
   return (
     <div
@@ -55,25 +49,6 @@ function RPSSelection({ lastHand, lastScore, flag }) {
         alignItems: "center",
       }}
     >
-      <TextContainer showTime={showTime}>
-        {lastScore >= 0 ? (
-          <GradientText
-            bg={
-              "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
-            }
-            size="80px"
-          >
-            +{lastScore}
-          </GradientText>
-        ) : (
-          <GradientText
-            bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
-            size="80px"
-          >
-            {lastScore}
-          </GradientText>
-        )}
-      </TextContainer>
       <img src={rpsDic[lastHand]} width="80%" height={"auto"} />
       <Row>
         <ImgBox coolTime={coolTime}>
@@ -115,36 +90,6 @@ function areEqual(prevProps, nextProps) {
 }
 
 export default React.memo(RPSSelection, areEqual);
-
-const TextContainer = styled.text`
-  position: absolute;
-
-  ${({ showTime }) => {
-    if (showTime) {
-      css`
-        display: block;
-      `;
-    } else {
-      // showTime이 지나면
-
-      return css`
-        display: none;
-      `;
-    }
-  }}
-
-  @media (max-width: 767px) {
-    //모바일
-    top: 30%;
-    left: 50%;
-  }
-
-  @media (min-width: 1200px) {
-    // 데스크탑 일반
-    top: 80%;
-    left: 45%;
-  }
-`;
 
 const Row = styled.div`
   position: relative;

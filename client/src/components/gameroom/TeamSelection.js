@@ -24,8 +24,12 @@ function TeamSelection({}) {
   };
 
   return (
-    <div style={{ display: isMobile ? "none" : "block" }}>
-      <BgBox bgColor={"var(--light-purple)"} width="150px" height="400px">
+    <Box>
+      <BgBox
+        bgColor={isMobile ? "#BAB8F4" : "var(--light-purple)"}
+        width="150px"
+        height="400px"
+      >
         <TextContainer>
           <MediumOutline color="#6E3D9D" size={"40px"}>
             {Language[mode].team}
@@ -39,7 +43,7 @@ function TeamSelection({}) {
           ))}
         </Col>
       </BgBox>
-    </div>
+    </Box>
   );
 }
 function TeamBtn({ color, onClick }) {
@@ -80,6 +84,21 @@ const TextContainer = styled.div`
   top: -20px;
 `;
 
+const Box = styled.div`
+  @media (max-width: 767px) {
+    //모바일
+    position: absolute;
+
+    align-self: center;
+
+    z-index: 5;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    position: relative;
+  }
+`;
 const Container = styled.div`
   display: flex;
   justify-content: center;
