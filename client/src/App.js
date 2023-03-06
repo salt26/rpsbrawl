@@ -22,6 +22,8 @@ import { useLocation } from "react-router-dom";
 import { BrowserView, MobileView } from "react-device-detect";
 import WatingMusicSrc from "../src/assets/bgm/Melody_of_travel_fluttering_ver..mp3";
 import GameMusicSrc from "../src/assets/bgm/Melody_of_tongtong.mp3";
+import PrivateRoute from "./utils/PrivateRoute";
+import { Navigate } from "react-router-dom";
 const Background = styled.div`
   width: 100%;
   height: 100vh;
@@ -65,9 +67,12 @@ function App() {
             {pathname == "/" && <Toggle mode={mode} setMode={setMode} />}
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/rooms/:room_id/*" element={<GameRoomPage />} />
-
-              <Route path="/rooms" element={<RoomListPage />} />
+              <Route path={"*"} component={<Navigate to="/" />} />
+              <Route element={<PrivateRoute />}>
+                <Route path="/rooms" element={<RoomListPage />} />
+                <Route path="/rooms/:room_id/*" element={<GameRoomPage />} />
+                <Route path={"*"} component={<Navigate to="/" />} />
+              </Route>
             </Routes>
           </Background>
         </BrowserView>

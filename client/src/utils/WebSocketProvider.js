@@ -3,6 +3,7 @@ import { createContext } from "react";
 import { BASE_WEBSOCKET_URL } from "../Config";
 import { setUserId, setUserName } from "./User";
 import { useNavigate } from "react-router-dom";
+import { setIsLogin } from "./User";
 export const WebsocketContext = createContext([
   () => {},
   false,
@@ -18,6 +19,7 @@ export const WebsocketContext = createContext([
 export const WebsocketProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [res, setRes] = useState(null);
+
   const navigate = useNavigate();
   const ws = useRef(null);
   // 웹소켓 연결
@@ -52,6 +54,7 @@ export const WebsocketProvider = ({ children }) => {
           setUserName(data.name);
 
           setUserId(data.person_id);
+          setIsLogin(true);
           navigate(`/rooms`, { state: data.rooms });
           break;
         case "recon_data": //재접속시
