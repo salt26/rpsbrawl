@@ -58,8 +58,14 @@ export const WebsocketProvider = ({ children }) => {
           setUserName(res.data.name);
 
           setUserId(res.data.person_id);
+          // 재접속 분기
+          if (res.response === "reconnected_game") {
+            navigate(`/rooms/${res.data.room.id}/game`, { state: res.data });
+          }
 
-          navigate(`/rooms/${res.data.room.id}/game`, { state: res.data });
+          if (res.response === "reconnected_result") {
+            navigate(`/rooms/${res.data.room.id}/result`, { state: res.data });
+          }
       }
     };
     ws.current = socket;
