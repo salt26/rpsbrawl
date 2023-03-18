@@ -201,7 +201,7 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
 
           <Tooltip
             anchorId="my-anchor-element"
-            content="You can not throw same hand in a row."
+            content={Language[mode].limited_text}
             place="right"
             style={{ zIndex: 100 }}
           />

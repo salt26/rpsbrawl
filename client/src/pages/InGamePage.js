@@ -40,8 +40,10 @@ export default function InGamePage() {
   const [msg, setMsg] = useState("");
   const [showTime, setShowTime] = useState(false);
   const [scoreTime, setScoreTime] = useState(false); //스코어 점수
+
   const preventGoBack = () => {
-    alert("Can not quit from the game");
+    setMsg(Language[mode].quit_warning_text);
+    setShowTime(true);
     window.history.pushState(null, "", window.location.href);
   };
 
@@ -138,18 +140,12 @@ export default function InGamePage() {
           if (
             res.message === "Cannot play the same hand in a row (limited mode)"
           ) {
-            setMsg(res.message);
+            setMsg(Language[mode].limited_text);
             setShowTime(true);
             return;
           }
 
           return;
-        }
-        if (res?.request === "disconnected") {
-          //기존 인원과 새인원 비교
-
-          setMsg(Language[mode].limited_text);
-          setShowTime(true);
         }
 
         switch (res.request) {
@@ -232,14 +228,23 @@ export default function InGamePage() {
           <RPSSelection lastHand={lastHand.current} />
           <ScoreContainer scoreTime={scoreTime}>
             {lastScore >= 0 ? (
-              <GradientText
-                bg={
-                  "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
-                }
-                size="100px"
-              >
-                +{lastScore}
-              </GradientText>
+              lastScore === 0 ? (
+                <GradientText
+                  bg={
+                    "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
+                  }
+                  size="100px"
+                >
+                  {lastScore}
+                </GradientText>
+              ) : (
+                <GradientText
+                  bg={"linear-gradient(180deg, #BDFF00 0%, #F1D22E 100%);"}
+                  size="100px"
+                >
+                  +{lastScore}
+                </GradientText>
+              )
             ) : (
               <GradientText
                 bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}

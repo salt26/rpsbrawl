@@ -40,7 +40,9 @@ export const Language = [
       return `You'll be moved to the room in ${count} seconds...`;
     },
     no_room_text: "Create new room to play!😁",
-    limited_text: "Unable to throw the same hand in a row ",
+    limited_text: "You cannot play the same hand in a row.",
+    quick_start_limit_text: "there's no room available",
+    quit_warning_text: "You cannot quit from playing room",
   },
   {
     title: "RPS Brawl",
@@ -85,5 +87,7 @@ export const Language = [
     },
     no_room_text: "방을 생성하고 게임을 즐기세요!😁",
     limited_text: "같은 손을 연속해서 내실 수 없습니다. (한 손 제한)",
+    quick_start_limit_text: "들어갈 수 있는 방이 없습니다.",
+    quit_warning_text: "게임 중에는 나갈 수 없습니다.",
   },
 ];

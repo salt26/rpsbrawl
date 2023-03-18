@@ -216,18 +216,27 @@ export default function MobileInGameScreen() {
         <RPSSelection lastHand={lastHand.current} />
         <ScoreContainer scoreTime={scoreTime}>
           {lastScore >= 0 ? (
-            <GradientText
-              bg={
-                "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
-              }
-              size="90px"
-            >
-              +{lastScore}
-            </GradientText>
+            lastScore === 0 ? (
+              <GradientText
+                bg={
+                  "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
+                }
+                size="100px"
+              >
+                {lastScore}
+              </GradientText>
+            ) : (
+              <GradientText
+                bg={"linear-gradient(180deg, #BDFF00 0%, #F1D22E 100%);"}
+                size="100px"
+              >
+                +{lastScore}
+              </GradientText>
+            )
           ) : (
             <GradientText
               bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
-              size="90px"
+              size="100px"
             >
               {lastScore}
             </GradientText>
@@ -257,17 +266,8 @@ const ScoreContainer = styled.text`
     }
   }}
 
-  @media (max-width: 767px) {
-    //모바일
-    top: 30%;
-    left: 50%;
-  }
-
-  @media (min-width: 1200px) {
-    // 데스크탑 일반
-    top: 80%;
-    left: 45%;
-  }
+  top: 30%;
+  left: 50%;
 `;
 const CountDownWrapper = styled.div`
   position: relative;
@@ -299,7 +299,7 @@ const Count = styled.text`
   //모바일
   font-size: 300px;
   top: 25%;
-  left: 30%;
+  left: 33%;
 `;
 
 const Col = styled.div`
@@ -320,24 +320,4 @@ const Row = styled.div`
   align-items: center;
   width: 100%;
   height: 100px;
-`;
-
-const TextContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-
-  justify-content: flex-start;
-  align-items: center;
-
-  width: 60%;
-`;
-const Right = styled.div`
-  display: flex;
-  flex: 0.4;
-  height: 100vh;
-  width: 100%;
-
-  flex-direction: column;
-  justify-content: space-around;
-  align-items: center;
 `;

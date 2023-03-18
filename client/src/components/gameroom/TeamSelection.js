@@ -39,7 +39,11 @@ function TeamSelection({}) {
         <Col>
           {" "}
           {teams.map((team, idx) => (
-            <TeamBtn color={team} onClick={() => _changeMyTeam(idx)} />
+            <TeamBtn
+              key={idx}
+              color={team}
+              onClick={() => _changeMyTeam(idx)}
+            />
           ))}
         </Col>
       </BgBox>

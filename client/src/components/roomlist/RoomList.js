@@ -65,20 +65,29 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
     // console.log("quick start success");
     var enter_id = 0;
     var room_num = 0;
+
     do {
-      room_num = Math.floor(Math.random() * roomLists.length); // 0 ~ 방번호 중 랜덤 방번호 추첨
+      if (room_num === roomLists.length) {
+        alert(Language[mode].quick_start_limit_text);
+
+        break;
+      }
       enter_id = roomLists[room_num].id; // 들어갈 방의 고유 id
-    } while (roomLists[room_num].has_password);
 
-    let request = {
-      request: "join",
-      room_id: enter_id,
-      password: "",
-    };
+      if (roomLists[room_num].has_password === false) {
+        // 비번 없는 방을 찾으면 입장 요청
+        let request = {
+          request: "join",
+          room_id: enter_id,
+          password: "",
+        };
 
-    console.log(request);
+        ws.send(JSON.stringify(request));
+        break;
+      }
 
-    ws.send(JSON.stringify(request));
+      room_num += 1;
+    } while (true);
   };
 
   const blueBtnStyle = {

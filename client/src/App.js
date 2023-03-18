@@ -38,6 +38,7 @@ function App() {
   const params = pathname.split("/");
 
   const [inGame, setInGame] = useState(false);
+  const [audioAllowed, setAudioAllowed] = useState(false);
 
   useEffect(() => {
     if (isNaN(params[2]) === false) {
@@ -50,34 +51,84 @@ function App() {
   return (
     <WebsocketProvider>
       <LanguageContext.Provider value={mode}>
-        <audio
-          src={WatingMusicSrc}
-          autoPlay={true}
-          loop={true}
-          muted={inGame}
-        ></audio>
-        <audio
-          src={GameMusicSrc}
-          autoPlay={true}
-          loop={true}
-          muted={!inGame}
-        ></audio>
         <BrowserView>
           <Background>
+            {inGame ? (
+              <audio
+                src={GameMusicSrc}
+                autoPlay={audioAllowed}
+                loop={true}
+                muted={inGame && !audioAllowed}
+              ></audio>
+            ) : (
+              <LeftTop>
+                <audio
+                  src={WatingMusicSrc}
+                  loop={true}
+                  autoPlay={audioAllowed}
+                  muted={!inGame && !audioAllowed}
+                  controls={pathname === "/"}
+                  onPlay={(e) => {
+                    setAudioAllowed(true);
+                  }}
+                  onPause={(e) => {
+                    setAudioAllowed(false);
+                  }}
+                ></audio>
+              </LeftTop>
+            )}
+
             {pathname == "/" && <Toggle mode={mode} setMode={setMode} />}
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path={"*"} component={<Navigate to="/" />} />
+
               <Route element={<PrivateRoute />}>
                 <Route path="/rooms" element={<RoomListPage />} />
                 <Route path="/rooms/:room_id/*" element={<GameRoomPage />} />
-                <Route path={"*"} component={<Navigate to="/" />} />
+                <Route
+                  path={"/*"}
+                  element={() => {
+                    alert("Page not found");
+                    return <Navigate to="/" />;
+                  }}
+                />
               </Route>
+              <Route
+                path={"/*"}
+                element={() => {
+                  alert("Page not found");
+                  return <Navigate to="/" />;
+                }}
+              />
             </Routes>
           </Background>
         </BrowserView>
         <MobileView>
           <Background>
+            {inGame ? (
+              <audio
+                src={GameMusicSrc}
+                autoPlay={audioAllowed}
+                loop={true}
+                muted={inGame && !audioAllowed}
+              ></audio>
+            ) : (
+              <Bottom>
+                <audio
+                  src={WatingMusicSrc}
+                  loop={true}
+                  autoPlay={audioAllowed}
+                  muted={!inGame && !audioAllowed}
+                  controls={pathname === "/"}
+                  onPlay={(e) => {
+                    setAudioAllowed(true);
+                  }}
+                  onPause={(e) => {
+                    setAudioAllowed(false);
+                  }}
+                ></audio>
+              </Bottom>
+            )}
             {pathname == "/" && <Toggle mode={mode} setMode={setMode} />}
 
             <Routes>
@@ -95,5 +146,21 @@ function App() {
     </WebsocketProvider>
   );
 }
+const LeftTop = styled.div`
+  position: absolute;
+  left: 3%;
+  top: 3%;
+  z-index: 10;
+`;
 
+const Bottom = styled.div`
+  position: absolute;
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  bottom: 1%;
+  z-index: 10;
+`;
 export default App;

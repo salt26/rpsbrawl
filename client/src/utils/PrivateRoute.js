@@ -10,7 +10,7 @@ const PrivateRoute = () => {
   const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
 
   if (!ready) {
-    alert("login required");
+    alert("Page not found");
   }
 
   return ready ? <Outlet /> : <Navigate to="/" />;

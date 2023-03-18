@@ -81,14 +81,4 @@ const BorderBox = styled.div`
   background-clip: content-box, border-box;
 `;
 
-const BgBox = styled.div`
-  width: ${({ width }) => (width ? width : "120px")};
-  height: ${({ height }) => (height ? height : "50px")};
-  position: relative;
-
-  border-radius: 10px;
-
-  background-image: ${({ bg }) =>
-    bg ? `linear-gradient(#fff, #fff), ${bg}` : "none"};
-`;
 export { NameTag, AdminTag };
