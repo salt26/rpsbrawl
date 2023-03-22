@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import TrophySrc from "../../assets/images/1st_trophy.svg";
 import { GradientText, Medium } from "../../styles/font";
 import styled from "styled-components";
-import BgBox from "../common/BgBox";
 import { Rock, Paper, Scissor } from "./RPS.js";
 import SizedBox from "../common/SizedBox";
 import useInterval from "../../utils/useInterval";
@@ -52,6 +51,7 @@ export default function NetworkLogs({ logs }) {
       style={{
         width: isMobile ? "90%" : "60%",
         height: "100%",
+
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-start",
@@ -63,7 +63,7 @@ export default function NetworkLogs({ logs }) {
       </Medium>
       <SizedBox height={"10px"} />
 
-      <BgBox width={"100%"} height={isMobile ? "100%" : "300px"}>
+      <BgBox>
         <ScrollView ref={scrollRef} id="log_container">
           {/*네트워크 로그*/}
           <table>
@@ -128,7 +128,7 @@ const Td = styled.td`
 const ScrollView = styled.div`
   width: 100%;
   height: 100%;
-  background-color: red;
+
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -147,4 +147,25 @@ const Row = styled.tr`
   width: 100%;
 
   gap: 20px;
+`;
+const BgBox = styled.div`
+  width: 100%;
+
+  @media (max-width: 767px) {
+    //모바일
+    height: 80%;
+    max-height: 80%;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    height: 300px;
+  }
+
+  background-color: ${({ bgColor }) => (bgColor ? bgColor : "white")};
+  border-radius: 10px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;

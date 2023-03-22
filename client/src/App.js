@@ -24,6 +24,8 @@ import WatingMusicSrc from "../src/assets/bgm/Melody_of_travel_fluttering_ver..m
 import GameMusicSrc from "../src/assets/bgm/Melody_of_tongtong.mp3";
 import PrivateRoute from "./utils/PrivateRoute";
 import { Navigate } from "react-router-dom";
+import TutorialBtn from "./components/common/TutorialBtn";
+import TutorialModal from "./components/common/TutorialModal";
 const Background = styled.div`
   width: 100%;
   height: 100vh;
@@ -39,7 +41,7 @@ function App() {
 
   const [inGame, setInGame] = useState(false);
   const [audioAllowed, setAudioAllowed] = useState(false);
-
+  const [tutorialModalVisible, setTutorialModalVisible] = useState(false);
   useEffect(() => {
     if (isNaN(params[2]) === false) {
       setInGame(true);
@@ -78,6 +80,16 @@ function App() {
               </LeftTop>
             )}
 
+            {pathname == "/" && (
+              <TutorialBtn
+                setTutorialModalVisible={setTutorialModalVisible}
+                tutorialModalVisible={tutorialModalVisible}
+              />
+            )}
+            <TutorialModal
+              modalVisible={tutorialModalVisible}
+              setModalVisible={setTutorialModalVisible}
+            />
             {pathname == "/" && <Toggle mode={mode} setMode={setMode} />}
             <Routes>
               <Route path="/" element={<LandingPage />} />

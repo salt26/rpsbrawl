@@ -9,7 +9,7 @@ import ScissorSrc from "../assets/images/scissor.png";
 import PaperSrc from "../assets/images/paper.png";
 import SvgIcon from "../components/common/SvgIcon";
 import SizedBox from "../components/common/SizedBox";
-import SelectBox from "../components/common/SelectBox";
+
 import Button from "../components/common/Button";
 import { useContext } from "react";
 import { Medium, MediumOutline } from "../styles/font";
@@ -69,9 +69,8 @@ function LoginBox() {
             {Language[mode].entrance}
           </MediumOutline>
         </Row>
-        <SizedBox height={"20px"} />
+        <SizedBox height={"60px"} />
 
-        <SizedBox height={"40px"} />
         <Row>
           {" "}
           <Medium size="25px" color="var(--purple)">
@@ -117,7 +116,7 @@ export default function LandingPage() {
       <SizedBox height={"50px"} />
 
       <Anim2 delay={5}>
-        <Logo />
+        <Logo size="m" />
       </Anim2>
 
       <RPSBox delay={5}>

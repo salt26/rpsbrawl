@@ -3,13 +3,13 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import Logo from "../components/common/Logo";
-import BgBox from "../components/common/BgBox";
+
 import RockSrc from "../assets/images/rock.png";
 import ScissorSrc from "../assets/images/scissor.png";
 import PaperSrc from "../assets/images/paper.png";
 import SvgIcon from "../components/common/SvgIcon";
 import SizedBox from "../components/common/SizedBox";
-import SelectBox from "../components/common/SelectBox";
+
 import Button from "../components/common/Button";
 import { useContext } from "react";
 import { Medium, MediumOutline } from "../styles/font";
@@ -35,7 +35,7 @@ function Tabs({ currentTab, setCurrentTab }) {
         </SelectedTab>
       ) : (
         <Tab onClick={() => setCurrentTab(0)}>
-          <MediumOutline size="30px" color="var(--purple)">
+          <MediumOutline size="30px" color="gray">
             {Language[mode].rule}
           </MediumOutline>
         </Tab>
@@ -63,38 +63,42 @@ const RowBetween = styled.div`
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
-  height: 30px;
 `;
 
 const Tab = styled.div`
   // 미클릭
-  background-color: white;
+  background-color: #ececec;
   border-radius: 10px;
-  width: 45%;
-  height: 30px;
+  width: 48%;
+  height: 5vh;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  z-index: 5;
 `;
 
 const SelectedTab = styled.div`
   //선택
+  background-color: white;
+  border-radius: 10px;
+  width: 48%;
+  height: 5vh;
   display: flex;
   justify-content: center;
   align-items: center;
-
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
-  background-color: white;
-
-  width: 50%;
+  cursor: pointer;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  z-index: 5;
 `;
 
 function RuleBox() {
   const mode = useContext(LanguageContext);
   return (
-    <BgBox width="80%" height="40%" color="white">
+    <BgBox width="80%" height="30vh" color="white">
       <Center>
         <SizedBox height={"50px"} />
         <Medium size="23px" color="var(--purple)">
@@ -125,7 +129,7 @@ function LoginBox() {
     createWebSocketConnection(name); // Socket Connection 생성
   };
   return (
-    <BgBox width="80%" height="40%" color="white">
+    <BgBox width="80%" height="30vh" color="white">
       <Col>
         <SizedBox height={"60px"} />
 
@@ -183,10 +187,18 @@ export default function MobileLandingScreen() {
         </Anim>
       </RPSBox>
 
-      <Tabs currentTab={currentTab} setCurrentTab={setCurrentTab} />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          alignItems: "center",
+        }}
+      >
+        <Tabs currentTab={currentTab} setCurrentTab={setCurrentTab} />
 
-      {currentTab === 0 ? <RuleBox /> : <LoginBox />}
-
+        {currentTab === 0 ? <RuleBox /> : <LoginBox />}
+      </div>
       <SizedBox height={"10px"} />
     </Container>
   );
@@ -304,4 +316,17 @@ const Col = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 30px;
+`;
+
+const BgBox = styled.div`
+  width: ${({ width }) => (width ? width : "100%")};
+  height: ${({ height }) => (height ? height : "auto")};
+  background-color: ${({ bgColor }) => (bgColor ? bgColor : "white")};
+  border-radius: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;

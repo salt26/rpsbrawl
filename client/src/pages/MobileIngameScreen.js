@@ -178,19 +178,7 @@ export default function MobileInGameScreen() {
       }
     };
   }, [ready]);
-  /*
-  const _findLatestScore = (gameList) => {
-    var len = gameList.length;
 
-    for (var i = len - 1; i >= 0; i--) {
-      // 가장 최신 로그 부터
-      if (gameList[i].name == my_name) {
-        return gameList[i].score;
-      }
-    }
-    return "";
-  };
-*/
   const _findMyPlace = (gameList) => {
     for (var user of gameList) {
       if (user.name === my_name) {
@@ -243,6 +231,7 @@ export default function MobileInGameScreen() {
           )}
         </ScoreContainer>
         <NetworkLogs logs={handList} />
+        <SizedBox height={"10px"} />
       </Col>
       <Count isWaiting={isWaiting}>{count}</Count>
     </CountDownWrapper>
@@ -265,9 +254,10 @@ const ScoreContainer = styled.text`
       `;
     }
   }}
-
-  top: 30%;
+  top: 50%;
   left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
 `;
 const CountDownWrapper = styled.div`
   position: relative;
@@ -298,8 +288,9 @@ const Count = styled.text`
 
   //모바일
   font-size: 300px;
-  top: 25%;
-  left: 33%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 `;
 
 const Col = styled.div`
@@ -310,6 +301,7 @@ const Col = styled.div`
   align-items: center;
   width: 100%;
   height: 100vh;
+
   padding: 10px;
 `;
 

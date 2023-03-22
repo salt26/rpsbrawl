@@ -277,7 +277,7 @@ export default function InGamePage() {
 
 const MsgBox = styled.div`
   position: absolute;
-  z-index: 101;
+  z-index: 10;
   top: 20%;
   left: 20%;
 `;

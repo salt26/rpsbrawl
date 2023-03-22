@@ -32,14 +32,14 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
   const blueBtnStyle = {
     fontSize: "25px",
     width: "40%",
-    height: "40px",
+    height: "5vh",
     borderRadius: "10px",
     bg: "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);",
   };
   const redBtnStyle = {
     fontSize: "25px",
     width: "40%",
-    height: "40px",
+    height: "5vh",
     borderRadius: "10px",
     bg: "linear-gradient(180deg, #FA1515 0%, #F97916 100%);",
   };
@@ -89,8 +89,8 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
                 backgroundColor: "transparent",
               },
               content: {
-                width: "90%",
-                height: "35%",
+                width: "90vw",
+                height: "35vh",
                 display: "flex",
                 backgroundColor: "orange",
                 flexDirection: "column",
@@ -113,9 +113,9 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
               overlay: {
                 width: "500px",
                 height: "300px",
-                top: "25%",
-                left: "35%",
-
+                top: "50%",
+                left: "50%",
+                transform: `translate(-50%, -50%)`,
                 backgroundColor: "transparent",
               },
               content: {
@@ -124,7 +124,7 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
                 padding: 0,
                 borderRadius: "10px",
                 backgroundColor: "white",
-
+                overflow: "hidden",
                 border: "3px solid transparent",
                 backgroundImage: `linear-gradient(#fff, #fff),
     linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)`,
@@ -148,7 +148,7 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
           onChange={(e) => setRoomTitle(e.target.value)}
           style={{
             width: "100%",
-            height: "50px",
+            height: "45px",
             borderColor: "var(--border)",
             fontSize: "35px",
             fontFamily: "KOTRAHOPE",
@@ -286,7 +286,9 @@ const Container = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  height: 30vh;
 
+  overflow: hidden;
   @media (max-width: 767px) {
     //모바일
     padding-left: 10px;

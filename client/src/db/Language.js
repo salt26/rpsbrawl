@@ -43,6 +43,15 @@ export const Language = [
     limited_text: "You cannot play the same hand in a row.",
     quick_start_limit_text: "there's no room available",
     quit_warning_text: "You cannot quit from playing room",
+    tutorial: [
+      "How to play",
+      "1. Join",
+      "2. Create room or Join the room",
+      "3.Setting",
+      "4. Team & Bot",
+      "5. Start",
+      "6. Play",
+    ],
   },
   {
     title: "RPS Brawl",
@@ -89,5 +98,14 @@ export const Language = [
     limited_text: "같은 손을 연속해서 내실 수 없습니다. (한 손 제한)",
     quick_start_limit_text: "들어갈 수 있는 방이 없습니다.",
     quit_warning_text: "게임 중에는 나갈 수 없습니다.",
+    tutorial: [
+      "게임 방법",
+      "1. 입장",
+      "2. 방생성 혹은 기존 방입장",
+      "3. 게임설정",
+      "4. 팀선택 및 봇 설정",
+      "5. 시작",
+      "6. 플레이",
+    ],
   },
 ];

@@ -45,7 +45,7 @@ export default function MyPlace({ place }) {
   };
 
   return (
-    <BgBox width={isMobile ? "45%" : "60%"} height={isMobile ? "80%" : "150px"}>
+    <BgBox width={isMobile ? "45%" : "60%"} height={isMobile ? "80%" : "100px"}>
       <Row>
         <Rank rank={rank} isMobile={isMobile} />
         <Col>

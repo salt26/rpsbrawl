@@ -115,6 +115,7 @@ export default function MobileWatingRoomScreen() {
 
     return false;
   };
+
   const mode = useContext(LanguageContext);
   const my_name = getUserName();
   const [users, setUsers] = useState(state.game_list);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ProgressBar from "@ramonak/react-progress-bar";
 import styled from "styled-components";
-import Clock from "./Clock";
+
 import SizedBox from "../common/SizedBox";
 import ClockSrc from "../../assets/images/clock.png";
 import SvgIcon from "../common/SvgIcon";
