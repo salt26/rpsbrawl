@@ -10,68 +10,103 @@ import Step6Src from "../../assets/images/step6.png";
 import Logo from "./Logo";
 import styled from "styled-components";
 import ReactModal from "react-modal";
-import { GradientText, Medium } from "../../styles/font";
-import { useMediaQuery } from "react-responsive";
+import { GradientText, Medium, MediumOutline } from "../../styles/font";
+
 import NextIconSrc from "../../assets/images/next.png";
 import BeforeIconSrc from "../../assets/images/before.png";
 import SizedBox from "../common/SizedBox";
 import { useContext } from "react";
 import { LanguageContext } from "../../utils/LanguageProvider";
 import { Language } from "../../db/Language";
+import useMediaQuery from "react-responsive";
+import Modal from "./Modal";
+
 export default function TutorialModal({ modalVisible, setModalVisible }) {
   const [currentTabIdx, setCurrentTabIdx] = useState(0);
-
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const LAST_TAP_IDX = 6;
   const mode = useContext(LanguageContext);
   const blueGradient =
     "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);";
   const content = [
     <Col>
-      <Logo size="m" />
+      {isMobile ? <Logo size="s" /> : <Logo size="m" />}
       <GradientText bg={blueGradient} size="30px">
         {Language[mode].tutorial[0]}
       </GradientText>
+      <MediumOutline size="20px" color="var(--background)">
+        {isMobile
+          ? Language[mode].tutorial_details[0][1]
+          : Language[mode].tutorial_details[0][0]}
+      </MediumOutline>
     </Col>,
     <Col>
       <GradientText bg={blueGradient} size="30px">
         {Language[mode].tutorial[1]}
       </GradientText>
-      <SvgIcon src={Step1Src} width="300px" />
+      <Box>
+        <SvgIcon src={Step1Src} width="300px" />
+        <MediumOutline size="20px" color="var(--background)">
+          {Language[mode].tutorial_details[1]}
+        </MediumOutline>
+      </Box>
     </Col>,
     <Col>
       <GradientText bg={blueGradient} size="30px">
         {Language[mode].tutorial[2]}
       </GradientText>
-      <SvgIcon src={Step2Src} width="300px" />
+      <Box>
+        <SvgIcon src={Step2Src} width="300px" />
+        <MediumOutline size="20px" color="var(--background)">
+          {Language[mode].tutorial_details[2]}
+        </MediumOutline>
+      </Box>
     </Col>,
     <Col>
       <GradientText bg={blueGradient} size="30px">
         {Language[mode].tutorial[3]}
       </GradientText>
-      <SvgIcon src={Step3Src} width="300px" />
+      <Box>
+        <SvgIcon src={Step3Src} width="300px" />
+        <MediumOutline size="20px" color="var(--background)">
+          {Language[mode].tutorial_details[3]}
+        </MediumOutline>
+      </Box>
     </Col>,
     <Col>
       <GradientText bg={blueGradient} size="30px">
         {Language[mode].tutorial[4]}
       </GradientText>
-      <SvgIcon src={Step4Src} size="300px" />
+      <Box>
+        <SvgIcon src={Step4Src} width="300px" />
+        <MediumOutline size="20px" color="var(--background)">
+          {Language[mode].tutorial_details[4]}
+        </MediumOutline>
+      </Box>
     </Col>,
     <Col>
       <GradientText bg={blueGradient} size="30px">
         {Language[mode].tutorial[5]}
       </GradientText>
+
       <SvgIcon src={Step5Src} width="100px" height={"auto"} />
-      <SizedBox height={"10%"} />
+      <MediumOutline size="20px" color="var(--background)">
+        {Language[mode].tutorial_details[5]}
+      </MediumOutline>
     </Col>,
-    <Col>
+    <Col isMobile={isMobile}>
       <GradientText bg={blueGradient} size="30px">
         {Language[mode].tutorial[6]}
       </GradientText>
-      <SvgIcon src={Step6Src} width="200px" />
+
+      <Box>
+        <SvgIcon src={Step6Src} width="200px" />
+        <MediumOutline size="20px" color="var(--background)">
+          {Language[mode].tutorial_details[6]}
+        </MediumOutline>
+      </Box>
     </Col>,
   ];
-
-  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
   const _closeModal = () => {
     setModalVisible(false);
@@ -84,53 +119,7 @@ export default function TutorialModal({ modalVisible, setModalVisible }) {
     setCurrentTabIdx((prev) => prev - 1);
   };
   return (
-    <ReactModal
-      ariaHideApp={false}
-      isOpen={modalVisible}
-      style={
-        isMobile
-          ? {
-              overlay: {
-                backgroundColor: "transparent",
-              },
-              content: {
-                width: "90vw",
-                height: "35vh",
-                display: "flex",
-
-                flexDirection: "column",
-                justifyContent: "space-between",
-
-                borderRadius: "10px",
-              },
-            }
-          : {
-              overlay: {
-                width: "50vw",
-                height: "55vh",
-                top: "25%",
-                left: "25%",
-
-                backgroundColor: "transparent",
-              },
-              content: {
-                width: "100%",
-                height: "100%",
-                padding: 0,
-                borderRadius: "10px",
-                position: "relative",
-                display: "flex",
-
-                justifyContent: "center",
-                alignItems: "center",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                backgroundColor: "white",
-              },
-            }
-      }
-    >
+    <Modal isOpen={modalVisible} closeModal={() => setModalVisible(false)}>
       {currentTabIdx !== 0 && (
         <Left>
           <SvgIcon
@@ -140,9 +129,7 @@ export default function TutorialModal({ modalVisible, setModalVisible }) {
           />
         </Left>
       )}
-
       {content[currentTabIdx]}
-
       {currentTabIdx !== LAST_TAP_IDX && (
         <Right>
           <SvgIcon src={NextIconSrc} size="30px" onClick={_moveToNextTab} />
@@ -151,7 +138,7 @@ export default function TutorialModal({ modalVisible, setModalVisible }) {
       <RightTop onClick={_closeModal}>
         <SvgIcon src={CancelIconSrc} />
       </RightTop>
-    </ReactModal>
+    </Modal>
   );
 }
 
@@ -166,18 +153,41 @@ const Col = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: "50px";
+  padding: 20px;
   align-items: center;
   height: 80%;
 `;
 
+const Box = styled.div`
+  display: flex;
+
+  width: 100%;
+
+  gap: 20px;
+  align-items: center;
+
+  @media (max-width: 767px) {
+    //모바일
+    flex-direction: column;
+    justify-content: space-around;
+    margin-top: 20px;
+  }
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    flex-direction: row;
+    justify-content: space-between;
+  }
+`;
 const Right = styled.div`
   position: absolute;
   right: 5%;
+  top: 50%;
   cursor: pointer;
 `;
 const Left = styled.div`
   position: absolute;
   left: 5%;
+  top: 50%;
   cursor: pointer;
 `;

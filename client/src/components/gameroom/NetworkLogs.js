@@ -153,8 +153,8 @@ const BgBox = styled.div`
 
   @media (max-width: 767px) {
     //모바일
-    height: 80%;
-    max-height: 80%;
+    height: 50%;
+    max-height: 50%;
   }
 
   @media (min-width: 1200px) {

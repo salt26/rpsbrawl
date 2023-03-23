@@ -12,8 +12,9 @@ import { useContext } from "react";
 import { Language } from "../../db/Language";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
+import CancelIconSrc from "../../assets/images/cancel.svg";
 
-function AddBot({ skilledBot, dumbBot }) {
+function AddBot({ skilledBot, dumbBot, setAddBotVisible }) {
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
@@ -25,7 +26,6 @@ function AddBot({ skilledBot, dumbBot }) {
     };
 
     ws.send(JSON.stringify(request));
-    console.log("봇변경 요청이 발송되었습니다.");
   };
   const mode = useContext(LanguageContext);
 
@@ -65,6 +65,10 @@ function AddBot({ skilledBot, dumbBot }) {
     _changeNumOfBot("dumb", dumbBot - 1);
     //setDumbBot((prev) => prev - 1);
   };
+
+  const _closeModal = () => {
+    setAddBotVisible(false);
+  };
   return (
     <Box>
       <BgBox
@@ -73,7 +77,7 @@ function AddBot({ skilledBot, dumbBot }) {
         height="400px"
       >
         <TextContainer>
-          <MediumOutline color="#6E3D9D" size={"40px"}>
+          <MediumOutline color="#6E3D9D" size={"35px"}>
             {Language[mode].add_bot}
           </MediumOutline>
         </TextContainer>
@@ -126,6 +130,11 @@ function AddBot({ skilledBot, dumbBot }) {
             </Row>
           </BotBox>
         </Col>
+        {isMobile && (
+          <RightTop>
+            <SvgIcon src={CancelIconSrc} onClick={_closeModal} />
+          </RightTop>
+        )}
       </BgBox>
     </Box>
   );
@@ -183,5 +192,12 @@ const Row = styled.div`
   gap: 20px;
   align-items: center;
   justify-content: center;
+`;
+
+const RightTop = styled.div`
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  cursor: pointer;
 `;
 export default AddBot;

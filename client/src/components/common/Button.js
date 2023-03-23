@@ -4,7 +4,7 @@ import styled from "styled-components";
 const Btn = styled.button`
   background-color: ${({ bgColor }) => (bgColor ? bgColor : "var(--mint)")};
   border: none;
-  z-index: 100;
+  z-index: 1;
   cursor: pointer;
   border-radius: 50px;
   width: ${({ width }) => (width ? width : "150px")};

@@ -9,7 +9,9 @@ import { LanguageContext } from "../../utils/LanguageProvider";
 import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
-function TeamSelection({}) {
+import CancelIconSrc from "../../assets/images/cancel.svg";
+import SvgIcon from "../common/SvgIcon";
+function TeamSelection({ setTeamSelectionVisible }) {
   const teams = ["red", "orange", "yellow", "green", "blue", "navy", "purple"];
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
@@ -21,6 +23,10 @@ function TeamSelection({}) {
       team: team_idx, // 0 이상 7 이하
     };
     ws.send(JSON.stringify(request));
+  };
+
+  const _closeModal = () => {
+    setTeamSelectionVisible(false);
   };
 
   return (
@@ -35,6 +41,11 @@ function TeamSelection({}) {
             {Language[mode].team}
           </MediumOutline>
         </TextContainer>
+        {isMobile && (
+          <RightTop>
+            <SvgIcon src={CancelIconSrc} onClick={_closeModal} />
+          </RightTop>
+        )}
 
         <Col>
           {" "}
@@ -118,5 +129,12 @@ const Container = styled.div`
   &:hover {
     transform: scale(1.1);
   }
+`;
+
+const RightTop = styled.div`
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  cursor: pointer;
 `;
 export default TeamSelection;

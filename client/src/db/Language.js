@@ -3,8 +3,7 @@ export const Language = [
     title: "RPS Brawl",
     intro_text: "Enjoy Rock Scissor Paper with several friends! 😁",
     rule: "Rule",
-    explanation: `The lastest hand is shown in the center of the screen.
-          If you win the hand, you will get +1 points. But if not, you will get -1 points. `,
+    explanation: `The lastest hand is shown in the center of the screen. If you win the hand, you will get +1 points. But if not, you will get -1 points. `,
     start: "Start",
     entrance: "Start",
     name: "name",
@@ -47,10 +46,32 @@ export const Language = [
       "How to play",
       "1. Join",
       "2. Create room or Join the room",
-      "3.Setting",
+      "3. Setting",
       "4. Team & Bot",
       "5. Start",
       "6. Play",
+    ],
+    tutorial_details: [
+      [
+        "Press F11 for best experience.",
+        "Enjoy rock paper scissor with several friends!",
+      ],
+      "Please enter your nickname.",
+      `You can create room 
+      or 
+      join the existing room.`,
+      `⦁ normal : normal mode 
+      ⦁ limited : cannot play the same sand in a row.
+      ⦁ Only a admin can set the mode. 
+      `,
+      `⦁ Dumb : A bot that only throws the losing hand 
+      ⦁ Skilled : A bot that only throws the winning hand 
+      ⦁ Only the admin can set the bot. 
+      `,
+      "Press start to play the game. ",
+      `The lastest hand is shown in the center of the screen.
+      If you win the hand, you will get +1 points. 
+      But if not, you will get -1 points. `,
     ],
   },
   {
@@ -106,6 +127,22 @@ export const Language = [
       "4. 팀선택 및 봇 설정",
       "5. 시작",
       "6. 플레이",
+    ],
+    tutorial_details: [
+      "F11 버튼을 눌러 전체화면으로 플레이하세요! ",
+      "게임에서 사용할 닉네임을 입력해주세요.",
+      "새롭게 방을 생성하거나 기존에 있던 방에 입장하세요.",
+      `⦁ normal: 일반 모드
+      ⦁ limited: 연속으로 같은 손을 낼 수 없는 모드 
+      ⦁ 모드 설정은 방장만 가능합니다. 
+      `,
+      `⦁ Dumb: 지는 손만 내는 봇 
+      ⦁ Skilled: 이기는 손만 내는 봇 
+      ⦁ 봇 설정은 방장만 가능합니다.
+      `,
+      "시작버튼을 눌러 게임을 시작하세요. ",
+      `가장 마지막에 낸 사람의 손이 화면에 크게 보입니다. 이 손을 이기면
+      +1점! 지면 -1점! 60초 안에 가장 많은 점수를 획득하세요!`,
     ],
   },
 ];

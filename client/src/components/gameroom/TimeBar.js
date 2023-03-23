@@ -85,6 +85,7 @@ export default function TimeBar({ roomInfo }) {
 const Row = styled.div`
   display: flex;
   width: 100%;
+  height: 50px;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;

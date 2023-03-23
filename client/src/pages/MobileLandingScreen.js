@@ -48,7 +48,7 @@ function Tabs({ currentTab, setCurrentTab }) {
         </SelectedTab>
       ) : (
         <Tab onClick={() => setCurrentTab(1)}>
-          <MediumOutline size="30px" color="var(--purple)">
+          <MediumOutline size="30px" color="gray">
             {Language[mode].start}
           </MediumOutline>
         </Tab>
@@ -77,7 +77,6 @@ const Tab = styled.div`
   cursor: pointer;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  z-index: 5;
 `;
 
 const SelectedTab = styled.div`
@@ -92,7 +91,6 @@ const SelectedTab = styled.div`
   cursor: pointer;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  z-index: 5;
 `;
 
 function RuleBox() {
@@ -171,7 +169,7 @@ export default function MobileLandingScreen() {
       <SizedBox height={"50px"} />
 
       <Anim2 delay={5}>
-        <Logo />
+        <Logo size="m" />
       </Anim2>
 
       <RPSBox delay={5}>

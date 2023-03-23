@@ -257,7 +257,7 @@ const ScoreContainer = styled.text`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 5;
+  z-index: 15;
 `;
 const CountDownWrapper = styled.div`
   position: relative;

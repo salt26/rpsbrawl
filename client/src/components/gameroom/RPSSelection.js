@@ -101,7 +101,7 @@ const Row = styled.div`
 
   align-items: center;
 
-  z-index: 10;
+  z-index: 3;
 `;
 
 const ImgBox = styled.div`

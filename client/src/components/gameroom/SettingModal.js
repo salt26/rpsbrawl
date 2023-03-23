@@ -319,8 +319,4 @@ const TitleBox = styled.div`
   align-items: center;
 `;
 
-const Hover = styled.div`
-  &:hover {
-  }
-`;
 export default SettingModal;

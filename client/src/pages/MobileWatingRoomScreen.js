@@ -223,8 +223,16 @@ export default function MobileWatingRoomScreen() {
 
   return (
     <Container>
-      {teamSelectionVisible && <TeamSelection />}
-      {addBotVisible && <AddBot skilledBot={skilledBot} dumbBot={dumbBot} />}
+      {teamSelectionVisible && (
+        <TeamSelection setTeamSelectionVisible={setTeamSelectionVisible} />
+      )}
+      {addBotVisible && (
+        <AddBot
+          skilledBot={skilledBot}
+          dumbBot={dumbBot}
+          setAddBotVisible={setAddBotVisible}
+        />
+      )}
       <TitleContainer>
         <SettingModal
           modalVisible={settingModalVisible}
@@ -276,7 +284,7 @@ export default function MobileWatingRoomScreen() {
         {isAdmin && (
           <SvgIcon
             src={SettingSrc}
-            size="40px"
+            size="35px"
             onClick={() => setSettingModalVisible(true)}
           />
         )}

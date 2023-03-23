@@ -141,16 +141,42 @@ function App() {
                 ></audio>
               </Bottom>
             )}
-            {pathname == "/" && <Toggle mode={mode} setMode={setMode} />}
+            {pathname === "/" && (
+              <TutorialBtn
+                setTutorialModalVisible={setTutorialModalVisible}
+                tutorialModalVisible={tutorialModalVisible}
+              />
+            )}
+            <TutorialModal
+              modalVisible={tutorialModalVisible}
+              setModalVisible={setTutorialModalVisible}
+            />
+            {pathname === "/" && <Toggle mode={mode} setMode={setMode} />}
 
             <Routes>
               <Route path="/" element={<MobileLandingScreen />} />
-              <Route
-                path="/rooms/:room_id/*"
-                element={<MobileGameRoomScreen />}
-              />
 
-              <Route path="/rooms" element={<MobileRoomListScreen />} />
+              <Route element={<PrivateRoute />}>
+                <Route path="/rooms" element={<MobileRoomListScreen />} />
+                <Route
+                  path="/rooms/:room_id/*"
+                  element={<MobileGameRoomScreen />}
+                />
+                <Route
+                  path={"/*"}
+                  element={() => {
+                    alert("Page not found");
+                    return <Navigate to="/" />;
+                  }}
+                />
+              </Route>
+              <Route
+                path={"/*"}
+                element={() => {
+                  alert("Page not found");
+                  return <Navigate to="/" />;
+                }}
+              />
             </Routes>
           </Background>
         </MobileView>
@@ -173,6 +199,6 @@ const Bottom = styled.div`
   justify-content: center;
   align-items: center;
   bottom: 1%;
-  z-index: 10;
+  z-index: 1;
 `;
 export default App;
