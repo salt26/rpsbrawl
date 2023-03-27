@@ -58,6 +58,7 @@
   * [end (응답만 존재)](#게임-종료end)
   * [signout](#로그아웃signout)
   * [disconnected (응답만 존재)](#연결-끊김disconnected)
+  * [dormancy (응답만 존재)](#휴면-처리dormancy)
   * [기타 오류 (응답만 존재)](#기타-오류)
 
 #### 로그인(signin)
@@ -73,7 +74,7 @@ signin error: `name`이 주어지지 않는 경우 다음 메시지 응답
   request: "signin",
   response: "error",
   type: "message",
-  message: "Name is required"
+  message: "Name is required."
 }
 ```
 
@@ -83,7 +84,7 @@ signin error: 같은 이름의 사람이 이미 접속하여 어떤 대기 방 �
   request: "signin",
   response: "error",
   type: "message",
-  message: "The same person has already entered in non-end room"
+  message: "The same person has already entered in non-end room."
 }
 ```
 
@@ -300,7 +301,7 @@ join error: 입장하려는 대기 방이 대기 방이 아닌(아니게 된) �
   request: "join",
   response: "error",
   type: "message",
-  message: "Cannot join in non-wait room"
+  message: "Cannot join in non-wait room."
 }
 ```
 
@@ -310,7 +311,7 @@ join error: 해당 사람이 다른 대기 방 또는 플레이 방에 이미 �
   request: "join",
   response: "error",
   type: "message",
-  message: "You are already in a room"
+  message: "You are already in a room."
 }
 ```
 
@@ -320,7 +321,7 @@ join error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 �
   request: "join",
   response: "error",
   type: "message",
-  message: "The same person has already entered in non-end room"
+  message: "The same person has already entered in non-end room."
 }
 ```
 
@@ -330,7 +331,7 @@ join error: 입장하려는 방의 인원(봇 포함)이 꽉 차 있는 경우 �
   request: "join",
   response: "error",
   type: "message",
-  message: "Room is full"
+  message: "Room is full."
 }
 ```
 
@@ -418,7 +419,7 @@ create error: 해당 사람이 다른 대기 방 또는 플레이 방에 이미 
   request: "create",
   response: "error",
   type: "message",
-  message: "You are already in a room"
+  message: "You are already in a room."
 }
 ```
 
@@ -428,7 +429,7 @@ create error: 다른 대기 방 또는 플레이 방에 같은 사람이 이미 
   request: "create",
   response: "error",
   type: "message",
-  message: "The same person has already entered in non-end room"
+  message: "The same person has already entered in non-end room."
 }
 ```
 
@@ -438,7 +439,7 @@ create error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
   request: "create",
   response: "error",
   type: "message",
-  message: "Bad request"
+  message: "Bad request."
 }
 ```
 
@@ -522,7 +523,7 @@ setting error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 
   request: "setting",
   response: "error",
   type: "message",
-  message: "You are not in any room"
+  message: "You are not in any room."
 }
 ```
 
@@ -532,7 +533,7 @@ setting error: 방장이 아닌 사람이 게임 시작 요청을 보낸 경우 
   request: "setting",
   response: "error",
   type: "message",
-  message: "Forbidden"
+  message: "Only the host can change the room settings."
 }
 ```
 
@@ -542,7 +543,7 @@ setting error: 이미 플레이 중인 방이거나 게임이 종료된 방에�
   request: "setting",
   response: "error",
   type: "message",
-  message: "Cannot change the settings of the non-wait room"
+  message: "Cannot change the settings of the non-wait room."
 }
 ```
 
@@ -607,7 +608,7 @@ team error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 응
   request: "team",
   response: "error",
   type: "message",
-  message: "You are not in any room"
+  message: "You are not in any room."
 }
 ```
 
@@ -617,7 +618,7 @@ team error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 �
   request: "team",
   response: "error",
   type: "message",
-  message: "Cannot change the team in the non-wait room"
+  message: "Cannot change the team in the non-wait room."
 }
 ```
 
@@ -627,7 +628,7 @@ team error: `team` 값이 잘못된 경우 아래 메시지 응답
   request: "team",
   response: "error",
   type: "message",
-  message: "Bad request"
+  message: "Bad request."
 }
 ```
 
@@ -670,7 +671,7 @@ quit error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 응
   request: "quit",
   response: "error",
   type: "message",
-  message: "You are not in any room"
+  message: "You are not in any room."
 }
 ```
 
@@ -680,7 +681,7 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
   request: "quit",
   response: "error",
   type: "message",
-  message: "Cannot quit from non-wait Room"
+  message: "Cannot quit from non-wait Room."
 }
 ```
 
@@ -690,7 +691,7 @@ quit error: 이미 플레이 중이거나 게임이 종료된 방에서 나가�
   request: "quit",
   response: "success",
   type: "message",
-  message: "Successfully left the room"
+  message: "Successfully left the room."
 }
 ```
 
@@ -736,7 +737,7 @@ start error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 �
   request: "start",
   response: "error",
   type: "message",
-  message: "You are not in any room"
+  message: "You are not in any room."
 }
 ```
 
@@ -746,7 +747,7 @@ start error: 방장이 아닌 사람이 게임 시작 요청을 보낸 경우 �
   request: "start",
   response: "error",
   type: "message",
-  message: "Forbidden"
+  message: "Only the host can start the game."
 }
 ```
 
@@ -756,7 +757,7 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
   request: "start",
   response: "error",
   type: "message",
-  message: "Room is not in a wait mode"
+  message: "Room is not in a wait mode."
 }
 ```
 
@@ -811,7 +812,7 @@ start error: 이미 플레이 중인 방이거나 게임이 종료된 방에서 
     ]
 }
 ```
-* start_time: 실제로 손 입력을 받기 시작할 때(`message: "Game start"`라는 메시지를 서버가 응답할 때) 결정되므로 그 이후에 GET `/room/{room_id}` 하면 확인할 수 있음
+* start_time: 실제로 손 입력을 받기 시작할 때(`request: "start"`이고 `type: "room_start"`인 메시지를 서버가 응답할 때) 결정되므로 그 이후에 GET `/room/{room_id}` 하면 확인할 수 있음
 * end_time: 실제로 게임이 종료될 때(`response: "end"`인 정보를 서버가 응답할 때) 결정되므로 그 이후에 GET `/room/{room_id}` 하면 확인할 수 있음
 * 첫 번째 랜덤 손은 이 방에 입장한 첫 번째 사람 명의로 표시되지만, 이 사람의 전적(score, win, draw, lose)에는 영향을 주지 않는다.
 
@@ -858,7 +859,7 @@ hand error: 어떤 방에도 입장해 있지 않은 경우 다음 메시지 응
   request: "hand",
   response: "error",
   type: "message",
-  message: "You are not in any room"
+  message: "You are not in any room."
 }
 ```
 
@@ -868,7 +869,7 @@ hand error: 방이 플레이 중인 방이 아니라서 손 입력 실패 시 �
   request: "hand",
   response: "error",
   type: "message",
-  message: "Room is not in a play mode"
+  message: "Room is not in a play mode."
 }
 ```
 
@@ -878,7 +879,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력을 받기 전의 시
   request: "hand",
   response: "error",
   type: "message",
-  message: "Game not started yet"
+  message: "Game not started yet."
 }
 ```
 
@@ -888,7 +889,7 @@ hand error: 방이 플레이 중인 방이지만 손 입력 가능 시간이 초
   request: "hand",
   response: "error",
   type: "message",
-  message: "Game has ended"
+  message: "Game has ended."
 }
 ```
 
@@ -908,7 +909,7 @@ hand error: limited 모드에서 같은 손을 두 번 이상 연달아 내려�
   request: "hand",
   response: "error",
   type: "message",
-  message: "Cannot play the same hand in a row (limited mode)"
+  message: "Cannot play the same hand in a row. (limited mode)"
 }
 ```
 
@@ -1081,7 +1082,7 @@ ws.send(request);
   request: "signout",
   response: "success",
   type: "message",
-  message: "Successfully signed out"
+  message: "Successfully signed out."
 }
 ```
 
@@ -1103,6 +1104,34 @@ disconnected broadcast: 클라이언트에서 연결을 끊는 경우 해당 방
 ```
 * 여기서 발생하는 응답의 `request`는 "disconnect`ed`"이다.
 
+#### 휴면 처리(dormancy)
+dormancy quit: 대기 방에서 10분 이상 아무 요청을 보내지 않은 사람은 자동으로 방 목록 화면으로 퇴장되며, 이들에게 다음 정보 응답
+```
+{
+  request: "dormancy",
+  response: "quit",
+  type: "message",
+  message: "You are sent out of the room because of inactivity."
+}
+```
+* 이 메시지를 받으면 클라이언트에서는 방 목록 화면으로 이동해야 한다.
+
+dormancy broadcast: 대기 방에서 10분 이상 아무 요청을 보내지 않아 퇴장 처리되는 사람이 발생할 때, 그 사람이 있던 방에 있는 모든 사람들에게 다음 정보 응답
+```
+{
+  request: "dormancy",
+  response: "broadcast",
+  type: "game_list",
+  data: [
+    {
+      name: "이름",
+      ...
+    },
+    ...
+  ]
+}
+```
+
 #### 기타 오류
 error: JSON 형식이 아닌 데이터를 요청으로 주거나, 요청 데이터에 "request" 키가 없거나, "request" 키의 값이 `["hand", "quit", "start"]` 중에 없는 경우 다음 오류 메시지 응답
 ```
@@ -1110,7 +1139,7 @@ error: JSON 형식이 아닌 데이터를 요청으로 주거나, 요청 데이�
   request: "",
   response: "error",
   type: "message",
-  message: "Bad request"
+  message: "Bad request."
 }
 ```
 * 이 경우 연결은 유지되며 다시 새로운 요청을 보낼 수 있다.
@@ -1121,7 +1150,7 @@ error: 서버 DB의 스키마가 변경되었거나 요청을 받는 중 알 수
   request: "",
   response: "error",
   type: "message",
-  message: "Internal server error"
+  message: "Internal server error."
 }
 ```
 * 이 경우 해당 개인의 연결이 즉시 끊어지며 바로 아래의 disconnect broadcast도 전송된다.

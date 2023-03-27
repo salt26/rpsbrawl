@@ -99,7 +99,7 @@ def check_person_dormancy(db: Session, person_id: int, minutes: int):
         db.commit()
         db.refresh(db_person.first())
         return False
-    return datetime.now() > db_person.first().last_activity + timedelta(seconds=minutes)
+    return datetime.now() > db_person.first().last_activity + timedelta(minutes=minutes)
 
 def update_person_last_activity(db: Session, person_id: int):
     db_person = db.query(models.Person).filter(models.Person.id == person_id)
