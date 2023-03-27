@@ -795,8 +795,8 @@ async def periodic_manager(time_interval: int):
         db.close()
 
 def periodic_manager_threading(time_interval: int):
-    if time_interval < 3:
-        time_interval = 3
+    if time_interval < 1:
+        time_interval = 1
     asyncio.run(periodic_manager(time_interval))
     
 async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depends(get_db)):
@@ -1096,4 +1096,4 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             # 오류 메시지 응답
             await ConnectionManager.send_text("", "error", "Bad request.", websocket)
 
-threading.Thread(target=periodic_manager_threading, args=(10,)).start()
+threading.Thread(target=periodic_manager_threading, args=(3,)).start()
