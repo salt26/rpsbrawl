@@ -52,6 +52,7 @@ class Person(Base):
     #hashed_password = Column(String)
     #is_active = Column(Boolean, default=False) # 삭제되었음에 유의!
     is_human = Column(Boolean, default=True)
+    last_activity = Column(DateTime(timezone=True), nullable=True, index=True)
 
     rooms = relationship("Game", back_populates="person", cascade="all, delete-orphan")
 

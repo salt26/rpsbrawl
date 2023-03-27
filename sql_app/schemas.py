@@ -67,6 +67,7 @@ class PersonCreate(PersonBase):
 class Person(PersonBase):
     id: int
     #is_active: bool
+    last_activity: Union[datetime, None] = None
     rooms: List[Game] = []
 
     class Config:

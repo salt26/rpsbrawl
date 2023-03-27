@@ -87,6 +87,32 @@ def check_person_waiting_or_playing(db: Session, person_id: int):
                 return room.id
     return -1
 
+# 해당 회원이 마지막으로 활동(signin을 제외한 모든 종류의 요청 발송, 잘못된 요청 포함)을 한 시각이 현재보다 minutes 분 이상 넘은 경우 휴면으로 판정하여 True 반환 
+def check_person_dormancy(db: Session, person_id: int, minutes: int):
+    db_person = db.query(models.Person).filter(models.Person.id == person_id)
+    if db_person.first() is None:
+        return False
+    if db_person.first().last_activity is None:
+        db_person.update({
+            "last_activity" : datetime.now()
+        })
+        db.commit()
+        db.refresh(db_person.first())
+        return False
+    return datetime.now() > db_person.first().last_activity + timedelta(seconds=minutes)
+
+def update_person_last_activity(db: Session, person_id: int):
+    db_person = db.query(models.Person).filter(models.Person.id == person_id)
+    if db_person.first() is None:
+        return (None, 1)
+    
+    db_person.update({
+        "last_activity" : datetime.now()
+    })
+    db.commit()
+    db.refresh(db_person.first())
+    return (db_person, 0)
+
 """
 def delete_person(db: Session, person: schemas.PersonCreate):
     # 회원 탈퇴 (아마 안 쓸 것)
@@ -110,6 +136,13 @@ def get_room(db: Session, room_id: int):
 
 def get_non_end_rooms(db: Session):
     rooms = db.query(models.Room).filter(models.Room.state != schemas.RoomStateEnum.End).all()
+    if rooms is None:
+        return None
+    else:
+        return parse_obj_as(schemas.List[schemas.Room], rooms)
+
+def get_wait_rooms(db: Session):
+    rooms = db.query(models.Room).filter(models.Room.state == schemas.RoomStateEnum.Wait).all()
     if rooms is None:
         return None
     else:
