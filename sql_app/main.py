@@ -761,18 +761,14 @@ async def remove_dormancy_person(db: Session):
     for room in wait_rooms:
         for game in room.persons:
             if crud.check_person_dormancy(db, game.person_id, 10):
-                # 대기 방에서 10분 이상 아무 활동을 하지 않은 유저는 강제 로그아웃 처리한다.
+                # 대기 방에서 10분 이상 아무 활동을 하지 않은 유저는 강제로 방 목록 화면으로 보낸다.
                 con = cManager.find_connection_by_person_id(game.person_id)
                 _, error_code = crud.update_room_to_quit(db, game.room_id, game.person_id)
                 if error_code == 0:
                     if con is not None:
                         cManager.change_room_id(game.person_id, -1)
+                        await ConnectionManager.send_text("dormancy", "quit", "You are sent out of the room because of inactivity.", con[0])
                     await cManager.broadcast_json("dormancy", "game_list", read_game(game.room_id, db), game.room_id)
-                if con is not None:
-                    await ConnectionManager.send_text("dormancy", "sign_out", "Please sign in again.", con[0])
-                    await cManager.close(con[0])
-
-
 
 async def periodic_manager(time_interval: int):
     # DB 세션을 새로 만들어서, 스레드 당 하나의 세션을 가지도록 해야 여러 스레드가 DB에 동시에 접근해서 생기는 문제가 발생하지 않는다.
