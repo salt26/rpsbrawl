@@ -48,6 +48,7 @@
 * 목차
   * [signin](#로그인signin)
   * [refresh](#방-목록-새로고침refresh)
+  * [auto_refresh](#방-목록-자동-새로고침auto_refresh)
   * [join](#입장join)
   * [create](#생성create)
   * [setting](#방-설정-변경setting)
@@ -250,6 +251,41 @@ ws.send(request);
 ```
 {
   request: "refresh",
+  response: "success",
+  type: "room_list",
+  data: [
+    {
+      state: 0,                                     // Wait
+      time_offset : -1,                             // 대기 방에서는 -1
+      time_duration : -1,                           // 대기 방에서는 -1
+      init_time: "",                                // 대기 방에서는 빈 문자열로 반환
+      start_time: "",                               // 대기 방에서는 빈 문자열로 반환
+      end_time: "",                                 // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0,                                      // Normal
+      has_password: True,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    ...   // 대기 방과 플레이 중인 방 개수만큼 존재
+  ]
+}
+```
+
+---
+
+#### 방 목록 자동 새로고침(auto_refresh)
+
+프론트엔드에서 방 목록 화면에 있는 모든 사람에게, 아무 방에서라도 변경이 이루어진 경우 10초마다 한 번씩 자동으로 새로고침하도록 응답을 보냄
+
+* 방이 새로 생기거나, 어떤 방의 인원, 설정, 상태(게임 시작 등)가 바뀌는 경우 방 목록에 변동이 생긴 것으로 인식함
+
+**auto_refresh success**: 방 목록에 변동이 있을 시 대기 방 및 플레이 중인 방 목록이 포함된 다음 정보 응답
+```
+{
+  request: "auto_refresh",
   response: "success",
   type: "room_list",
   data: [
@@ -590,6 +626,8 @@ setting error: 일부 설정 값이 잘못된 경우 아래 메시지 응답
   }
 }
 ```
+
+---
 
 #### 팀 변경(team)
 
@@ -1066,6 +1104,8 @@ hand error: limited 모드에서 같은 손을 두 번 이상 연달아 내려�
 * 위 응답을 받으면 대기 방 화면으로 전환한다.
 * 사람들의 목록(game_list) 안에서 본인 정보는 name을 비교하여 직접 찾아야 한다.
 
+---
+
 #### 로그아웃(signout)
 
 프론트엔드에서 다음을 요청하여 접속 종료
@@ -1086,6 +1126,8 @@ ws.send(request);
 }
 ```
 
+---
+
 #### 연결 끊김(disconnected)
 disconnected broadcast: 클라이언트에서 연결을 끊는 경우 해당 방에 남아있는 모든 사람들(연결이 끊긴 본인 제외)에게 다음 정보 응답
 ```
@@ -1103,6 +1145,8 @@ disconnected broadcast: 클라이언트에서 연결을 끊는 경우 해당 방
 }
 ```
 * 여기서 발생하는 응답의 `request`는 "disconnect`ed`"이다.
+
+---
 
 #### 휴면 처리(dormancy)
 dormancy quit: 대기 방에서 10분 이상 아무 요청을 보내지 않은 사람은 자동으로 방 목록 화면으로 퇴장되며, 이들에게 다음 정보 응답
@@ -1131,6 +1175,8 @@ dormancy broadcast: 대기 방에서 10분 이상 아무 요청을 보내지 않
   ]
 }
 ```
+
+---
 
 #### 기타 오류
 error: JSON 형식이 아닌 데이터를 요청으로 주거나, 요청 데이터에 "request" 키가 없거나, "request" 키의 값이 `["hand", "quit", "start"]` 중에 없는 경우 다음 오류 메시지 응답
@@ -1175,6 +1221,7 @@ disconnect broadcast: 요청 데이터에 필요한 정보가 모두 들어있�
 ```
 * 여기서 발생하는 응답의 `request`는 "disconnect"이다.
 
+---
 
 ### API test
 * 터미널을 켜고 아래 명령어 실행
