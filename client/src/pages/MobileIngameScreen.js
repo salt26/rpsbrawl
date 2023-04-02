@@ -122,7 +122,7 @@ export default function MobileInGameScreen() {
       if (ready) {
         if (res?.response === "error") {
           if (
-            res.message === "Cannot play the same hand in a row (limited mode)"
+            res.message === "Cannot play the same hand in a row (limited mode)."
           ) {
             setMsg(Language[mode].limited_text);
             setShowTime(true);

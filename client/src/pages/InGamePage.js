@@ -15,6 +15,7 @@ import useInterval from "../utils/useInterval";
 import { getUserId } from "../utils/User";
 import MessageBox from "../components/gameroom/MessageBox";
 import { useMediaQuery } from "react-responsive";
+
 import { Language } from "../db/Language";
 import { LanguageContext } from "../utils/LanguageProvider";
 import { Medium } from "../styles/font";
@@ -138,7 +139,7 @@ export default function InGamePage() {
       if (ready) {
         if (res?.response === "error") {
           if (
-            res.message === "Cannot play the same hand in a row (limited mode)"
+            res.message === "Cannot play the same hand in a row (limited mode)."
           ) {
             setMsg(Language[mode].limited_text);
             setShowTime(true);
@@ -188,19 +189,7 @@ export default function InGamePage() {
       }
     };
   }, [ready]);
-  /*
-  const _findLatestScore = (gameList) => {
-    var len = gameList.length;
 
-    for (var i = len - 1; i >= 0; i--) {
-      // 가장 최신 로그 부터
-      if (gameList[i].name == my_name) {
-        return gameList[i].score;
-      }
-    }
-    return "";
-  };
-*/
   const _findMyPlace = (gameList) => {
     for (var user of gameList) {
       if (user.name === my_name) {
