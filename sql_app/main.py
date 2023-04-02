@@ -209,7 +209,8 @@ cManager = ConnectionManager()
 bManager = BotManager()         # bManager는 lock과 함께 사용 -> lock은 없어도 됨
 hManager = HandManager()        # hManager 역시 lock과 함께 사용 -> lock은 없어도 됨
 #lock = threading.Lock()
-room_list_dirty_bit = False
+room_list_dirty_bit = threading.Event()
+room_list_dirty_bit.clear()
 
 @app.websocket("/signin")
 async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depends(get_db)):
@@ -286,7 +287,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
         crud.update_room_to_quit(db, room_id, person.id)
         await cManager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id) # disconnect`ed`
-        room_list_dirty_bit = True
+        room_list_dirty_bit.set()
     except Exception:
         #print("다른 예외")
         traceback.print_exc()
@@ -302,7 +303,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         crud.update_room_to_quit(db, room_id, person.id)
         #print("접속 끊긴 사람 퇴장 완료")
         await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
-        room_list_dirty_bit = True
+        room_list_dirty_bit.set()
     
 
 @app.get("/")
@@ -715,7 +716,7 @@ async def manage_time_for_room(room_id: int, time_offset: int, time_duration: in
     join_data = {"room": read_room(new_room.id, db), "game_list": read_game(new_room.id, db)}
     #lock.release()
     await cManager.broadcast_json("end", "join_data", join_data, new_room.id)
-    room_list_dirty_bit = True
+    room_list_dirty_bit.set()
 
 # 방의 시간 관리 함수를 돌리는 스레드에서 봇을 함께 비동기로 돌리도록 함
 async def run_game_for_room(room_id: int, time_offset: int, time_duration: int):
@@ -775,11 +776,11 @@ async def remove_dormancy_person(db: Session):
                     await cManager.broadcast_json("dormancy", "game_list", read_game(game.room_id, db), game.room_id)
 
 async def auto_refresh_room_list(db: Session):
-    global room_list_dirty_bit
-    if room_list_dirty_bit:
-        room_list_dirty_bit = False
+    if room_list_dirty_bit.is_set():
+        room_list_dirty_bit.clear()
         for con in cManager.find_all_connections_by_room_id(-1):
             await ConnectionManager.send_json("auto_refresh", "success", "room_list", read_non_end_rooms(db), con[0])
+        print("auto_refresh_room_list")
 
 async def periodic_manager(time_interval: int):
     # DB 세션을 새로 만들어서, 스레드 당 하나의 세션을 가지도록 해야 여러 스레드가 DB에 동시에 접근해서 생기는 문제가 발생하지 않는다.
@@ -787,6 +788,7 @@ async def periodic_manager(time_interval: int):
     try:
         while True:
             tasks = []
+            print("periodic_manager " + str(room_list_dirty_bit.is_set()))
             tasks.append(remove_dormancy_person(db))
             tasks.append(auto_refresh_room_list(db))
             tasks.append(asyncio.sleep(time_interval))
@@ -863,7 +865,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 # 해당 방 전체에게 입장 데이터(방 정보 및 전적(사람) 목록) 응답
                 join_data = {"room": read_room(data["room_id"], db), "game_list": read_game(data["room_id"], db)}
                 await cManager.broadcast_json("join", "join_data", join_data, data["room_id"])
-                room_list_dirty_bit = True
+                room_list_dirty_bit.set()
             elif error_code == 1:
                 await ConnectionManager.send_text("join", "error", "Room not found.", websocket)
             elif error_code == 2:
@@ -896,7 +898,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 # 개인에게 입장 데이터(방 정보 및 전적(사람) 목록) 응답
                 join_data = {"room": read_room(room.id, db), "game_list": read_game(room.id, db)}
                 await ConnectionManager.send_json("create", "success", "join_data", join_data, websocket)
-                room_list_dirty_bit = True
+                room_list_dirty_bit.set()
             elif error_code == 2:
                 await ConnectionManager.send_text("create", "error", "Bad request.", websocket)
             elif error_code == 3:
@@ -935,7 +937,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 password=data.get("password"), bot_skilled=data.get("bot_skilled"), bot_dumb=data.get("bot_dumb"), max_persons=data.get("max_persons"))
             if error_code == 0:
                 await cManager.broadcast_json("setting", "room", read_room(room.id, db), room.id)
-                room_list_dirty_bit = True
+                room_list_dirty_bit.set()
             elif error_code == 1:
                 await ConnectionManager.send_text("setting", "error", "Room not found.", websocket)
             elif error_code == 2:
@@ -1026,7 +1028,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 cManager.change_room_id(person_id, -1)
                 await ConnectionManager.send_text("quit", "success", "Successfully left the room.", websocket)
                 await cManager.broadcast_json("quit", "game_list", read_game(room_id, db), room_id)
-                room_list_dirty_bit = True
+                room_list_dirty_bit.set()
             elif error_code == 1:
                 await ConnectionManager.send_text("quit", "error", "Room not found.", websocket)
             elif error_code == 2:
@@ -1047,7 +1049,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
                 if error_code == 0:
                     cManager.change_room_id(person_id, -1)
                     await cManager.broadcast_json("signout", "game_list", read_game(room_id, db), room_id)
-                    room_list_dirty_bit = True
+                    room_list_dirty_bit.set()
 
             await ConnectionManager.send_text("signout", "success", "Successfully signed out.", websocket)
             await cManager.close(websocket)
@@ -1084,7 +1086,7 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             if room["state"] == schemas.RoomStateEnum.Wait:
                 crud.update_room_to_play(db, room_id=room_id, \
                     time_offset=data.get("time_offset", 5), time_duration=data.get("time_duration", 60))
-                room_list_dirty_bit = True
+                room_list_dirty_bit.set()
 
                 # https://tech.buzzvil.com/blog/asyncio-no-1-coroutine-and-eventloop/
                 # 멀티스레드를 사용하여, start 요청을 보낸 사람(방장)이 접속 종료 시 해당 방의 게임이 멈춰버리던 문제 해결
