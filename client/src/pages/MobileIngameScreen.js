@@ -39,10 +39,26 @@ export default function MobileInGameScreen() {
   const [roomInfo, setRoomInfo] = useState(state["room"]);
   const [msg, setMsg] = useState("");
   const [showTime, setShowTime] = useState(false);
+  const preventGoBack = () => {
+    setMsg(Language[mode].quit_warning_text);
+    setShowTime(true);
+    window.history.pushState(null, "", window.location.href);
+  };
 
+  useEffect(() => {
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", preventGoBack); // 뒤로가기를 누르면
+
+    return () => {
+      window.removeEventListener("popstate", preventGoBack);
+      //handleCloseDrawer();
+    };
+  }, []);
   const _getTimeOffset = (room) => {
     const current = new Date();
-    var start = new Date(room["init_time"].slice(0, 19));
+    var start = new Date(room["init_time"].slice(0, 19).replace(" ", "T"));
+    /* IOS에서만 NaN 뜨는 오류 
+  https://stackoverflow.com/questions/66252303/time-shows-as-nan-on-iphone-only*/
     start.setSeconds(start.getSeconds() + room["time_offset"]);
     var left = parseInt((start.getTime() - current.getTime()) / 1000);
 
