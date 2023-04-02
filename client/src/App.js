@@ -26,6 +26,9 @@ import PrivateRoute from "./utils/PrivateRoute";
 import { Navigate } from "react-router-dom";
 import TutorialBtn from "./components/common/TutorialBtn";
 import TutorialModal from "./components/common/TutorialModal";
+import SvgIcon from "./components/common/SvgIcon";
+import MusicOnSrc from "./assets/images/music_on.png";
+import MusicOffSrc from "./assets/images/music_off.png";
 const Background = styled.div`
   width: 100%;
   height: 100vh;
@@ -43,13 +46,35 @@ function App() {
   const [audioAllowed, setAudioAllowed] = useState(false);
   const [tutorialModalVisible, setTutorialModalVisible] = useState(false);
   useEffect(() => {
-    if (isNaN(params[2]) === false) {
+    if (params[3] === "game" || params[3] === "result") {
       setInGame(true);
     } else {
       setInGame(false);
     }
   });
 
+  const inGameAudio = useRef(null);
+  const basicAudio = useRef(null);
+
+  const onPlayMusic = () => {
+    setAudioAllowed(true);
+
+    if (inGame) {
+      inGameAudio.current.play();
+    } else {
+      basicAudio.current.play();
+    }
+  };
+
+  const onPauseMusic = () => {
+    setAudioAllowed(false);
+
+    if (inGame) {
+      inGameAudio.current.pause();
+    } else {
+      basicAudio.current.pause();
+    }
+  };
   return (
     <WebsocketProvider>
       <LanguageContext.Provider value={mode}>
@@ -60,7 +85,7 @@ function App() {
                 src={GameMusicSrc}
                 autoPlay={audioAllowed}
                 loop={true}
-                muted={inGame && !audioAllowed}
+                ref={inGameAudio}
               ></audio>
             ) : (
               <LeftTop>
@@ -68,16 +93,39 @@ function App() {
                   src={WatingMusicSrc}
                   loop={true}
                   autoPlay={audioAllowed}
-                  muted={!inGame && !audioAllowed}
-                  controls={pathname === "/"}
-                  onPlay={(e) => {
-                    setAudioAllowed(true);
-                  }}
-                  onPause={(e) => {
-                    setAudioAllowed(false);
-                  }}
+                  ref={basicAudio}
                 ></audio>
               </LeftTop>
+            )}
+
+            {pathname === "/" ? (
+              audioAllowed ? (
+                <img
+                  src={MusicOnSrc}
+                  onClick={onPauseMusic}
+                  width={"50px"}
+                  style={{
+                    cursor: "pointer",
+                    position: "absolute",
+                    top: "3%",
+                    left: "2%",
+                  }}
+                />
+              ) : (
+                <img
+                  src={MusicOffSrc}
+                  onClick={onPlayMusic}
+                  width={"50px"}
+                  style={{
+                    cursor: "pointer",
+                    position: "absolute",
+                    top: "3%",
+                    left: "2%",
+                  }}
+                />
+              )
+            ) : (
+              <></>
             )}
 
             {pathname == "/" && (
@@ -100,7 +148,7 @@ function App() {
                 <Route
                   path={"/*"}
                   element={() => {
-                    alert("Page not found");
+                    alert("Page not found.");
                     return <Navigate to="/" />;
                   }}
                 />
@@ -108,7 +156,7 @@ function App() {
               <Route
                 path={"/*"}
                 element={() => {
-                  alert("Page not found");
+                  alert("Page not found.");
                   return <Navigate to="/" />;
                 }}
               />
@@ -122,7 +170,7 @@ function App() {
                 src={GameMusicSrc}
                 autoPlay={audioAllowed}
                 loop={true}
-                muted={inGame && !audioAllowed}
+                ref={inGameAudio}
               ></audio>
             ) : (
               <Bottom>
@@ -130,16 +178,38 @@ function App() {
                   src={WatingMusicSrc}
                   loop={true}
                   autoPlay={audioAllowed}
-                  muted={!inGame && !audioAllowed}
-                  controls={pathname === "/"}
-                  onPlay={(e) => {
-                    setAudioAllowed(true);
-                  }}
-                  onPause={(e) => {
-                    setAudioAllowed(false);
-                  }}
+                  ref={basicAudio}
                 ></audio>
               </Bottom>
+            )}
+            {pathname === "/" ? (
+              audioAllowed ? (
+                <img
+                  src={MusicOnSrc}
+                  onClick={onPauseMusic}
+                  width={"50px"}
+                  style={{
+                    cursor: "pointer",
+                    position: "absolute",
+                    top: "3%",
+                    left: "2%",
+                  }}
+                />
+              ) : (
+                <img
+                  src={MusicOffSrc}
+                  onClick={onPlayMusic}
+                  width={"50px"}
+                  style={{
+                    cursor: "pointer",
+                    position: "absolute",
+                    top: "3%",
+                    left: "2%",
+                  }}
+                />
+              )
+            ) : (
+              <></>
             )}
             {pathname === "/" && (
               <TutorialBtn
