@@ -39,8 +39,8 @@ export const Language = [
       return `You'll be moved to the room in ${count} seconds...`;
     },
     no_room_text: "Create new room to play!😁",
-    limited_text: "You cannot play the same hand in a row.",
-    quick_start_limit_text: "there's no room available",
+    limited_text: "You cannot throw the same hand in a row.",
+    quick_start_limit_text: "There's no room available",
     quit_warning_text: "You cannot quit from playing room",
     tutorial: [
       "How to play",
@@ -54,15 +54,18 @@ export const Language = [
     tutorial_details: [
       [
         "Press F11 for best experience.",
-        "Enjoy rock paper scissor with several friends!",
+        "Enjoy Rock-Paper-Scissors with your friends!",
+        "6-15 people are the best! 👍",
+        "Up to 30 people can play!",
+        "Solo play is also available with bots 🤖",
       ],
       "Please enter your nickname.",
       `You can create room 
       or 
       join the existing room.`,
       `⦁ normal : normal mode 
-      ⦁ limited : cannot play the same sand in a row.
-      ⦁ Only a admin can set the mode. 
+      ⦁ limited : cannot throw the same sand in a row.
+      ⦁ Only the room host can set the mode. 
       `,
       `⦁ Dumb : A bot that only throws the losing hand 
       ⦁ Skilled : A bot that only throws the winning hand 
@@ -129,7 +132,13 @@ export const Language = [
       "6. 플레이",
     ],
     tutorial_details: [
-      "F11 버튼을 눌러 전체화면으로 플레이하세요! ",
+      [
+        "F11 버튼을 눌러 전체화면으로 플레이하세요!",
+        "여럿이서 가위바위보를 즐겨보세요!",
+        "추천 인원 6~15명! 👍",
+        "최대 30명까지 플레이 가능!",
+        "혼자서도 봇과 함께 재미있게! 🤖",
+      ],
       "게임에서 사용할 닉네임을 입력해주세요.",
       "새롭게 방을 생성하거나 기존에 있던 방에 입장하세요.",
       `⦁ normal: 일반 모드
@@ -140,7 +149,7 @@ export const Language = [
       ⦁ Skilled: 이기는 손만 내는 봇 
       ⦁ 봇 설정은 방장만 가능합니다.
       `,
-      "시작버튼을 눌러 게임을 시작하세요. ",
+      "시작 버튼을 눌러 게임을 시작하세요. ",
       `가장 마지막에 낸 사람의 손이 화면에 크게 보입니다. 이 손을 이기면
       +1점! 지면 -1점! 60초 안에 가장 많은 점수를 획득하세요!`,
     ],
