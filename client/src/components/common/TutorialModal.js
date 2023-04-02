@@ -35,9 +35,16 @@ export default function TutorialModal({ modalVisible, setModalVisible }) {
         {Language[mode].tutorial[0]}
       </GradientText>
       <MediumOutline size="20px" color="var(--background)">
-        {isMobile
-          ? Language[mode].tutorial_details[0][1]
-          : Language[mode].tutorial_details[0][0]}
+        {isMobile === false && Language[mode].tutorial_details[0][0]}
+
+        <br />
+        {Language[mode].tutorial_details[0][1]}
+        <br />
+        {Language[mode].tutorial_details[0][2]}
+        <br />
+        {Language[mode].tutorial_details[0][3]}
+        <br />
+        {Language[mode].tutorial_details[0][4]}
       </MediumOutline>
     </Col>,
     <Col>
@@ -156,6 +163,12 @@ const Col = styled.div`
   padding: 20px;
   align-items: center;
   height: 80%;
+
+  @media (max-width: 767px) {
+    //모바일
+    overflow: hidden scroll;
+    transform: scale(1vw * 0.8); // 사이즈에 비례해서 작아지도록
+  }
 `;
 
 const Box = styled.div`
