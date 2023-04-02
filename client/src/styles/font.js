@@ -6,6 +6,7 @@ export const Medium = styled.text`
   color: ${({ color }) => (color ? color : "black")};
   text-shadow: ${({ shadow }) =>
     shadow ? " 0px 5.17647px 5.17647px rgba(0, 0, 0, 0.25);" : "none"};
+  white-space: pre-wrap;
 `;
 
 export const GradientText = styled.text`
@@ -15,6 +16,7 @@ export const GradientText = styled.text`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  white-space: pre-line;
 `;
 export const NavyGradient = styled.text`
   font-family: "KOTRAHOPE";
@@ -45,6 +47,6 @@ export const MediumOutline = styled.text`
   text-align: center;
   flex-direction: row;
   display: flex;
-
+  white-space: pre-wrap;
   text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.25);
 `;

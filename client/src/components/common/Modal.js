@@ -81,7 +81,7 @@ const ModalWrapper = styled.div`
   @media (min-width: 1200px) {
     // 데스크탑 일반
 
-    width: 60vw;
-    height: 55vh;
+    width: 70vw;
+    height: 85vh;
   }
 `;
