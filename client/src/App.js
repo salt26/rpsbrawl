@@ -16,6 +16,7 @@ import "./App.css";
 import { useState, useRef, useEffect, createContext } from "react";
 import { WebsocketContext } from "./utils/WebSocketProvider";
 import { WebsocketProvider } from "./utils/WebSocketProvider";
+import { Language } from "./db/Language";
 import { LanguageContext } from "./utils/LanguageProvider";
 import Toggle from "./components/Toggle";
 import { useLocation } from "react-router-dom";
@@ -150,7 +151,7 @@ function App() {
                 <Route
                   path={"/*"}
                   element={() => {
-                    alert("Page not found.");
+                    alert(Language[mode].page_not_found);
                     return <Navigate to="/" />;
                   }}
                 />
@@ -158,7 +159,7 @@ function App() {
               <Route
                 path={"/*"}
                 element={() => {
-                  alert("Page not found.");
+                  alert(Language[mode].page_not_found);
                   return <Navigate to="/" />;
                 }}
               />
@@ -225,7 +226,7 @@ function App() {
                 <Route
                   path={"/*"}
                   element={() => {
-                    alert("Page not found");
+                    alert(Language[mode].page_not_found);
                     return <Navigate to="/" />;
                   }}
                 />
@@ -233,7 +234,7 @@ function App() {
               <Route
                 path={"/*"}
                 element={() => {
-                  alert("Page not found");
+                  alert(Language[mode].page_not_found);
                   return <Navigate to="/" />;
                 }}
               />
