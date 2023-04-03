@@ -17,6 +17,7 @@ const SvgIcon = ({ src, size, color, width, height, onClick }) => {
 export default SvgIcon;
 
 const IconContainer = styled.div`
+  display: flex;
   justify-content: center;
   align-items: center;
 

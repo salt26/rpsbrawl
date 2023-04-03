@@ -59,22 +59,15 @@ function App() {
   const onPlayMusic = () => {
     setAudioAllowed(true);
 
-    if (inGame) {
-      inGameAudio.current.play();
-    } else {
-      basicAudio.current.play();
-    }
+    basicAudio.current.play();
   };
 
   const onPauseMusic = () => {
     setAudioAllowed(false);
 
-    if (inGame) {
-      inGameAudio.current.pause();
-    } else {
-      basicAudio.current.pause();
-    }
+    basicAudio.current.pause();
   };
+
   return (
     <WebsocketProvider>
       <LanguageContext.Provider value={mode}>
@@ -88,16 +81,13 @@ function App() {
                 ref={inGameAudio}
               ></audio>
             ) : (
-              <LeftTop>
-                <audio
-                  src={WatingMusicSrc}
-                  loop={true}
-                  autoPlay={audioAllowed}
-                  ref={basicAudio}
-                ></audio>
-              </LeftTop>
+              <audio
+                src={WatingMusicSrc}
+                loop={true}
+                autoPlay={audioAllowed}
+                ref={basicAudio}
+              ></audio>
             )}
-
             {pathname === "/" ? (
               audioAllowed ? (
                 <img
@@ -127,7 +117,6 @@ function App() {
             ) : (
               <></>
             )}
-
             {pathname == "/" && (
               <TutorialBtn
                 setTutorialModalVisible={setTutorialModalVisible}
@@ -173,38 +162,36 @@ function App() {
                 ref={inGameAudio}
               ></audio>
             ) : (
-              <Bottom>
-                <audio
-                  src={WatingMusicSrc}
-                  loop={true}
-                  autoPlay={audioAllowed}
-                  ref={basicAudio}
-                ></audio>
-              </Bottom>
+              <audio
+                src={WatingMusicSrc}
+                loop={true}
+                autoPlay={audioAllowed}
+                ref={basicAudio}
+              ></audio>
             )}
             {pathname === "/" ? (
               audioAllowed ? (
                 <img
                   src={MusicOnSrc}
                   onClick={onPauseMusic}
-                  width={"50px"}
+                  width={"30px"}
                   style={{
                     cursor: "pointer",
                     position: "absolute",
                     top: "3%",
-                    left: "2%",
+                    left: "3%",
                   }}
                 />
               ) : (
                 <img
                   src={MusicOffSrc}
                   onClick={onPlayMusic}
-                  width={"50px"}
+                  width={"30px"}
                   style={{
                     cursor: "pointer",
                     position: "absolute",
                     top: "3%",
-                    left: "2%",
+                    left: "3%",
                   }}
                 />
               )
