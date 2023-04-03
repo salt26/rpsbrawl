@@ -50,7 +50,7 @@ export default function TimeBar({ roomInfo }) {
     // start_time이랑 비교해서 남은시간제한 구하기.
     // 형식 => 2023-01-03 00:35:41.029853 KST
     const current = new Date();
-    var end = new Date(targetISOString.slice(0, 19));
+    var end = new Date(targetISOString.slice(0, 19).replace(" ", "T"));
     end.setSeconds(end.getSeconds() + roomInfo["time_duration"]);
     var left = Math.floor((end.getTime() - current.getTime()) / 1000);
 

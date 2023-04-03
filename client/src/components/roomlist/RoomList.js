@@ -37,6 +37,7 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
           alert(res.message);
           return;
         }
+
         if (res.response === "error_refresh") {
           const enteredPassword = prompt("please enter password");
           if (enteredPassword !== null) {

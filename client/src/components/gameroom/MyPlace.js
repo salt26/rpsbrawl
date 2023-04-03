@@ -52,11 +52,17 @@ export default function MyPlace({ place }) {
       <Row>
         <Rank rank={rank} isMobile={isMobile} />
         <Col>
-          <Medium size={isMobile ? "var(--font-size-md)" : "30px"}>
-            {team_color[team]}
-          </Medium>
+          <Medium size={`var(--font-size-md)`}>{team_color[team]}</Medium>
 
-          <Medium size={`var(--font-size-md)`}>{name}</Medium>
+          <Medium
+            size={
+              isMobile
+                ? String(10 - 4 * (name.length / 5)) + "vw"
+                : String(30 - 6 * (name.length / 7)) + "px"
+            }
+          >
+            {name}
+          </Medium>
         </Col>
 
         {score >= 0 ? (
