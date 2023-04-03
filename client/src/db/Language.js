@@ -81,8 +81,7 @@ export const Language = [
     title: "RPS Brawl",
     intro_text: "여러명의 친구들과 가위바위보 난투를 즐기세요! 😁",
     rule: "규칙",
-    explanation: `가장 마지막에 낸 사람의 손이 화면에 크게 보입니다. 이 손을 이기면
-          +1점! 지면 -1점! 60초 안에 가장 많은 점수를 획득하세요!`,
+    explanation: `가장 마지막에 낸 사람의 손이 화면에 크게 보입니다. 이 손을 이기면 +1점! 지면 -1점! 60초 안에 가장 많은 점수를 획득하세요!`,
     start: "시작",
     entrance: "입장",
     name: "이름",

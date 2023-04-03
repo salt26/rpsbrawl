@@ -61,7 +61,7 @@ export default function ResultBoard({ result }) {
     >
       <Col>
         <Title>
-          <SvgIcon src={ClockSrc} size="80px" />
+          <SvgIcon src={ClockSrc} size="50px" />
           <Medium color={"var(--mint)"}>{Language[mode].time_over}</Medium>
         </Title>
         <SizedBox height={10} />

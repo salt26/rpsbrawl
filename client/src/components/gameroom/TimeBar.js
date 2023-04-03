@@ -66,14 +66,14 @@ export default function TimeBar({ roomInfo }) {
 
   return (
     <Row>
-      <SvgIcon src={ClockSrc} size={isMobile ? "50px" : "100px"} />
-      <SizedBox width={"30px"} />
+      <SvgIcon src={ClockSrc} size={isMobile ? `30vw` : "50px"} />
+      <SizedBox width={"6vw"} />
       <ProgressBar
         completed={String((sec * 100) / time_duration)}
         customLabel=" "
         bgColor={sec / time_duration <= 0.2 ? "var(--red)" : "#BDFF00"}
-        width={isMobile ? `250px` : "550px"}
-        height="40px"
+        width={isMobile ? `70vw` : "550px"}
+        height="5vh"
       />
       <SizedBox width={"10px"} />
       <Medium color="white" size={"25px"}>
@@ -85,7 +85,7 @@ export default function TimeBar({ roomInfo }) {
 const Row = styled.div`
   display: flex;
   width: 100%;
-  height: 50px;
+
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;

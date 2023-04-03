@@ -14,6 +14,7 @@ import { Language } from "../../db/Language";
 import { LanguageContext } from "../../utils/LanguageProvider";
 import palette from "../../styles/palette";
 import { useMediaQuery } from "react-responsive";
+import { isMobile } from "react-device-detect";
 
 //1등 점수 정보
 export default function NetworkLogs({ logs }) {
@@ -50,7 +51,7 @@ export default function NetworkLogs({ logs }) {
     <div
       style={{
         width: isMobile ? "90%" : "60%",
-        height: "100%",
+        height: isMobile ? "30vh" : "300px",
 
         display: "flex",
         flexDirection: "column",
@@ -58,51 +59,49 @@ export default function NetworkLogs({ logs }) {
         alignItems: "flex-start",
       }}
     >
-      <Medium size={"30px"} color={"white"}>
+      <Medium size={"var(--font-size-ml)"} color={"white"}>
         {Language[mode].network_logs}
       </Medium>
       <SizedBox height={"10px"} />
 
-      <BgBox>
-        <ScrollView ref={scrollRef} id="log_container">
-          {/*네트워크 로그*/}
-          <table>
-            <tbody>
-              {logs &&
-                logs.map(({ team, name, hand, score }, idx) => (
-                  <Log
-                    belong={team === -1 ? "bot" : team_color[team]}
-                    key={idx}
-                    name={name}
-                    rps={rpsDic[hand]}
-                    score={score}
-                  />
-                ))}
-            </tbody>
-          </table>
-        </ScrollView>
-      </BgBox>
+      <ScrollView ref={scrollRef} id="log_container">
+        {/*네트워크 로그*/}
+        <table>
+          <tbody>
+            {logs &&
+              logs.map(({ team, name, hand, score }, idx) => (
+                <Log
+                  belong={team === -1 ? "bot" : team_color[team]}
+                  key={idx}
+                  name={name}
+                  rps={rpsDic[hand]}
+                  score={score}
+                />
+              ))}
+          </tbody>
+        </table>
+      </ScrollView>
     </div>
   );
 }
 
 function Log({ belong, name, rps, score }) {
   var rpsDic = {
-    rock: <Rock size="50px" />,
-    scissor: <Scissor size="50px" />,
-    paper: <Paper size="50px" />,
+    rock: <Rock size={isMobile ? "10vw" : "50px"} />,
+    scissor: <Scissor size={isMobile ? "10vw" : "50px"} />,
+    paper: <Paper size={isMobile ? "10vw" : "50px"} />,
   };
 
   return (
     <Row>
       <Td flex={0.3}>
-        <GradientText size="30px" bg={palette[belong]}>
+        <GradientText size="var(--font-size-ml)" bg={palette[belong]}>
           {belong}
         </GradientText>
       </Td>
       <Td flex={0.5}>
         {/*String(30 - 6 * (name.length % 7)) + "px"*/}
-        <Medium size={"15px"}>{name}</Medium>
+        <Medium size={"var(--font-size-ms)"}>{name}</Medium>
       </Td>
       <Td flex={0.1}>{rpsDic[rps]}</Td>
       <Td flex={0.1}>
@@ -138,6 +137,11 @@ const ScrollView = styled.div`
   padding-right: 10px;
   overflow-x: hidden;
   overflow-y: scroll;
+
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    height: 500px;
+  }
 `;
 const Row = styled.tr`
   display: flex;
@@ -150,17 +154,6 @@ const Row = styled.tr`
 `;
 const BgBox = styled.div`
   width: 100%;
-
-  @media (max-width: 767px) {
-    //모바일
-    height: 50%;
-    max-height: 50%;
-  }
-
-  @media (min-width: 1200px) {
-    // 데스크탑 일반
-    height: 300px;
-  }
 
   background-color: ${({ bgColor }) => (bgColor ? bgColor : "white")};
   border-radius: 10px;

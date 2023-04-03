@@ -35,27 +35,30 @@ export default function FirstPlace({ place }) {
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const mode = useContext(LanguageContext);
   return (
-    <BgBox width={isMobile ? "45%" : "60%"} height={isMobile ? "80%" : "100px"}>
+    <BgBox
+      width={isMobile ? "45%" : "60%"}
+      height={isMobile ? "10vh" : "100px"}
+    >
       <Row>
         <SvgIcon src={TrophySrc} size={isMobile ? "50px" : "80px"} />
         <Col>
-          <Medium size={isMobile ? "20px" : "27px"}>{team_color[team]}</Medium>
+          <Medium size={`var(--font-size-md)`}>{team_color[team]}</Medium>
 
-          <Medium size={getNameSize(name)}>{name}</Medium>
+          <Medium size={`var(--font-size-md)`}>{name}</Medium>
         </Col>
         {score >= 0 ? (
           <GradientText
             bg={
               "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
             }
-            size={isMobile ? "30px" : "50px"}
+            size={isMobile ? "var(--font-size-lg)" : "50px"}
           >
             +{score}
           </GradientText>
         ) : (
           <GradientText
             bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
-            size={isMobile ? "30px" : "50px"}
+            size={isMobile ? "var(--font-size-lg)" : "50px"}
           >
             {score}
           </GradientText>

@@ -212,7 +212,7 @@ export default function MobileInGameScreen() {
         {showTime && <MessageBox>{msg}</MessageBox>}
 
         <TimeBar roomInfo={roomInfo} />
-
+        <SizedBox height={"10px"} />
         <Row>
           <FirstPlace place={firstPlace.current} />
           <MyPlace place={myPlace.current} />
@@ -317,15 +317,15 @@ const Col = styled.div`
   align-items: center;
   width: 100%;
   height: 100vh;
-
-  padding: 10px;
+  overflow: scroll;
+  padding: 20px;
 `;
 
 const Row = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
-  height: 100px;
+  height: 10vh;
 `;

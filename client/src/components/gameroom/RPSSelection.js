@@ -10,6 +10,7 @@ import { WebsocketContext } from "../../utils/WebSocketProvider";
 import useInterval from "../../utils/useInterval";
 import { COOL_TIME } from "../../Config";
 import { GradientText } from "../../styles/font";
+import { isMobile } from "react-device-detect";
 
 function RPSSelection({ lastHand }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
@@ -41,20 +42,31 @@ function RPSSelection({ lastHand }) {
     return () => clearInterval(id);
   }, [coolTime]);
 
+  const selectImgStyle = {
+    height: isMobile ? "10vh" : "100px",
+  };
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        maxHeight: isMobile ? "40vh" : "auto",
+        width: "100%",
       }}
     >
-      <img src={rpsDic[lastHand]} width="80%" height={"auto"} />
+      <img
+        src={rpsDic[lastHand]}
+        style={{
+          height: isMobile ? "30vh" : "auto",
+          width: isMobile ? "auto" : "50%",
+        }}
+      />
       <Row>
         <ImgBox coolTime={coolTime}>
           <img
             src={RockSrc}
-            width="100px"
+            style={selectImgStyle}
             onClick={() => {
               if (!coolTime) _addHand(0);
             }}
@@ -64,7 +76,7 @@ function RPSSelection({ lastHand }) {
         <ImgBox coolTime={coolTime}>
           <img
             src={ScissorSrc}
-            width="100px"
+            style={selectImgStyle}
             onClick={() => {
               if (!coolTime) _addHand(1);
             }}
@@ -74,7 +86,7 @@ function RPSSelection({ lastHand }) {
           {" "}
           <img
             src={PaperSrc}
-            width="100px"
+            style={selectImgStyle}
             onClick={() => {
               if (!coolTime) _addHand(2);
             }}
@@ -95,10 +107,10 @@ const Row = styled.div`
   position: relative;
   display: flex;
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 5vw;
 
-  width: 80%;
-
+  width: 100%;
   align-items: center;
 
   z-index: 3;

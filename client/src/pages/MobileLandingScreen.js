@@ -29,26 +29,26 @@ function Tabs({ currentTab, setCurrentTab }) {
     <RowBetween>
       {currentTab == 0 ? (
         <SelectedTab>
-          <MediumOutline size="30px" color="var(--purple)">
+          <MediumOutline size="var(--font-size-lg)" color="var(--purple)">
             {Language[mode].rule}
           </MediumOutline>
         </SelectedTab>
       ) : (
         <Tab onClick={() => setCurrentTab(0)}>
-          <MediumOutline size="30px" color="gray">
+          <MediumOutline size="var(--font-size-lg)" color="gray">
             {Language[mode].rule}
           </MediumOutline>
         </Tab>
       )}
       {currentTab == 1 ? (
         <SelectedTab>
-          <MediumOutline size="30px" color="var(--purple)">
+          <MediumOutline size="var(--font-size-lg)" color="var(--purple)">
             {Language[mode].start}
           </MediumOutline>
         </SelectedTab>
       ) : (
         <Tab onClick={() => setCurrentTab(1)}>
-          <MediumOutline size="30px" color="gray">
+          <MediumOutline size="var(--font-size-lg)" color="gray">
             {Language[mode].start}
           </MediumOutline>
         </Tab>
@@ -99,7 +99,7 @@ function RuleBox() {
     <BgBox width="80%" height="30vh" color="white">
       <Center>
         <SizedBox height={"50px"} />
-        <Medium size="23px" color="var(--purple)">
+        <Medium size="var(--font-size-ml)" color="var(--purple)">
           {Language[mode].explanation}
         </Medium>
       </Center>
@@ -133,7 +133,7 @@ function LoginBox() {
 
         <Row>
           {" "}
-          <Medium size="25px" color="var(--purple)">
+          <Medium size={`var(--font-size-ml)`} color="var(--purple)">
             {Language[mode].name}
           </Medium>
           <input
@@ -174,14 +174,14 @@ export default function MobileLandingScreen() {
 
       <RPSBox delay={5}>
         <Anim delay={1}>
-          <SvgIcon src={ScissorSrc} size="100px" />
+          <SvgIcon src={ScissorSrc} size="100%" />
         </Anim>
 
         <Anim delay={2}>
-          <SvgIcon src={RockSrc} size="100px" />
+          <SvgIcon src={RockSrc} size="100%" />
         </Anim>
         <Anim delay={3}>
-          <SvgIcon src={PaperSrc} size="100px" />
+          <SvgIcon src={PaperSrc} size="100%" />
         </Anim>
       </RPSBox>
 
@@ -197,7 +197,6 @@ export default function MobileLandingScreen() {
 
         {currentTab === 0 ? <RuleBox /> : <LoginBox />}
       </div>
-      <SizedBox height={"10px"} />
     </Container>
   );
 }
@@ -210,6 +209,7 @@ linear | ease | ease-in | ease-out | ease-in-out | step-start | step-end | steps
 const Anim = styled.div`
   animation: anim1 5s infinite ease-in-out;
   animation-delay: ${({ delay }) => delay}s;
+
   @keyframes anim1 {
     0% {
       transform: translate(0);
@@ -283,7 +283,7 @@ const Center = styled.div`
 `;
 const RPSBox = styled.div`
   display: flex;
-  width: 30%;
+  width: 80vw;
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
