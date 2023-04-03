@@ -51,7 +51,7 @@ export default function NetworkLogs({ logs }) {
     <div
       style={{
         width: isMobile ? "90%" : "60%",
-        height: isMobile ? "30vh" : "300px",
+        height: isMobile ? "35vh" : "350px",
 
         display: "flex",
         flexDirection: "column",
@@ -151,14 +151,4 @@ const Row = styled.tr`
   width: 100%;
 
   gap: 20px;
-`;
-const BgBox = styled.div`
-  width: 100%;
-
-  background-color: ${({ bgColor }) => (bgColor ? bgColor : "white")};
-  border-radius: 10px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 `;

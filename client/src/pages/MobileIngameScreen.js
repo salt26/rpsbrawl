@@ -312,7 +312,7 @@ const Count = styled.text`
 const Col = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: space-between;
 
   align-items: center;
   width: 100%;

@@ -44,7 +44,15 @@ export default function FirstPlace({ place }) {
         <Col>
           <Medium size={`var(--font-size-md)`}>{team_color[team]}</Medium>
 
-          <Medium size={`var(--font-size-md)`}>{name}</Medium>
+          <Medium
+            size={
+              isMobile
+                ? String(10 - 4 * (name.length / 5)) + "vw"
+                : String(30 - 6 * (name.length / 7)) + "px"
+            }
+          >
+            {name}
+          </Medium>
         </Col>
         {score >= 0 ? (
           <GradientText
