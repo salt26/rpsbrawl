@@ -1154,8 +1154,25 @@ dormancy quit: 대기 방에서 10분 이상 아무 요청을 보내지 않은 �
 {
   request: "dormancy",
   response: "quit",
-  type: "message",
-  message: "You are sent out of the room because of inactivity."
+  type: "room_list",
+  data: [
+    {
+      state: 0,                                     // Wait
+      time_offset : -1,                             // 대기 방에서는 -1
+      time_duration : -1,                           // 대기 방에서는 -1
+      init_time: "",                                // 대기 방에서는 빈 문자열로 반환
+      start_time: "",                               // 대기 방에서는 빈 문자열로 반환
+      end_time: "",                                 // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0,                                      // Normal
+      has_password: True,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7                                 // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    ...   // 대기 방과 플레이 중인 방 개수만큼 존재
+  ]
 }
 ```
 * 이 메시지를 받으면 클라이언트에서는 방 목록 화면으로 이동해야 한다.

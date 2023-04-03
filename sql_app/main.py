@@ -772,7 +772,7 @@ async def remove_dormancy_person(db: Session):
                 if error_code == 0:
                     if con is not None:
                         cManager.change_room_id(game.person_id, -1)
-                        await ConnectionManager.send_text("dormancy", "quit", "You are sent out of the room because of inactivity.", con[0])
+                        await ConnectionManager.send_json("dormancy", "quit", "room_list", read_non_end_rooms(db), con[0])
                     await cManager.broadcast_json("dormancy", "game_list", read_game(game.room_id, db), game.room_id)
 
 async def auto_refresh_room_list(db: Session):
@@ -780,7 +780,6 @@ async def auto_refresh_room_list(db: Session):
         room_list_dirty_bit.clear()
         for con in cManager.find_all_connections_by_room_id(-1):
             await ConnectionManager.send_json("auto_refresh", "success", "room_list", read_non_end_rooms(db), con[0])
-        print("auto_refresh_room_list")
 
 async def periodic_manager(time_interval: int):
     # DB 세션을 새로 만들어서, 스레드 당 하나의 세션을 가지도록 해야 여러 스레드가 DB에 동시에 접근해서 생기는 문제가 발생하지 않는다.
@@ -788,7 +787,6 @@ async def periodic_manager(time_interval: int):
     try:
         while True:
             tasks = []
-            print("periodic_manager " + str(room_list_dirty_bit.is_set()))
             tasks.append(remove_dormancy_person(db))
             tasks.append(auto_refresh_room_list(db))
             tasks.append(asyncio.sleep(time_interval))
