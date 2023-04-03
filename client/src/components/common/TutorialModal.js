@@ -31,10 +31,10 @@ export default function TutorialModal({ modalVisible, setModalVisible }) {
   const content = [
     <Col>
       {isMobile ? <Logo size="s" /> : <Logo size="m" />}
-      <GradientText bg={blueGradient} size="30px">
+      <GradientText bg={blueGradient} size="var(--font-size-lg)">
         {Language[mode].tutorial[0]}
       </GradientText>
-      <MediumOutline size="20px" color="var(--background)">
+      <MediumOutline size="var(--font-size-ms)" color="var(--background)">
         {isMobile === false && Language[mode].tutorial_details[0][0]}
 
         <br />
@@ -48,67 +48,67 @@ export default function TutorialModal({ modalVisible, setModalVisible }) {
       </MediumOutline>
     </Col>,
     <Col>
-      <GradientText bg={blueGradient} size="30px">
+      <GradientText bg={blueGradient} size="var(--font-size-lg)">
         {Language[mode].tutorial[1]}
       </GradientText>
       <Box>
         <SvgIcon src={Step1Src} width="300px" />
-        <MediumOutline size="20px" color="var(--background)">
+        <MediumOutline size="var(--font-size-ms)" color="var(--background)">
           {Language[mode].tutorial_details[1]}
         </MediumOutline>
       </Box>
     </Col>,
     <Col>
-      <GradientText bg={blueGradient} size="30px">
+      <GradientText bg={blueGradient} size="var(--font-size-lg)">
         {Language[mode].tutorial[2]}
       </GradientText>
       <Box>
         <SvgIcon src={Step2Src} width="300px" />
-        <MediumOutline size="20px" color="var(--background)">
+        <MediumOutline size="var(--font-size-ms)" color="var(--background)">
           {Language[mode].tutorial_details[2]}
         </MediumOutline>
       </Box>
     </Col>,
     <Col>
-      <GradientText bg={blueGradient} size="30px">
+      <GradientText bg={blueGradient} size="var(--font-size-lg)">
         {Language[mode].tutorial[3]}
       </GradientText>
       <Box>
         <SvgIcon src={Step3Src} width="300px" />
-        <MediumOutline size="20px" color="var(--background)">
+        <MediumOutline size="var(--font-size-ms)" color="var(--background)">
           {Language[mode].tutorial_details[3]}
         </MediumOutline>
       </Box>
     </Col>,
     <Col>
-      <GradientText bg={blueGradient} size="30px">
+      <GradientText bg={blueGradient} size="var(--font-size-lg)">
         {Language[mode].tutorial[4]}
       </GradientText>
       <Box>
         <SvgIcon src={Step4Src} width="300px" />
-        <MediumOutline size="20px" color="var(--background)">
+        <MediumOutline size="var(--font-size-ms)" color="var(--background)">
           {Language[mode].tutorial_details[4]}
         </MediumOutline>
       </Box>
     </Col>,
     <Col>
-      <GradientText bg={blueGradient} size="30px">
+      <GradientText bg={blueGradient} size="var(--font-size-lg)">
         {Language[mode].tutorial[5]}
       </GradientText>
 
       <SvgIcon src={Step5Src} width="100px" height={"auto"} />
-      <MediumOutline size="20px" color="var(--background)">
+      <MediumOutline size="var(--font-size-ms)" color="var(--background)">
         {Language[mode].tutorial_details[5]}
       </MediumOutline>
     </Col>,
     <Col isMobile={isMobile}>
-      <GradientText bg={blueGradient} size="30px">
+      <GradientText bg={blueGradient} size="var(--font-size-lg)">
         {Language[mode].tutorial[6]}
       </GradientText>
 
       <Box>
         <SvgIcon src={Step6Src} width="200px" />
-        <MediumOutline size="20px" color="var(--background)">
+        <MediumOutline size="var(--font-size-ms)" color="var(--background)">
           {Language[mode].tutorial_details[6]}
         </MediumOutline>
       </Box>
