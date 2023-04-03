@@ -68,6 +68,20 @@ function App() {
     basicAudio.current.pause();
   };
 
+  const audioIconShow = pathname === "/" || params[3] === "waiting";
+
+  const musicIconStyle = {
+    cursor: "pointer",
+    position: "absolute",
+    top: "3%",
+    right: "2%",
+  };
+  const mobileMusicIconStyle = {
+    cursor: "pointer",
+    position: "absolute",
+    top: "3%",
+    left: "8%",
+  };
   return (
     <WebsocketProvider>
       <LanguageContext.Provider value={mode}>
@@ -88,30 +102,20 @@ function App() {
                 ref={basicAudio}
               ></audio>
             )}
-            {pathname === "/" ? (
+            {audioIconShow ? (
               audioAllowed ? (
                 <img
                   src={MusicOnSrc}
                   onClick={onPauseMusic}
-                  width={"50px"}
-                  style={{
-                    cursor: "pointer",
-                    position: "absolute",
-                    top: "3%",
-                    left: "2%",
-                  }}
+                  width={"40px"}
+                  style={musicIconStyle}
                 />
               ) : (
                 <img
                   src={MusicOffSrc}
                   onClick={onPlayMusic}
-                  width={"50px"}
-                  style={{
-                    cursor: "pointer",
-                    position: "absolute",
-                    top: "3%",
-                    left: "2%",
-                  }}
+                  width={"40px"}
+                  style={musicIconStyle}
                 />
               )
             ) : (
@@ -133,7 +137,16 @@ function App() {
 
               <Route element={<PrivateRoute />}>
                 <Route path="/rooms" element={<RoomListPage />} />
-                <Route path="/rooms/:room_id/*" element={<GameRoomPage />} />
+                <Route
+                  path="/rooms/:room_id/*"
+                  element={
+                    <GameRoomPage
+                      inGameAudio={inGameAudio}
+                      basicAudio={basicAudio}
+                      setAudioAllowed={setAudioAllowed}
+                    />
+                  }
+                />
                 <Route
                   path={"/*"}
                   element={() => {
@@ -169,30 +182,20 @@ function App() {
                 ref={basicAudio}
               ></audio>
             )}
-            {pathname === "/" ? (
+            {audioIconShow ? (
               audioAllowed ? (
                 <img
                   src={MusicOnSrc}
                   onClick={onPauseMusic}
                   width={"30px"}
-                  style={{
-                    cursor: "pointer",
-                    position: "absolute",
-                    top: "3%",
-                    left: "3%",
-                  }}
+                  style={mobileMusicIconStyle}
                 />
               ) : (
                 <img
                   src={MusicOffSrc}
                   onClick={onPlayMusic}
                   width={"30px"}
-                  style={{
-                    cursor: "pointer",
-                    position: "absolute",
-                    top: "3%",
-                    left: "3%",
-                  }}
+                  style={mobileMusicIconStyle}
                 />
               )
             ) : (

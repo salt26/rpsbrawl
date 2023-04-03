@@ -11,7 +11,7 @@ export default function TutorialBtn({
     <IconContainer>
       <SvgIcon
         src={TutorialSrc}
-        size="30px"
+        size="40px"
         onClick={() => setTutorialModalVisible(true)}
       />
     </IconContainer>
@@ -20,7 +20,7 @@ export default function TutorialBtn({
 
 const IconContainer = styled.div`
   position: absolute;
-  right: calc(4% + 90px);
+  right: calc(3% + 40px);
   top: 3%;
   cursor: pointer;
 `;
