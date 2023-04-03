@@ -30,14 +30,14 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
 
   var navigate = useNavigate();
   const blueBtnStyle = {
-    fontSize: "25px",
+    fontSize: "var(--font-size-md)",
     width: "40%",
     height: "5vh",
     borderRadius: "10px",
     bg: "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);",
   };
   const redBtnStyle = {
-    fontSize: "25px",
+    fontSize: "var(--font-size-md)",
     width: "40%",
     height: "5vh",
     borderRadius: "10px",
@@ -90,11 +90,12 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
               },
               content: {
                 width: "90vw",
+                backgroundColor: "red",
                 height: "35vh",
                 display: "flex",
-                backgroundColor: "orange",
+        
                 flexDirection: "column",
-                justifyContent: "space-between",
+                justifyContent: "flex-start",
 
                 top: "30%",
                 left: "5%",
@@ -136,30 +137,31 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
       }
     >
       <TitleBox>
-        <Medium size="30px" color="white">
+        <Medium size={`var(--font-size-xl)`} color="white">
           {Language[mode].create_room}
         </Medium>
       </TitleBox>
+
       <Container>
-        <SizedBox height={"15px"} />
+        <SizedBox height={"3vh"} />
         <input
           type={"text"}
           value={roomTitle}
           onChange={(e) => setRoomTitle(e.target.value)}
           style={{
             width: "100%",
-            height: "45px",
+            height: "30%",
             borderColor: "var(--border)",
-            fontSize: "35px",
+            fontSize: "var(--font-size-xl)",
             fontFamily: "KOTRAHOPE",
           }}
         />
-        <SizedBox height={"15px"} />
+        <SizedBox height={"3vh"} />
         <Row>
           <Row2>
             <SvgIcon src={GameSrc} size="30px" />
 
-            <Medium size="30px" color="black">
+            <Medium size="var(--font-size-ml)" color="black">
               {Language[mode].mode}
             </Medium>
           </Row2>
@@ -174,7 +176,7 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
               />
             )}
 
-            <Medium size="25px" color="black">
+            <Medium size="var(--font-size-ml)" color="black">
               {Language[mode].normal}
             </Medium>
           </Row2>
@@ -188,7 +190,7 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
                 onClick={() => setGameMode(1)}
               />
             )}
-            <Medium size="25px" color="black">
+            <Medium size="var(--font-size-ml)" color="black">
               {Language[mode].limited}
             </Medium>
           </Row2>
@@ -219,7 +221,7 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
           <Row2>
             <SvgIcon src={LockSrc} size="30px" />
 
-            <Medium size="30px" color="black">
+            <Medium size="var(--font-size-ml)" color="black">
               {Language[mode].privateRoom}
             </Medium>
 
@@ -247,13 +249,13 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
                   height: "30px",
                   borderColor: "var(--border)",
                   fontFamily: "KOTRAHOPE",
-                  fontSize: "20px",
+                  fontSize: "var(--font-size-ms)",
                 }}
               />
             )}
           </Row2>
         </div>
-        <SizedBox height={"15px"} />
+        <SizedBox height={"3vh"} />
         <Row>
           <GradientBtn
             text={Language[mode].create}
@@ -268,8 +270,8 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
             onClick={() => setModalVisible(false)}
           />
         </Row>
+        <SizedBox height={"3vh"} />
       </Container>
-      <SizedBox height={"15px"} />
     </ReactModal>
   );
 }
@@ -279,16 +281,17 @@ const Row2 = styled.div`
   flex-direction: row;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 `;
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  height: 30vh;
 
   overflow: hidden;
+
   @media (max-width: 767px) {
     //모바일
     padding-left: 10px;
@@ -297,8 +300,8 @@ const Container = styled.div`
 
   @media (min-width: 1200px) {
     // 데스크탑 일반
-    padding-left: 50px;
-    padding-right: 50px;
+    padding-left: 40px;
+    padding-right: 40px;
   }
 `;
 
@@ -314,7 +317,7 @@ const TitleBox = styled.div`
   background: linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%);
   border-radius: 5px;
   width: 100%;
-  height: 20%;
+  height: 50px;
   display: flex;
   justify-content: center;
   align-items: center;

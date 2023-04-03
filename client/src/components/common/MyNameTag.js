@@ -14,11 +14,6 @@ const getNameSize = (name) => {
 };
 
 function MyNameTag({ children, size, none, color }) {
-  const fontsize = {
-    s: "25px",
-    m: "35px",
-  };
-
   return (
     <Container size={size} none={none} bg={palette[color]}>
       <Medium size={getNameSize(children)} color={"white"}>
@@ -34,7 +29,7 @@ const sizes = {
     height: "50px",
   },
   m: {
-    width: "200px",
+    width: "250px",
     height: "60px",
   },
 };

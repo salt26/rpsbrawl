@@ -45,13 +45,18 @@ export default function MyPlace({ place }) {
   };
 
   return (
-    <BgBox width={isMobile ? "45%" : "60%"} height={isMobile ? "80%" : "100px"}>
+    <BgBox
+      width={isMobile ? "45%" : "60%"}
+      height={isMobile ? "10vh" : "100px"}
+    >
       <Row>
         <Rank rank={rank} isMobile={isMobile} />
         <Col>
-          <Medium size={isMobile ? "20px" : "30px"}>{team_color[team]}</Medium>
+          <Medium size={isMobile ? "var(--font-size-md)" : "30px"}>
+            {team_color[team]}
+          </Medium>
 
-          <Medium size={getNameSize(name)}>{name}</Medium>
+          <Medium size={`var(--font-size-md)`}>{name}</Medium>
         </Col>
 
         {score >= 0 ? (
@@ -59,14 +64,14 @@ export default function MyPlace({ place }) {
             bg={
               "linear-gradient(180deg, #3AB6BC 0%, #3A66BC 100%, #2F508E 100%);"
             }
-            size={isMobile ? "30px" : "50px"}
+            size={isMobile ? "var(--font-size-lg)" : "50px"}
           >
             +{score}
           </GradientText>
         ) : (
           <GradientText
             bg={"linear-gradient(180deg, #FA1515 0%, #F97916 100%);"}
-            size={isMobile ? "30px" : "50px"}
+            size={isMobile ? "var(--font-size-lg)" : "50px"}
           >
             {score}
           </GradientText>

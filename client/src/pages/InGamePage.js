@@ -57,6 +57,7 @@ export default function InGamePage() {
       //handleCloseDrawer();
     };
   }, []);
+
   const _getTimeOffset = (room) => {
     const current = new Date();
     var start = new Date(room["init_time"].slice(0, 19));
@@ -246,16 +247,19 @@ export default function InGamePage() {
         </Left>
 
         <Right>
-          <TextContainer>
-            <Medium size={"30px"} color={"white"}>
-              {Language[mode].places}
-            </Medium>
-          </TextContainer>
-          <SizedBox height={"10px"} />
-          <FirstPlace place={firstPlace.current} />
+          <Col>
+            <TextContainer>
+              <Medium size={"30px"} color={"white"}>
+                {Language[mode].places}
+              </Medium>
+            </TextContainer>
+            <SizedBox height={"10px"} />
+            <FirstPlace place={firstPlace.current} />
+            <SizedBox height={"20px"} />
+            <MyPlace place={myPlace.current} />
+          </Col>
           <SizedBox height={"20px"} />
-          <MyPlace place={myPlace.current} />
-          <SizedBox height={"20px"} />
+
           <NetworkLogs logs={handList} />
         </Right>
       </Container>
@@ -263,6 +267,15 @@ export default function InGamePage() {
     </CountDownWrapper>
   );
 }
+
+const Col = styled.div`
+  display: flex;
+
+  flex-direction: column;
+  justify-content: space-around;
+  width: 100%;
+  align-items: center;
+`;
 
 const MsgBox = styled.div`
   position: absolute;
@@ -341,7 +354,7 @@ const Container = styled.div`
 
 const Left = styled.div`
   flex: 0.6;
-  width: 100%;
+
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -363,7 +376,8 @@ const Right = styled.div`
   display: flex;
   flex: 0.4;
   flex-direction: column;
-  justify-content: flex-start;
-
+  justify-content: space-around;
+  padding: 30px;
+  height: 100vh;
   align-items: center;
 `;
