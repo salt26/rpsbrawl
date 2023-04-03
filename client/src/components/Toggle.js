@@ -35,8 +35,16 @@ const Wrapper = styled.div`
   z-index: 5;
   align-items: center;
   position: absolute;
-  right: 3%;
+
   top: 3%;
+  @media (max-width: 767px) {
+    //모바일
+    left: calc(8% + 40px);
+  }
+  @media (min-width: 1200px) {
+    // 데스크탑 일반
+    left: 3%;
+  }
 `;
 
 const ToggleBtn = styled.button`

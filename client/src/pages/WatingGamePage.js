@@ -353,18 +353,6 @@ const Sector = styled.div`
   width: 100%;
 `;
 
-const BottomLeft = styled.div`
-  @media (max-width: 767px) {
-    //모바일
-    position: absolute;
-    bottom: 5%;
-    left: 5%;
-  }
-  @media (min-width: 1200px) {
-    // 데스크탑 일반
-  }
-`;
-
 const BottomRight = styled.div`
   @media (max-width: 767px) {
     //모바일
