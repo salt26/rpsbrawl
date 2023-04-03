@@ -61,25 +61,23 @@ export const Language = [
       ],
       "Please enter your nickname.",
       `You can create room 
-      or 
-      join the existing room.`,
+or 
+join the existing room.`,
       `⦁ Normal : normal mode.
-      ⦁ Limited : cannot throw the same hand in a row.
-      ⦁ Only the room host can set the mode.
-      `,
+⦁ Limited : cannot throw the same hand in a row.
+⦁ Only the room host can set the mode.`,
       `⦁ Anyone can change teams.
 
-      ⦁ Dumb : A bot that only throws the losing hand.
-      ⦁ Skilled : A bot that only throws the winning hand.
-      ⦁ Only the admin can set the bot.
-      `,
-      `The game starts when the host presses "Start"!`,
+⦁ Dumb : A bot that only throws the losing hand.
+⦁ Skilled : A bot that only throws the winning hand.
+⦁ Only the room host can set the bot.`,
+      `The game starts when the room host presses "Start"!`,
       `Whenever someone throws a hand, 
-      it will be displayed in the center of the screen.
-      If you win the hand, you will get +1 points.
-      But if you lose the hand, you will get -1 points.
-      You can throw your hand repeatedly every second.
-      Get the most points in 60 seconds! 🤩 `,
+it will be displayed in the center of the screen.
+If you win the hand, you will get +1 points.
+But if you lose the hand, you will get -1 points.
+You can throw your hand repeatedly every second.
+Get the most points in 60 seconds! 🤩`,
     ],
     name_blank: "Name is required.",
     name_long: "Name must be no more than 32 characters long.",
@@ -155,20 +153,19 @@ export const Language = [
       ],
       "게임에서 사용할 닉네임을 입력해주세요.",
       "새롭게 방을 생성하거나 기존에 있던 방에 입장하세요.",
+      `⦁ 일반: 일반 모드
+⦁ 한 손 제한: 연속으로 같은 손을 낼 수 없는 모드
+⦁ 모드 설정은 방장만 가능합니다.`,
       `⦁ 팀은 누구나 자유롭게 바꿀 수 있습니다.
-      ⦁ 일반: 일반 모드
-      ⦁ 한 손 제한: 연속으로 같은 손을 낼 수 없는 모드
-      ⦁ 모드 설정은 방장만 가능합니다.
-      `,
-      `⦁ 트롤봇: 지는 손만 내는 봇 
-      ⦁ 실력봇: 이기는 손만 내는 봇 
-      ⦁ 봇 설정은 방장만 가능합니다.
-      `,
+
+⦁ 트롤봇: 지는 손만 내는 봇 
+⦁ 실력봇: 이기는 손만 내는 봇 
+⦁ 봇 설정은 방장만 가능합니다.`,
       `방장이 "시작"을 누르면 게임이 시작됩니다!`,
       `누군가가 손을 낼 때마다 해당 손이 화면 중앙에 표시됩니다.
-      이 손을 이기면 +1점! 지면 -1점!
-      손은 1초마다 반복하여 낼 수 있습니다.
-      60초 안에 가장 많은 점수를 획득하세요!`,
+이 손을 이기면 +1점! 지면 -1점!
+손은 1초마다 반복하여 낼 수 있습니다.
+60초 안에 가장 많은 점수를 획득하세요!`,
     ],
     name_blank: "이름을 입력하세요.",
     name_long: "이름은 32글자 이하여야 합니다.",
