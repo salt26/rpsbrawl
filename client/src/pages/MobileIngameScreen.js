@@ -150,7 +150,7 @@ export default function MobileInGameScreen() {
         if (res?.request === "disconnected") {
           //기존 인원과 새인원 비교
 
-          setMsg("Cannot play the same hand in a row (limited mode)");
+          setMsg(Language[mode].disconnected);
           setShowTime(true);
         }
 

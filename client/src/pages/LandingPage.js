@@ -51,11 +51,11 @@ function LoginBox() {
 
   const _joinGame = () => {
     if (name === "") {
-      alert("fill in the blank");
+      alert(Language[mode].name_blank);
       return;
     }
     if (name.length > 32) {
-      alert("Name can be no more than 32 letters");
+      alert(Language[mode].name_long);
       return;
     }
 

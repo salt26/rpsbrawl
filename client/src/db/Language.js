@@ -3,10 +3,10 @@ export const Language = [
     title: "RPS Brawl",
     intro_text: "Enjoy Rock Scissor Paper with several friends! 😁",
     rule: "Rule",
-    explanation: `The lastest hand is shown in the center of the screen. If you win the hand, you will get +1 points. But if not, you will get -1 points. `,
+    explanation: `The lastest hand is shown in the center of the screen. If you win the hand, you will get +1 points. But if not, you will get -1 points.`,
     start: "Start",
     entrance: "Start",
-    name: "name",
+    name: "Name",
     join: "Join",
     quit: "Quit",
     places: "Places",
@@ -33,21 +33,21 @@ export const Language = [
     skilled: "Skilled",
     dumb: "Dumb",
     teams: ["red", "orange", "yellow", "green", "blue", "navy", "purple"],
-    time_over: "time over",
+    time_over: "Time over!",
     save_result: "Save result",
     result_page_text: (count) => {
       return `You'll be moved to the room in ${count} seconds...`;
     },
-    no_room_text: "Create new room to play!😁",
+    no_room_text: "Create new room to play! 😁",
     limited_text: "You cannot throw the same hand in a row.",
-    quick_start_limit_text: "There's no room available",
-    quit_warning_text: "You cannot quit from playing room",
+    quick_start_limit_text: "There's no room available.",
+    quit_warning_text: "You cannot quit from playing room.",
     tutorial: [
       "How to play",
-      "1. Join",
-      "2. Create room or Join the room",
-      "3. Setting",
-      "4. Team & Bot",
+      "1. Sign in",
+      "2. Create or Join a room",
+      "3. Settings",
+      "4. Teams & Bots",
       "5. Start",
       "6. Play",
     ],
@@ -63,28 +63,38 @@ export const Language = [
       `You can create room 
       or 
       join the existing room.`,
-      `⦁ normal : normal mode 
-      ⦁ limited : cannot throw the same hand in a row.
-      ⦁ Only the room host can set the mode. 
+      `⦁ Normal : normal mode.
+      ⦁ Limited : cannot throw the same hand in a row.
+      ⦁ Only the room host can set the mode.
       `,
-      `⦁ Dumb : A bot that only throws the losing hand 
-      ⦁ Skilled : A bot that only throws the winning hand 
-      ⦁ Only the admin can set the bot. 
-      ⦁ Anyone can change teams.
+      `⦁ Anyone can change teams.
+
+      ⦁ Dumb : A bot that only throws the losing hand.
+      ⦁ Skilled : A bot that only throws the winning hand.
+      ⦁ Only the admin can set the bot.
       `,
       `The game starts when the host presses "Start"!`,
-      ` The last time someone throws a hand, 
+      `Whenever someone throws a hand, 
       it will be displayed in the center of the screen.
-      If you win the hand, you will get +1 points. 
-      But if you lose the hand, you will get -1 points. 
-      You can throw your hand repeatedly every second. 
-      Get the most points in 60 seconds!🤩 `,
+      If you win the hand, you will get +1 points.
+      But if you lose the hand, you will get -1 points.
+      You can throw your hand repeatedly every second.
+      Get the most points in 60 seconds! 🤩 `,
     ],
+    name_blank: "Name is required.",
+    name_long: "Name must be no more than 32 characters long.",
+    already_end: "The game has already finished.",
+    disconnected: "Someone has disconnected.",
+    page_not_found: "Page not found.",
+    bot_exceed: "Cannot add more bots.",
+    bot_negative: "Cannot be reduced to less than zero.",
+    password_long: "Please set a password of no more than 20 characters long.",
+    title_long: "Please set a title of no more than 32 characters long.",
   },
 
   {
     title: "RPS Brawl",
-    intro_text: "여러명의 친구들과 가위바위보 난투를 즐기세요! 😁",
+    intro_text: "여러 명의 친구들과 가위바위보 난투를 즐기세요! 😁",
     rule: "규칙",
     explanation: `가장 마지막에 낸 사람의 손이 화면에 크게 보입니다. 이 손을 이기면 +1점! 지면 -1점! 60초 안에 가장 많은 점수를 획득하세요!`,
     start: "시작",
@@ -95,7 +105,7 @@ export const Language = [
     play: "게임 중",
     places: "순위",
     network_logs: "네트워크 로그",
-    rooms: "방목록",
+    rooms: "방 목록",
     create_room: "방 만들기",
     quick_start: "빠른 시작",
     mode: "모드",
@@ -117,20 +127,20 @@ export const Language = [
     skilled: "실력봇",
     dumb: "트롤봇",
     teams: ["빨강", "오렌지", "노랑", "초록", "파랑", "네이비", "보라"],
-    time_over: "시간 종료",
+    time_over: "시간 종료!",
     save_result: "결과 저장",
     result_page_text: (count) => {
       return `${count} 초 후에 대기실로 이동됩니다...`;
     },
     no_room_text: "방을 생성하고 게임을 즐기세요!😁",
-    limited_text: "같은 손을 연속해서 내실 수 없습니다. (한 손 제한)",
+    limited_text: "같은 손을 연속해서 낼 수 없습니다. (한 손 제한)",
     quick_start_limit_text: "들어갈 수 있는 방이 없습니다.",
     quit_warning_text: "게임 중에는 나갈 수 없습니다.",
     tutorial: [
       "게임 방법",
       "1. 입장",
       "2. 방 생성 혹은 기존 방 입장",
-      "3. 게임설정",
+      "3. 게임 설정",
       "4. 팀 선택 및 봇 설정",
       "5. 시작",
       "6. 플레이",
@@ -145,20 +155,29 @@ export const Language = [
       ],
       "게임에서 사용할 닉네임을 입력해주세요.",
       "새롭게 방을 생성하거나 기존에 있던 방에 입장하세요.",
-      `⦁ normal: 일반 모드
-      ⦁ limited: 연속으로 같은 손을 낼 수 없는 모드 
-      ⦁ 모드 설정은 방장만 가능합니다. 
-      ⦁ 팀은 누구나 자유롭게 바꿀 수 있습니다. 
+      `⦁ 팀은 누구나 자유롭게 바꿀 수 있습니다.
+      ⦁ 일반: 일반 모드
+      ⦁ 한 손 제한: 연속으로 같은 손을 낼 수 없는 모드
+      ⦁ 모드 설정은 방장만 가능합니다.
       `,
-      `⦁ Dumb: 지는 손만 내는 봇 
-      ⦁ Skilled: 이기는 손만 내는 봇 
+      `⦁ 트롤봇: 지는 손만 내는 봇 
+      ⦁ 실력봇: 이기는 손만 내는 봇 
       ⦁ 봇 설정은 방장만 가능합니다.
       `,
       `방장이 "시작"을 누르면 게임이 시작됩니다!`,
-      `누군가가 손을 내면 해당 손이 화면 중앙에 표시됩니다.
+      `누군가가 손을 낼 때마다 해당 손이 화면 중앙에 표시됩니다.
       이 손을 이기면 +1점! 지면 -1점!
       손은 1초마다 반복하여 낼 수 있습니다.
       60초 안에 가장 많은 점수를 획득하세요!`,
     ],
+    name_blank: "이름을 입력하세요.",
+    name_long: "이름은 32글자 이하여야 합니다.",
+    already_end: "게임이 이미 종료된 방입니다.",
+    disconnected: "누군가 접속이 끊겼습니다.",
+    page_not_found: "페이지를 찾을 수 없습니다.",
+    bot_exceed: "봇을 더 추가할 수 없습니다.",
+    bot_negative: "0 미만으로 줄일 수 없습니다.",
+    password_long: "비밀번호를 20글자 이하로 설정해 주세요.",
+    title_long: "방 제목을 32글자 이하로 설정해 주세요.",
   },
 ];

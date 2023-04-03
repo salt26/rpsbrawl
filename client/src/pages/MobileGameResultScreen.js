@@ -35,7 +35,7 @@ export default function MobileGameResultScreen() {
 
     if (left < 0) {
       // 남은 시간이 지난경우
-      alert("게임이 이미 종료된 방입니다.");
+      alert(Language[mode].already_end);
       navigate(`/rooms`);
     } else {
       setCount(left); //타이머 초깃값 세팅

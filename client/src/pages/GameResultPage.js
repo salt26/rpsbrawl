@@ -26,7 +26,7 @@ export default function GameResultPage() {
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   const preventGoBack = () => {
-    alert("Can not quit from the game");
+    alert(Language[mode].quit_warning_text);
     window.history.pushState(null, "", window.location.href);
   };
 
