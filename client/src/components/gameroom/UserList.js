@@ -25,7 +25,11 @@ export default function UserList({ users }) {
           if (name === my_name) {
             return (
               <Anim>
-                <AdminTag key={idx} color={team_color[team]}>
+                <AdminTag
+                  key={idx}
+                  color={team_color[team]}
+                  isMe={name === my_name}
+                >
                   {name}
                 </AdminTag>
               </Anim>
