@@ -18,7 +18,7 @@ function Toggle({ mode, setMode }) {
 
         {mode == 0 ? (
           <MediumOutline color="white" size="25px">
-            ㅤ EN
+            ㅤ ENG
           </MediumOutline>
         ) : (
           <MediumOutline color="white" size="25px">

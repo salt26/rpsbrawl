@@ -31,7 +31,7 @@ function AddBot({ skilledBot, dumbBot, setAddBotVisible }) {
 
   const _addSkilledBot = () => {
     if (skilledBot >= 10) {
-      alert("Cannot add more bots");
+      alert(Language[mode].bot_exceed);
       return;
     }
     _changeNumOfBot("skilled", skilledBot + 1);
@@ -40,7 +40,7 @@ function AddBot({ skilledBot, dumbBot, setAddBotVisible }) {
 
   const _deductSkilledBot = () => {
     if (skilledBot <= 0) {
-      alert("Cannot reduce the number of bots.");
+      alert(Language[mode].bot_negative);
       return;
     }
     _changeNumOfBot("skilled", skilledBot - 1);
@@ -49,7 +49,7 @@ function AddBot({ skilledBot, dumbBot, setAddBotVisible }) {
 
   const _addDumbBot = () => {
     if (dumbBot >= 10) {
-      alert("Cannot add more bots");
+      alert(Language[mode].bot_exceed);
       return;
     }
 
@@ -59,7 +59,7 @@ function AddBot({ skilledBot, dumbBot, setAddBotVisible }) {
 
   const _deductDumbBot = () => {
     if (dumbBot <= 0) {
-      alert("Cannot reduce the number of bots");
+      alert(Language[mode].bot_negative);
       return;
     }
     _changeNumOfBot("dumb", dumbBot - 1);

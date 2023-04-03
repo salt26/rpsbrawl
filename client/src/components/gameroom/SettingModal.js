@@ -47,12 +47,12 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
 
   const _modifyRoom = () => {
     if (password.length > 20) {
-      alert("Please set the password  no more than 20 characters.");
+      alert(Language[mode].password_long);
       return;
     }
 
     if (roomTitle.length > 32) {
-      alert("Please set the title  no more than 32 characters.");
+      alert(Language[mode].title_long);
       return;
     }
 
