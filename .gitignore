@@ -4,6 +4,7 @@ ignore/
 alembic/versions/
 #alembic.ini
 setupProxy.js
+Config.js
 
 # Virtualenv
 # http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
