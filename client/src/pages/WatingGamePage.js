@@ -103,9 +103,7 @@ export default function WatingGamePage() {
           alert(res.message);
           return;
         }
-        if (res?.request === "dormancy") {
-          navigate(`/rooms`, { state: res.data });
-        }
+
         switch (res?.type) {
           case "game_list": // 팀 변경 요청에 대한 응답 , 접속 끊겼을때
             setUsers(res.data);
@@ -121,7 +119,9 @@ export default function WatingGamePage() {
 
             break;
           case "room_list": // 룸 목록 갱신 요청에 대한 응답
-            navigate("/rooms", { state: res.data });
+            if (res?.request === "dormancy") {
+              navigate(`/rooms`, { state: res.data });
+            }
             break;
 
           case "room": // 방 설정 변경 성공시
