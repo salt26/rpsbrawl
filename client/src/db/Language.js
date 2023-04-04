@@ -67,7 +67,6 @@ join the existing room.`,
 ⦁ Limited : cannot throw the same hand in a row.
 ⦁ Only the room host can set the mode.`,
       `⦁ Anyone can change teams.
-
 ⦁ Dumb : A bot that only throws the losing hand.
 ⦁ Skilled : A bot that only throws the winning hand.
 ⦁ Only the room host can set the bot.`,
@@ -153,13 +152,12 @@ Get the most points in 60 seconds! 🤩`,
       ],
       "게임에서 사용할 닉네임을 입력해주세요.",
       "새롭게 방을 생성하거나 기존에 있던 방에 입장하세요.",
-      `⦁ 일반: 일반 모드
-⦁ 한 손 제한: 연속으로 같은 손을 낼 수 없는 모드
-⦁ 모드 설정은 방장만 가능합니다.`,
+      `⦁ 일반(normal): 일반 모드
+⦁ 한 손 제한(limited): 연속으로 같은 손을 낼 수 없는 모드
+⦁ 방 설정은 방장만 가능합니다.`,
       `⦁ 팀은 누구나 자유롭게 바꿀 수 있습니다.
-
-⦁ 트롤봇: 지는 손만 내는 봇 
-⦁ 실력봇: 이기는 손만 내는 봇 
+⦁ 트롤봇(dumb): 지는 손만 내는 봇 
+⦁ 실력봇(skilled): 이기는 손만 내는 봇 
 ⦁ 봇 설정은 방장만 가능합니다.`,
       `방장이 "시작"을 누르면 게임이 시작됩니다!`,
       `누군가가 손을 낼 때마다 해당 손이 화면 중앙에 표시됩니다.
