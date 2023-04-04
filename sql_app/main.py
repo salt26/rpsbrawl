@@ -778,6 +778,7 @@ async def remove_dormancy_person(db: Session):
                         cManager.change_room_id(game.person_id, -1)
                         await ConnectionManager.send_json("dormancy", "quit", "room_list", read_non_end_rooms(db), con[0])
                     await cManager.broadcast_json("dormancy", "game_list", read_game(game.room_id, db), game.room_id)
+                    room_list_dirty_bit.set()
 
 async def auto_refresh_room_list(db: Session):
     if room_list_dirty_bit.is_set():
