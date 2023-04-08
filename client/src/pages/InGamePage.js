@@ -308,7 +308,7 @@ const ScoreContainer = styled.text`
 
   @media (min-width: 1200px) {
     // 데스크탑 일반
-    top: 80%;
+    top: 75%;
     left: 45%;
   }
 `;
