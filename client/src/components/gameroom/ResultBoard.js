@@ -153,7 +153,7 @@ const Circle = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--mint);
+  background: linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%);
 `;
 
 const Title = styled.div`
