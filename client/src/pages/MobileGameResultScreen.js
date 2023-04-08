@@ -29,7 +29,7 @@ export default function MobileGameResultScreen() {
   const [count, setCount] = useState(20); // 게임 종료까지 남은 시간
   const _getTimeOffset = (room) => {
     const current = new Date();
-    var end = new Date(room["end_time"].slice(0, 19));
+    var end = new Date(room["end_time"].slice(0, 19).replace(" ", "T"));
     end.setSeconds(end.getSeconds() + RESULT_TIME); // 종료되는 시간
     var left = parseInt((end.getTime() - current.getTime()) / 1000);
 
