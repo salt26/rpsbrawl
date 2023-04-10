@@ -109,7 +109,10 @@ class ConnectionManager:
         obj["type"] = type
         obj["data"] = data
         for connection in self.find_all_connections_by_room_id(room_id):
-            await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
+            try:
+                await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
+            except Exception:
+                traceback.print_exc()
 
     async def broadcast_text(self, request: str, message: str, room_id: int):
         # 한 방 전체의 사람들에게 공통된 JSON을 보냄
@@ -119,7 +122,10 @@ class ConnectionManager:
         obj["type"] = "message"
         obj["message"] = message
         for connection in self.find_all_connections_by_room_id(room_id):
-            await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
+            try:
+                await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
+            except Exception:
+                traceback.print_exc()
 
 class BotManager:
     def __init__(self) -> None:
