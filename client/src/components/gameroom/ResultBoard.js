@@ -164,7 +164,7 @@ const Title = styled.div`
   width: 100%;
   gap: 20px;
   position: absolute;
-  top: -50px;
+  top: -5%;
 `;
 
 const Row = styled.div`
