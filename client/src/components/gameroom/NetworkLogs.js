@@ -150,5 +150,5 @@ const Row = styled.tr`
   align-items: center;
   width: 100%;
 
-  gap: 20px;
+  gap: 5px;
 `;
