@@ -91,7 +91,6 @@ export default function WatingGamePage() {
   console.log(_findHost(users));
   var navigate = useNavigate();
 
-  useEffect(() => {}, []);
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   useEffect(() => {
     ws.onmessage = function (event) {
@@ -118,10 +117,11 @@ export default function WatingGamePage() {
             }
 
             break;
-          case "room_list": // 룸 목록 갱신 요청에 대한 응답
-            if (res?.request === "dormancy") {
+          case "room_list": // 룸 나가기 ( 휴먼, 나가기버튼)
+            if (res?.request === "dormancy" || res?.request === "refresh") {
               navigate(`/rooms`, { state: res.data });
             }
+
             break;
 
           case "room": // 방 설정 변경 성공시
