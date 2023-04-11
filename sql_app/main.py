@@ -217,7 +217,6 @@ hManager = HandManager()        # hManager 역시 lock과 함께 사용 -> lock�
 #lock = threading.Lock()
 room_list_dirty_bit = threading.Event()
 room_list_dirty_bit.clear()
-event_loop_for_game = asyncio.new_event_loop()
 event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
@@ -767,7 +766,7 @@ async def run_game_for_room(room_id: int, time_offset: int, time_duration: int):
 
 # 멀티스레드로 방의 시간 관리 함수를 돌려서, 요청을 보낸 사람의 접속이 끊어져서 메인 스레드에서 Exception이 발생하더라도 끝까지 게임이 진행될 수 있게 함
 def manage_time_for_room_threading(room_id: int, time_offset: int, time_duration: int):
-    asyncio.set_event_loop(event_loop_for_game)
+    asyncio.set_event_loop(asyncio.new_event_loop())
     asyncio.get_event_loop().run_until_complete(run_game_for_room(room_id, time_offset, time_duration))
     #asyncio.run(run_game_for_room(room_id, time_offset, time_duration))
 
