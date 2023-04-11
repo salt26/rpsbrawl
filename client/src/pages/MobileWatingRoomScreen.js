@@ -155,7 +155,7 @@ export default function MobileWatingRoomScreen() {
 
             break;
           case "room_list": // 룸 목록 갱신 요청에 대한 응답
-            if (res?.request === "dormancy") {
+            if (res?.request === "dormancy" || res?.request === "refresh") {
               navigate(`/rooms`, { state: res.data });
             }
             break;
