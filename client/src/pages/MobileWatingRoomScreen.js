@@ -157,7 +157,9 @@ export default function MobileWatingRoomScreen() {
 
             break;
           case "room_list": // 룸 목록 갱신 요청에 대한 응답
-            navigate("/rooms", { state: res.data });
+            if (res?.request === "dormancy" || res?.request === "refresh") {
+              navigate(`/rooms`, { state: res.data });
+            }
             break;
 
           case "room": // 방 설정 변경 성공시

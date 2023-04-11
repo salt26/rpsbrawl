@@ -140,7 +140,7 @@ export default function InGamePage() {
       if (ready) {
         if (res?.response === "error") {
           if (
-            res.message === "Cannot play the same hand in a row (limited mode)."
+            res.message === "Cannot play the same hand in a row. (limited mode)"
           ) {
             setMsg(Language[mode].limited_text);
             setShowTime(true);
@@ -308,7 +308,7 @@ const ScoreContainer = styled.text`
 
   @media (min-width: 1200px) {
     // 데스크탑 일반
-    top: 80%;
+    top: 75%;
     left: 45%;
   }
 `;

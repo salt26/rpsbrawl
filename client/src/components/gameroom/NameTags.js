@@ -31,7 +31,7 @@ function AdminTag({ children, color, isMe }) {
   if (isMe) {
     return (
       <Container bg={palette[color]}>
-        {color === "yellow" ? (
+        {color === "yellow" || color === "orange" ? (
           <Image src={NewCrownSrc} />
         ) : (
           <Image src={CrownSrc} />

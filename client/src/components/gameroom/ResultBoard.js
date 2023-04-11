@@ -153,7 +153,7 @@ const Circle = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--mint);
+  background: linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%);
 `;
 
 const Title = styled.div`
@@ -164,7 +164,7 @@ const Title = styled.div`
   width: 100%;
   gap: 20px;
   position: absolute;
-  top: -50px;
+  top: -5%;
 `;
 
 const Row = styled.div`

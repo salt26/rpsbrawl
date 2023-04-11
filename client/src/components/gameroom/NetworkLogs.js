@@ -25,9 +25,7 @@ export default function NetworkLogs({ logs }) {
   useEffect(() => {
     // 스크롤 위치 하단 고정 -> 좀 부자연스러운 느낌?
     /*https://velog.io/@matajeu/React-div-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EB%A7%A8-%EB%B0%91%EC%9C%BC%EB%A1%9C-%EB%82%B4%EB%A6%AC%EA%B8%B0-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EC%9C%84%EC%B9%98-%EC%A1%B0%EC%9E%91%ED%95%98%EA%B8%B0*/
-
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    console.log(scrollRef.current);
   }, [logs]);
 
   /*
@@ -51,7 +49,7 @@ export default function NetworkLogs({ logs }) {
     <div
       style={{
         width: isMobile ? "90%" : "60%",
-        height: isMobile ? "35vh" : "350px",
+        height: isMobile ? "35vh" : "360px",
 
         display: "flex",
         flexDirection: "column",
@@ -59,7 +57,7 @@ export default function NetworkLogs({ logs }) {
         alignItems: "flex-start",
       }}
     >
-      <Medium size={"var(--font-size-ml)"} color={"white"}>
+      <Medium size={"30px"} color={"white"}>
         {Language[mode].network_logs}
       </Medium>
       <SizedBox height={"10px"} />
@@ -67,18 +65,16 @@ export default function NetworkLogs({ logs }) {
       <ScrollView ref={scrollRef} id="log_container">
         {/*네트워크 로그*/}
         <table>
-          <tbody>
-            {logs &&
-              logs.map(({ team, name, hand, score }, idx) => (
-                <Log
-                  belong={team === -1 ? "bot" : team_color[team]}
-                  key={idx}
-                  name={name}
-                  rps={rpsDic[hand]}
-                  score={score}
-                />
-              ))}
-          </tbody>
+          {logs &&
+            logs.map(({ team, name, hand, score }, idx) => (
+              <Log
+                belong={team === -1 ? "bot" : team_color[team]}
+                key={idx}
+                name={name}
+                rps={rpsDic[hand]}
+                score={score}
+              />
+            ))}
         </table>
       </ScrollView>
     </div>
@@ -87,24 +83,24 @@ export default function NetworkLogs({ logs }) {
 
 function Log({ belong, name, rps, score }) {
   var rpsDic = {
-    rock: <Rock size={isMobile ? "10vw" : "50px"} />,
-    scissor: <Scissor size={isMobile ? "10vw" : "50px"} />,
-    paper: <Paper size={isMobile ? "10vw" : "50px"} />,
+    rock: <Rock size={isMobile ? "10vw" : "40px"} />,
+    scissor: <Scissor size={isMobile ? "10vw" : "40px"} />,
+    paper: <Paper size={isMobile ? "10vw" : "40px"} />,
   };
 
   return (
     <Row>
-      <Td flex={0.3}>
-        <GradientText size="var(--font-size-ml)" bg={palette[belong]}>
+      <Td width={"25%"}>
+        <GradientText size="var(--font-size-md)" bg={palette[belong]}>
           {belong}
         </GradientText>
       </Td>
-      <Td flex={0.5}>
-        {/*String(30 - 6 * (name.length % 7)) + "px"*/}
+      <Td width={"35%"}>
+        {/**/}
         <Medium size={"var(--font-size-ms)"}>{name}</Medium>
       </Td>
-      <Td flex={0.1}>{rpsDic[rps]}</Td>
-      <Td flex={0.1}>
+      <Td width={"10%"}>{rpsDic[rps]}</Td>
+      <Td width={"10%"}>
         {score >= 0 ? (
           <Medium color="var(--mint)" size={"30px"}>
             +{score}
@@ -119,7 +115,7 @@ function Log({ belong, name, rps, score }) {
   );
 }
 const Td = styled.td`
-  flex: ${({ flex }) => (flex ? flex : 0.3)};
+  width: ${({ width }) => (width ? width : "25%")};
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -131,13 +127,15 @@ const ScrollView = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+
   background-color: white;
   border-radius: 10px;
+
   padding-left: 10px;
-  padding-right: 10px;
+
   overflow-x: hidden;
   overflow-y: scroll;
-
+  flex-wrap: wrap;
   @media (min-width: 1200px) {
     // 데스크탑 일반
     height: 500px;
@@ -146,9 +144,8 @@ const ScrollView = styled.div`
 const Row = styled.tr`
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
-
-  gap: 20px;
+  margin-bottom: 1.5vh;
 `;

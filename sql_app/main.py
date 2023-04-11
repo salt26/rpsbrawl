@@ -109,7 +109,10 @@ class ConnectionManager:
         obj["type"] = type
         obj["data"] = data
         for connection in self.find_all_connections_by_room_id(room_id):
-            await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
+            try:
+                await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
+            except Exception:
+                traceback.print_exc()
 
     async def broadcast_text(self, request: str, message: str, room_id: int):
         # 한 방 전체의 사람들에게 공통된 JSON을 보냄
@@ -119,7 +122,10 @@ class ConnectionManager:
         obj["type"] = "message"
         obj["message"] = message
         for connection in self.find_all_connections_by_room_id(room_id):
-            await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
+            try:
+                await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
+            except Exception:
+                traceback.print_exc()
 
 class BotManager:
     def __init__(self) -> None:
@@ -211,6 +217,7 @@ hManager = HandManager()        # hManager 역시 lock과 함께 사용 -> lock�
 #lock = threading.Lock()
 room_list_dirty_bit = threading.Event()
 room_list_dirty_bit.clear()
+event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
 async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depends(get_db)):
@@ -759,7 +766,9 @@ async def run_game_for_room(room_id: int, time_offset: int, time_duration: int):
 
 # 멀티스레드로 방의 시간 관리 함수를 돌려서, 요청을 보낸 사람의 접속이 끊어져서 메인 스레드에서 Exception이 발생하더라도 끝까지 게임이 진행될 수 있게 함
 def manage_time_for_room_threading(room_id: int, time_offset: int, time_duration: int):
-    asyncio.run(run_game_for_room(room_id, time_offset, time_duration))
+    asyncio.set_event_loop(asyncio.new_event_loop())
+    asyncio.get_event_loop().run_until_complete(run_game_for_room(room_id, time_offset, time_duration))
+    #asyncio.run(run_game_for_room(room_id, time_offset, time_duration))
 
 async def remove_dormancy_person(db: Session):
     wait_rooms = crud.get_wait_rooms(db)
@@ -774,6 +783,7 @@ async def remove_dormancy_person(db: Session):
                         cManager.change_room_id(game.person_id, -1)
                         await ConnectionManager.send_json("dormancy", "quit", "room_list", read_non_end_rooms(db), con[0])
                     await cManager.broadcast_json("dormancy", "game_list", read_game(game.room_id, db), game.room_id)
+                    room_list_dirty_bit.set()
 
 async def auto_refresh_room_list(db: Session):
     if room_list_dirty_bit.is_set():
@@ -797,7 +807,9 @@ async def periodic_manager(time_interval: int):
 def periodic_manager_threading(time_interval: int):
     if time_interval < 1:
         time_interval = 1
-    asyncio.run(periodic_manager(time_interval))
+    asyncio.set_event_loop(event_loop_for_periodic_manager)
+    asyncio.get_event_loop().run_until_complete(periodic_manager(time_interval))
+    #asyncio.run(periodic_manager(time_interval))
     
 async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depends(get_db)):
     while True:
@@ -1096,4 +1108,4 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             # 오류 메시지 응답
             await ConnectionManager.send_text("", "error", "Bad request.", websocket)
 
-threading.Thread(target=periodic_manager_threading, args=(3,)).start()
+threading.Thread(target=periodic_manager_threading, args=(3,), daemon=True).start()
