@@ -10,12 +10,12 @@ services:
       - traefik.http.services.app.loadbalancer.server.port=80
       # Make Traefik use this domain in HTTP
       - traefik.http.routers.app-http.entrypoints=http
-      - traefik.http.routers.app-http.rule=Host(`an.dantae.net`)
+      - traefik.http.routers.app-http.rule=Host(`rpsdata.dantae.net`)
       # Use the traefik-public network (declared below)
       - traefik.docker.network=traefik-public
       # Make Traefik use this domain in HTTPS
       - traefik.http.routers.app-https.entrypoints=https
-      - traefik.http.routers.app-https.rule=Host(`an.dantae.net`)
+      - traefik.http.routers.app-https.rule=Host(`rpsdata.dantae.net`)
       - traefik.http.routers.app-https.tls=true
       # Use the "le" (Let's Encrypt) resolver
       - traefik.http.routers.app-https.tls.certresolver=le
@@ -24,10 +24,29 @@ services:
       - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
       # Middleware to redirect HTTP to HTTPS
       - traefik.http.routers.app-http.middlewares=https-redirect
-      - traefik.http.routers.app-https.middlewares=admin-auth
+      #- traefik.http.routers.app-https.middlewares=admin-auth
     networks:
       # Use the public network created to be shared between Traefik and
       # any other service that needs to be publicly available with HTTPS
+      - traefik-public
+  frontend:
+    build: ./client
+    expose:
+      - "80"
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.app2.loadbalancer.server.port=80
+      - traefik.http.routers.app2-http.entrypoints=http
+      - traefik.http.routers.app2-http.rule=Host(`rpsbrawl.dantae.net`)
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.app2-https.entrypoints=https
+      - traefik.http.routers.app2-https.rule=Host(`rpsbrawl.dantae.net`)
+      - traefik.http.routers.app2-https.tls=true
+      - traefik.http.routers.app2-https.tls.certresolver=le
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.app2-http.middlewares=https-redirect
+    networks:
       - traefik-public
 
 networks:

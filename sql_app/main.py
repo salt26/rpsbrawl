@@ -20,7 +20,8 @@ app = FastAPI()
 #oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 origins = [
-    "http://localhost:3000" # TODO 포트 번호 바꾸기
+    "https://rpsbrawl.dantae.net",
+    "https://rpsbrawl.swygbro.com"
 ]
 
 app.add_middleware(
