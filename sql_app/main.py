@@ -20,6 +20,7 @@ app = FastAPI()
 #oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 origins = [
+    "http://localhost:3000",
     "https://rpsbrawl.dantae.net",
     "https://rpsbrawl.swygbro.com"
 ]
