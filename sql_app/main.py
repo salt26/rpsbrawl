@@ -20,7 +20,11 @@ from .database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
-SECRET_KEY = os.environ.get('RPS_SECRET', '')
+try:
+    with open("config.json", "r", encoding='utf-8') as f:
+        SECRET_KEY = json.load(f)['RPS_SECRET']
+except:
+    SECRET_KEY = ""
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -56,17 +60,22 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
+    print(pwd_context.hash(password))
     return pwd_context.hash(password)
 
 def get_auth(username):
-    auths = json.loads(os.environ.get('RPS_AUTH', ''))
+    try:
+        with open("config.json", "r", encoding='utf-8') as f:
+            auths = json.load(f)['RPS_AUTH']
+    except:
+        auths = []
     return next((x for x in auths if x["username"] == username), None)
 
 def authenticate(username: str, password: str):
     auth = get_auth(username)
     if not auth:
         return False
-    if not verify_password(password, auth.hashed_password):
+    if not verify_password(password, auth["hashed_password"]):
         return False
     return auth
 
@@ -80,7 +89,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_auth(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_current_auth(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -91,7 +100,7 @@ async def get_current_auth(token: Annotated[str, Depends(oauth2_scheme)]):
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = models.TokenDataBase(username=username)
+        token_data = schemas.TokenDataBase(username=username)
     except JWTError:
         raise credentials_exception
     auth = get_auth(username=token_data.username)
@@ -99,9 +108,9 @@ async def get_current_auth(token: Annotated[str, Depends(oauth2_scheme)]):
         raise credentials_exception
     return auth
 
-@app.post("/token", response_model=models.TokenBase)
+@app.post("/token", response_model=schemas.TokenBase)
 async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+    form_data: OAuth2PasswordRequestForm = Depends()
 ):
     auth = authenticate(form_data.username, form_data.password)
     if not auth:
@@ -112,7 +121,7 @@ async def login_for_access_token(
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": auth.username}, expires_delta=access_token_expires
+        data={"sub": auth["username"]}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -294,7 +303,7 @@ room_list_dirty_bit.clear()
 event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
-async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: Annotated[models.AuthBase, Depends(get_current_auth)], db: Session = Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: schemas.AuthBase = Depends(get_current_auth), db: Session = Depends(get_db)):
     if name is None or name == "":
         await websocket.accept()
         await ConnectionManager.send_text("signin", "error", "Name is required.", websocket)
@@ -393,7 +402,7 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get("/connections")
-def read_connections(current_auth: Annotated[models.AuthBase, Depends(get_current_auth)]):
+def read_connections(current_auth: schemas.AuthBase = Depends(get_current_auth)):
     # (디버깅 용도)
     ret = []
     for con in cManager.active_connections:
