@@ -5,6 +5,7 @@ alembic/versions/
 #alembic.ini
 setupProxy.js
 Config.js
+config.json
 .env.dev
 
 # Virtualenv
