@@ -1,10 +1,13 @@
-from typing import List, Union, Dict, Tuple
-
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-#from fastapi.security import OAuth2PasswordBearer
+from typing import List, Union, Dict, Tuple, Annotated
+from datetime import datetime, timedelta
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pytz import timezone
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
 import threading
 import asyncio
 import json
@@ -16,25 +19,39 @@ from .database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
+SECRET_KEY = "5" # TODO 밖으로 옮기기
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 app = FastAPI()
-#oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 origins = [
     "http://localhost:3000",
-    "https://rpsbrawl.dantae.net",
+    #"https://rpsbrawl.dantae.net",
     "https://rpsbrawl.swygbro.com"
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=False, # OAuth 사용 시 True로 바꾸기
+    allow_credentials=True, # OAuth 사용 시 True로 바꾸기
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 JSON_SENDING_MODE = "text"
 JSON_RECEIVING_MODE = "text"
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def 
 
 # Dependency
 def get_db():
