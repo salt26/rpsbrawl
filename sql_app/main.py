@@ -13,13 +13,14 @@ import asyncio
 import json
 import traceback
 import random
+import os
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
-SECRET_KEY = "5" # TODO 밖으로 옮기기
+SECRET_KEY = os.environ.get('RPS_SECRET', '')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -45,14 +46,6 @@ app.add_middleware(
 JSON_SENDING_MODE = "text"
 JSON_RECEIVING_MODE = "text"
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-def 
-
 # Dependency
 def get_db():
     db = SessionLocal()
@@ -60,6 +53,70 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def get_auth(username):
+    auths = json.loads(os.environ.get('RPS_AUTH', ''))
+    return next((x for x in auths if x["username"] == username), None)
+
+def authenticate(username: str, password: str):
+    auth = get_auth(username)
+    if not auth:
+        return False
+    if not verify_password(password, auth.hashed_password):
+        return False
+    return auth
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_auth(token: Annotated[str, Depends(oauth2_scheme)]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = models.TokenDataBase(username=username)
+    except JWTError:
+        raise credentials_exception
+    auth = get_auth(username=token_data.username)
+    if auth is None:
+        raise credentials_exception
+    return auth
+
+@app.post("/token", response_model=models.TokenBase)
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+):
+    auth = authenticate(form_data.username, form_data.password)
+    if not auth:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": auth.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 class ConnectionManager:
     def __init__(self):
@@ -239,7 +296,7 @@ room_list_dirty_bit.clear()
 event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
-async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: Annotated[models.AuthBase, Depends(get_current_auth)], db: Session = Depends(get_db)):
     if name is None or name == "":
         await websocket.accept()
         await ConnectionManager.send_text("signin", "error", "Name is required.", websocket)
@@ -338,7 +395,7 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get("/connections")
-def read_connections():
+def read_connections(current_auth: Annotated[models.AuthBase, Depends(get_current_auth)]):
     # (디버깅 용도)
     ret = []
     for con in cManager.active_connections:
@@ -354,7 +411,6 @@ def read_all_room(db: Session = Depends(get_db)):
     # 최종 배포 시에는 반드시 이 함수를 지워야 함!
 """
 
-@app.get("/room/{room_id}")
 def read_room(room_id: int, db: Session = Depends(get_db)):
     # 해당 방 반환
     db_room = crud.get_room(db, room_id)
@@ -396,7 +452,6 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
     }
 
 
-@app.get("/room/non-end/list")
 def read_non_end_rooms(db: Session = Depends(get_db)):
     # 종료 상태가 아닌 모든 방 목록 반환
     db_rooms = crud.get_non_end_rooms(db)
@@ -441,7 +496,6 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
     
     return rooms
 
-@app.get("/room/{room_id}/hand")
 def read_hands(room_id: int, limit: int = 6, db: Session = Depends(get_db)):
     # 해당 방에서 사람들이 낸 손 목록 limit개 반환 (마지막으로 낸 손이 마지막 인덱스)
     hands = crud.get_hands_from_last(db, room_id=room_id, limit=limit)
@@ -461,7 +515,6 @@ def read_hands(room_id: int, limit: int = 6, db: Session = Depends(get_db)):
         })
     return ret
 
-@app.get("/room/{room_id}/hand/list")
 def read_all_hands(room_id: int, db: Session = Depends(get_db)):
     # 해당 방에서 사람들이 낸 손 목록 모두 반환 (가장 먼저 낸 손이 [0]번째 인덱스, 마지막으로 낸 손이 마지막 인덱스)
     hands = crud.get_hands(db, room_id=room_id)
@@ -481,7 +534,6 @@ def read_all_hands(room_id: int, db: Session = Depends(get_db)):
         })
     return ret
 
-@app.get("/room/{room_id}/game")
 def read_game(room_id: int, db: Session = Depends(get_db)):
     # 해당 방의 사람들의 {순위, 팀 번호, 이름, 방장 여부, 점수, win, draw, lose, 방 번호} 반환
     # person_id가 -1이 아닌 값으로 주어지는 경우, 해당 사람이 있으면 그 사람은 항상 목록의 0번째 인덱스에 정렬
@@ -509,6 +561,7 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
         })
     return ret
 
+"""
 @app.get("/profile/{room_id}/{person_id}")
 def read_profile(room_id: int, person_id: int, db: Session = Depends(get_db)):
     # 해당 방의 특정 사람의 {팀 번호, 이름, 방장 여부, 방 번호, 개인 번호} 반환
@@ -528,7 +581,6 @@ def read_profile(room_id: int, person_id: int, db: Session = Depends(get_db)):
         'person_id': game.person_id
     }
 
-"""
 @app.get("/person/{person_id}")
 def read_person(person_id: int, db: Session = Depends(get_db)):
     return crud.get_person(db, person_id)

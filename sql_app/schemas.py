@@ -97,3 +97,16 @@ class Room(RoomBase):
     class Config:
         orm_mode = True
         use_enum_values = True
+
+class TokenBase(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenDataBase(BaseModel):
+    username: str | None = None
+
+class AuthBase(BaseModel):
+    username: str
+
+class AuthCreate(AuthBase):
+    hashed_password: str
