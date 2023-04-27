@@ -390,9 +390,11 @@ async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: sche
             cManager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
-        crud.update_room_to_quit(db, room_id, person.id)
-        #print("접속 끊긴 사람 퇴장 완료")
-        await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
+        room, error_code = crud.update_room_to_quit(db, room_id, person.id)
+
+        if error_code == 0 and room is not None:
+            #print("접속 끊긴 사람 퇴장 완료")
+            await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
         room_list_dirty_bit.set()
     
 
