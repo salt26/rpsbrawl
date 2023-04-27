@@ -300,6 +300,7 @@ hManager = HandManager()        # hManager 역시 lock과 함께 사용 -> lock�
 #lock = threading.Lock()
 room_list_dirty_bit = threading.Event()
 room_list_dirty_bit.clear()
+event_loop_for_main = asyncio.get_event_loop()
 event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
@@ -352,6 +353,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: sche
                 'hand_list': read_hands(recon_room_id, 6, db),
                 'game_list': read_game(recon_room_id, db)
             }
+            asyncio.set_event_loop(event_loop_for_main)
             await ConnectionManager.send_json("signin", 'reconnected_game', "recon_data", recon_data, websocket)
 
         else:
@@ -364,6 +366,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: sche
                 'hand_list': read_all_hands(recon_room_id, db),
                 'game_list': read_game(recon_room_id, db)
             }
+            asyncio.set_event_loop(event_loop_for_main)
             await ConnectionManager.send_json("signin", 'reconnected_result', "recon_data", recon_data, websocket)
 
         # 무한 루프를 돌면서 클라이언트에게 요청을 받고 처리하고 응답
