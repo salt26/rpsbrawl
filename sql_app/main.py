@@ -1,23 +1,37 @@
-from typing import List, Union, Dict, Tuple
-
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-#from fastapi.security import OAuth2PasswordBearer
+from typing import List, Union, Dict, Tuple, Annotated
+from datetime import datetime, timedelta
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pytz import timezone
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
 import threading
 import asyncio
 import json
 import traceback
 import random
+import os
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
+try:
+    with open("config.json", "r", encoding='utf-8') as f:
+        SECRET_KEY = json.load(f)['RPS_SECRET']
+except:
+    SECRET_KEY = ""
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 app = FastAPI()
-#oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 origins = [
     "http://localhost:3000" # TODO 포트 번호 바꾸기
@@ -26,7 +40,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=False, # OAuth 사용 시 True로 바꾸기
+    allow_credentials=True, # OAuth 사용 시 True로 바꾸기
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -41,6 +55,75 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    print(pwd_context.hash(password))
+    return pwd_context.hash(password)
+
+def get_auth(username):
+    try:
+        with open("config.json", "r", encoding='utf-8') as f:
+            auths = json.load(f)['RPS_AUTH']
+    except:
+        auths = []
+    return next((x for x in auths if x["username"] == username), None)
+
+def authenticate(username: str, password: str):
+    auth = get_auth(username)
+    if not auth:
+        return False
+    if not verify_password(password, auth["hashed_password"]):
+        return False
+    return auth
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_auth(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = schemas.TokenDataBase(username=username)
+    except JWTError:
+        raise credentials_exception
+    auth = get_auth(username=token_data.username)
+    if auth is None:
+        raise credentials_exception
+    return auth
+
+@app.post("/token", response_model=schemas.TokenBase)
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends()
+):
+    auth = authenticate(form_data.username, form_data.password)
+    if not auth:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": auth["username"]}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 class ConnectionManager:
     def __init__(self):
@@ -217,11 +300,11 @@ hManager = HandManager()        # hManager 역시 lock과 함께 사용 -> lock�
 #lock = threading.Lock()
 room_list_dirty_bit = threading.Event()
 room_list_dirty_bit.clear()
-event_loop_for_game = asyncio.new_event_loop()
+event_loop_for_main = asyncio.get_event_loop()
 event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
-async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: schemas.AuthBase = Depends(get_current_auth), db: Session = Depends(get_db)):
     if name is None or name == "":
         await websocket.accept()
         await ConnectionManager.send_text("signin", "error", "Name is required.", websocket)
@@ -270,6 +353,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
                 'hand_list': read_hands(recon_room_id, 6, db),
                 'game_list': read_game(recon_room_id, db)
             }
+            asyncio.set_event_loop(event_loop_for_main)
             await ConnectionManager.send_json("signin", 'reconnected_game', "recon_data", recon_data, websocket)
 
         else:
@@ -282,6 +366,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
                 'hand_list': read_all_hands(recon_room_id, db),
                 'game_list': read_game(recon_room_id, db)
             }
+            asyncio.set_event_loop(event_loop_for_main)
             await ConnectionManager.send_json("signin", 'reconnected_result', "recon_data", recon_data, websocket)
 
         # 무한 루프를 돌면서 클라이언트에게 요청을 받고 처리하고 응답
@@ -293,8 +378,10 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
         cManager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
-        crud.update_room_to_quit(db, room_id, person.id)
-        await cManager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id) # disconnect`ed`
+        room, error_code = crud.update_room_to_quit(db, room_id, person.id)
+
+        if error_code == 0 and room is not None:
+            await cManager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id) # disconnect`ed`
         room_list_dirty_bit.set()
     except Exception:
         #print("다른 예외")
@@ -308,9 +395,11 @@ async def websocket_endpoint(websocket: WebSocket, name: str, db: Session = Depe
             cManager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
-        crud.update_room_to_quit(db, room_id, person.id)
-        #print("접속 끊긴 사람 퇴장 완료")
-        await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
+        room, error_code = crud.update_room_to_quit(db, room_id, person.id)
+
+        if error_code == 0 and room is not None:
+            #print("접속 끊긴 사람 퇴장 완료")
+            await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
         room_list_dirty_bit.set()
     
 
@@ -320,7 +409,7 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get("/connections")
-def read_connections():
+def read_connections(current_auth: schemas.AuthBase = Depends(get_current_auth)):
     # (디버깅 용도)
     ret = []
     for con in cManager.active_connections:
@@ -336,7 +425,6 @@ def read_all_room(db: Session = Depends(get_db)):
     # 최종 배포 시에는 반드시 이 함수를 지워야 함!
 """
 
-@app.get("/room/{room_id}")
 def read_room(room_id: int, db: Session = Depends(get_db)):
     # 해당 방 반환
     db_room = crud.get_room(db, room_id)
@@ -378,7 +466,6 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
     }
 
 
-@app.get("/room/non-end/list")
 def read_non_end_rooms(db: Session = Depends(get_db)):
     # 종료 상태가 아닌 모든 방 목록 반환
     db_rooms = crud.get_non_end_rooms(db)
@@ -423,7 +510,6 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
     
     return rooms
 
-@app.get("/room/{room_id}/hand")
 def read_hands(room_id: int, limit: int = 6, db: Session = Depends(get_db)):
     # 해당 방에서 사람들이 낸 손 목록 limit개 반환 (마지막으로 낸 손이 마지막 인덱스)
     hands = crud.get_hands_from_last(db, room_id=room_id, limit=limit)
@@ -443,7 +529,6 @@ def read_hands(room_id: int, limit: int = 6, db: Session = Depends(get_db)):
         })
     return ret
 
-@app.get("/room/{room_id}/hand/list")
 def read_all_hands(room_id: int, db: Session = Depends(get_db)):
     # 해당 방에서 사람들이 낸 손 목록 모두 반환 (가장 먼저 낸 손이 [0]번째 인덱스, 마지막으로 낸 손이 마지막 인덱스)
     hands = crud.get_hands(db, room_id=room_id)
@@ -463,7 +548,6 @@ def read_all_hands(room_id: int, db: Session = Depends(get_db)):
         })
     return ret
 
-@app.get("/room/{room_id}/game")
 def read_game(room_id: int, db: Session = Depends(get_db)):
     # 해당 방의 사람들의 {순위, 팀 번호, 이름, 방장 여부, 점수, win, draw, lose, 방 번호} 반환
     # person_id가 -1이 아닌 값으로 주어지는 경우, 해당 사람이 있으면 그 사람은 항상 목록의 0번째 인덱스에 정렬
@@ -491,6 +575,7 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
         })
     return ret
 
+"""
 @app.get("/profile/{room_id}/{person_id}")
 def read_profile(room_id: int, person_id: int, db: Session = Depends(get_db)):
     # 해당 방의 특정 사람의 {팀 번호, 이름, 방장 여부, 방 번호, 개인 번호} 반환
@@ -510,7 +595,6 @@ def read_profile(room_id: int, person_id: int, db: Session = Depends(get_db)):
         'person_id': game.person_id
     }
 
-"""
 @app.get("/person/{person_id}")
 def read_person(person_id: int, db: Session = Depends(get_db)):
     return crud.get_person(db, person_id)
@@ -767,7 +851,7 @@ async def run_game_for_room(room_id: int, time_offset: int, time_duration: int):
 
 # 멀티스레드로 방의 시간 관리 함수를 돌려서, 요청을 보낸 사람의 접속이 끊어져서 메인 스레드에서 Exception이 발생하더라도 끝까지 게임이 진행될 수 있게 함
 def manage_time_for_room_threading(room_id: int, time_offset: int, time_duration: int):
-    asyncio.set_event_loop(event_loop_for_game)
+    asyncio.set_event_loop(asyncio.new_event_loop())
     asyncio.get_event_loop().run_until_complete(run_game_for_room(room_id, time_offset, time_duration))
     #asyncio.run(run_game_for_room(room_id, time_offset, time_duration))
 
