@@ -1,4 +1,4 @@
-# Rock-Scissor-Paper Brawl
+# Rock-Paper-Scissors Brawl
 * 네트워크 가위바위보 난투
 * 백엔드는 FastAPI로 구현
 * 프론트엔드는 React로 구현
@@ -9,8 +9,7 @@
 #### Install
 * React 사용
 * `cd client`
-* `npm install`
-  * 잘 안 되면 `npm install --force`
+* `npm install --force`
 
 #### Run
 * `npm start`
@@ -30,7 +29,6 @@
 
 #### Install
 * Python 3.11.0 사용
-  * 3.6 이상의 버전이면 작동
 * Windows의 경우 터미널(PowerShell)을 관리자 권한으로 실행하고 아래 명령어 모두 입력
 * `cd {root_of_this_repository}`
 * `python -m venv sql_app`
