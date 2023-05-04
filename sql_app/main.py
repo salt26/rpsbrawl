@@ -1,6 +1,6 @@
-from typing import List, Union, Dict, Tuple, Annotated
+from typing import List, Union, Dict, Tuple
 from datetime import datetime, timedelta
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -21,14 +21,14 @@ from .database import SessionLocal, engine
 models.Base.metadata.create_all(bind=engine)
 
 try:
-    with open("config.json", "r", encoding='utf-8') as f:
-        SECRET_KEY = json.load(f)['RPS_SECRET']
+    SECRET_KEY = os.environ["RPS_SECRET"]
 except:
     SECRET_KEY = ""
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+valid_tokens = []
 
 app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -67,8 +67,7 @@ def get_password_hash(password):
 
 def get_auth(username):
     try:
-        with open("config.json", "r", encoding='utf-8') as f:
-            auths = json.load(f)['RPS_AUTH']
+        auths = json.loads(os.environ.get('RPS_AUTH'))
     except:
         auths = []
     return next((x for x in auths if x["username"] == username), None)
@@ -91,27 +90,49 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_auth(token: str = Depends(oauth2_scheme)):
+async def get_current_auth(request: Request, token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if token not in valid_tokens:
+        # 토큰은 1회용 - 재사용 방지
+        print("소멸한 토큰 사용")
+        raise credentials_exception
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = schemas.TokenDataBase(username=username)
+        source_ip: str = payload.get("source_ip")
+        exp: int = payload.get("exp")
+        token_data = schemas.TokenDataBase(username=username, source_ip=source_ip)
     except JWTError:
         raise credentials_exception
     auth = get_auth(username=token_data.username)
     if auth is None:
+        # 등록되지 않은 사용자 이름일 경우
+        print("등록되지 않은 사용자")
         raise credentials_exception
+    if source_ip is None or source_ip != request.client.host:
+        # 토큰을 생성할 때의 클라이언트 IP가 현재 요청을 보낸 IP와 일치하지 않는 경우
+        print("IP 불일치")
+        raise credentials_exception
+    if exp is None or exp < datetime.utcnow().timestamp():
+        # 기한이 만료된 토큰인 경우
+        print("기한 만료")
+        raise credentials_exception
+    try:
+        # 토큰 소멸
+        valid_tokens.remove(token)
+    except ValueError:
+        pass
     return auth
 
 @app.post("/token", response_model=schemas.TokenBase)
 async def login_for_access_token(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends()
 ):
     auth = authenticate(form_data.username, form_data.password)
@@ -121,10 +142,12 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    client_ip = request.client.host
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": auth["username"]}, expires_delta=access_token_expires
+        data={"sub": auth["username"], "source_ip": client_ip}, expires_delta=access_token_expires
     )
+    valid_tokens.append(access_token)
     return {"access_token": access_token, "token_type": "bearer"}
 
 class ConnectionManager:
@@ -302,10 +325,13 @@ hManager = HandManager()        # hManager 역시 lock과 함께 사용 -> lock�
 #lock = threading.Lock()
 room_list_dirty_bit = threading.Event()
 room_list_dirty_bit.clear()
+event_loop_for_main = asyncio.get_event_loop()
 event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
-async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: schemas.AuthBase = Depends(get_current_auth), db: Session = Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket, name: str, token: str, request: Request, db: Session = Depends(get_db)):
+    await get_current_auth(request, token)
+
     if name is None or name == "":
         await websocket.accept()
         await ConnectionManager.send_text("signin", "error", "Name is required.", websocket)
@@ -354,6 +380,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: sche
                 'hand_list': read_hands(recon_room_id, 6, db),
                 'game_list': read_game(recon_room_id, db)
             }
+            asyncio.set_event_loop(event_loop_for_main)
             await ConnectionManager.send_json("signin", 'reconnected_game', "recon_data", recon_data, websocket)
 
         else:
@@ -366,6 +393,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: sche
                 'hand_list': read_all_hands(recon_room_id, db),
                 'game_list': read_game(recon_room_id, db)
             }
+            asyncio.set_event_loop(event_loop_for_main)
             await ConnectionManager.send_json("signin", 'reconnected_result', "recon_data", recon_data, websocket)
 
         # 무한 루프를 돌면서 클라이언트에게 요청을 받고 처리하고 응답
@@ -377,8 +405,10 @@ async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: sche
         cManager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
-        crud.update_room_to_quit(db, room_id, person.id)
-        await cManager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id) # disconnect`ed`
+        room, error_code = crud.update_room_to_quit(db, room_id, person.id)
+
+        if error_code == 0 and room is not None:
+            await cManager.broadcast_json("disconnected", "game_list", read_game(room_id, db), room_id) # disconnect`ed`
         room_list_dirty_bit.set()
     except Exception:
         #print("다른 예외")
@@ -392,9 +422,11 @@ async def websocket_endpoint(websocket: WebSocket, name: str, current_auth: sche
             cManager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
-        crud.update_room_to_quit(db, room_id, person.id)
-        #print("접속 끊긴 사람 퇴장 완료")
-        await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
+        room, error_code = crud.update_room_to_quit(db, room_id, person.id)
+
+        if error_code == 0 and room is not None:
+            #print("접속 끊긴 사람 퇴장 완료")
+            await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
         room_list_dirty_bit.set()
     
 

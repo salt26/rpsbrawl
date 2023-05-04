@@ -1,0 +1,6 @@
+{
+    "RPS_SECRET": "d92616228f30e93495ed0173f96d3ae1a466b3c1c5f1d113671afba75746f40e",
+    "RPS_AUTH": [
+        {"username": "rpsbro", "hashed_password": "$2b$12$cPN3pEhQ1Qa9G/YxAe.vjeBnfSOQgRAImBOg0IeKAXPe7psfzOJqW"}
+    ]
+}
