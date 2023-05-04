@@ -104,6 +104,7 @@ class TokenBase(BaseModel):
 
 class TokenDataBase(BaseModel):
     username: str | None = None
+    source_ip: str | None = None
 
 class AuthBase(BaseModel):
     username: str
