@@ -1,6 +1,6 @@
-from typing import List, Union, Dict, Tuple, Annotated
+from typing import List, Union, Dict, Tuple
 from datetime import datetime, timedelta
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status, Request, Cookie
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -21,8 +21,7 @@ from .database import SessionLocal, engine
 models.Base.metadata.create_all(bind=engine)
 
 try:
-    with open("config.json", "r", encoding='utf-8') as f:
-        SECRET_KEY = json.load(f)['RPS_SECRET']
+    SECRET_KEY = os.environ["RPS_SECRET"]
 except:
     SECRET_KEY = ""
 ALGORITHM = "HS256"
@@ -66,8 +65,7 @@ def get_password_hash(password):
 
 def get_auth(username):
     try:
-        with open("config.json", "r", encoding='utf-8') as f:
-            auths = json.load(f)['RPS_AUTH']
+        auths = json.loads(os.environ.get('RPS_AUTH'))
     except:
         auths = []
     return next((x for x in auths if x["username"] == username), None)
