@@ -1,6 +1,6 @@
 from typing import List, Union, Dict, Tuple
 from datetime import datetime, timedelta
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status, Request
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, WebSocketException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -88,12 +88,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_auth(request: Request, token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+def get_current_auth(token: str, credentials_exception: Exception, ip: str):
     if token not in valid_tokens:
         # 토큰은 1회용 - 재사용 방지
         print("소멸한 토큰 사용")
@@ -113,7 +108,7 @@ async def get_current_auth(request: Request, token: str = Depends(oauth2_scheme)
         # 등록되지 않은 사용자 이름일 경우
         print("등록되지 않은 사용자")
         raise credentials_exception
-    if source_ip is None or source_ip != request.client.host:
+    if source_ip is None or source_ip != ip:
         # 토큰을 생성할 때의 클라이언트 IP가 현재 요청을 보낸 IP와 일치하지 않는 경우
         print("IP 불일치")
         raise credentials_exception
@@ -127,6 +122,21 @@ async def get_current_auth(request: Request, token: str = Depends(oauth2_scheme)
     except ValueError:
         pass
     return auth
+
+async def get_current_auth_http(request: Request, token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    return get_current_auth(token, credentials_exception, request.client.host)
+
+async def get_current_auth_websocket(websocket: WebSocket, token: str = Depends(oauth2_scheme)):
+    credentials_exception = WebSocketException(
+        code=status.WS_1008_POLICY_VIOLATION,
+        reason="Could not validate credentials"
+    )
+    return get_current_auth(token, credentials_exception, websocket.client.host)
 
 @app.post("/token", response_model=schemas.TokenBase)
 async def login_for_access_token(
@@ -327,8 +337,8 @@ event_loop_for_main = asyncio.get_event_loop()
 event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
-async def websocket_endpoint(websocket: WebSocket, name: str, token: str, request: Request, db: Session = Depends(get_db)):
-    await get_current_auth(request, token)
+async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Session = Depends(get_db)):
+    await get_current_auth_websocket(websocket, token)
 
     if name is None or name == "":
         await websocket.accept()
@@ -434,7 +444,7 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get("/connections")
-def read_connections(current_auth: schemas.AuthBase = Depends(get_current_auth)):
+def read_connections(current_auth: schemas.AuthBase = Depends(get_current_auth_http)):
     # (디버깅 용도)
     ret = []
     for con in cManager.active_connections:
