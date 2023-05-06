@@ -25,9 +25,16 @@ export const WebsocketProvider = ({ children }) => {
   // 웹소켓 연결
 
   function createWebSocketConnection(name) {
-    var socket = new WebSocket(`${BASE_WEBSOCKET_URL}/signin?name=${name}`);
+    const token = localStorage.getItem("access_token");
+
+    console.log(token);
+    const socket = new WebSocket(
+      `${BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
+    );
+
     socket.onopen = (event) => {
       console.log("Socket open", event);
+      alert("성공");
       setIsReady(true);
     };
 

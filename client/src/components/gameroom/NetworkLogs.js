@@ -136,10 +136,6 @@ const ScrollView = styled.div`
   overflow-x: hidden;
   overflow-y: scroll;
   flex-wrap: wrap;
-  @media (min-width: 1200px) {
-    // 데스크탑 일반
-    height: 500px;
-  }
 `;
 const Row = styled.tr`
   display: flex;
@@ -147,5 +143,5 @@ const Row = styled.tr`
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-bottom: 1.5vh;
+  margin-bottom: 10px;
 `;

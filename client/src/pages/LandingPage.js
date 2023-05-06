@@ -9,7 +9,7 @@ import ScissorSrc from "../assets/images/scissor.png";
 import PaperSrc from "../assets/images/paper.png";
 import SvgIcon from "../components/common/SvgIcon";
 import SizedBox from "../components/common/SizedBox";
-
+import axios from "axios";
 import Button from "../components/common/Button";
 import { useContext } from "react";
 import { Medium, MediumOutline } from "../styles/font";
@@ -22,6 +22,7 @@ import { Language } from "../db/Language";
 import { BASE_WEBSOCKET_URL } from "../Config";
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
+import qs from "qs";
 function RuleBox() {
   const mode = useContext(LanguageContext);
   return (
@@ -59,7 +60,35 @@ function LoginBox() {
       return;
     }
 
-    createWebSocketConnection(name); // Socket Connection 생성
+    var body = {
+      grant_type: "",
+      username: "rpsbro",
+      password: "rpsDance",
+      scope: "",
+      client_id: "",
+      client_secret: "",
+    };
+
+    axios
+      .post(
+        "http://localhost:8000/token",
+        /*json을 queryString 타입의 text로 변환*/
+        qs.stringify(body),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json",
+          },
+        }
+      )
+      .then(function (response) {
+        console.log(response);
+        localStorage.setItem("access_token", response.data.access_token);
+        createWebSocketConnection(name); // Socket Connection 생성
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
   };
   return (
     <BgBox width="250px" height="300px" color="white">
