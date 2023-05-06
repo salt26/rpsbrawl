@@ -22,7 +22,8 @@ import { Language } from "../db/Language";
 import { BASE_WEBSOCKET_URL } from "../Config";
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
-
+import axios from "axios";
+import qs from "qs";
 function Tabs({ currentTab, setCurrentTab }) {
   const mode = useContext(LanguageContext);
   return (
@@ -123,7 +124,35 @@ function LoginBox() {
       alert(Language[mode].name_long);
       return;
     }
+    var body = {
+      grant_type: "",
+      username: "rpsbro",
+      password: "rpsDance",
+      scope: "",
+      client_id: "",
+      client_secret: "",
+    };
 
+    axios
+      .post(
+        "http://localhost:8000/token",
+        /*json을 queryString 타입의 text로 변환*/
+        qs.stringify(body),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Accept: "application/json",
+          },
+        }
+      )
+      .then(function (response) {
+        console.log(response);
+        localStorage.setItem("access_token", response.data.access_token);
+        createWebSocketConnection(name); // Socket Connection 생성
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
     createWebSocketConnection(name); // Socket Connection 생성
   };
   return (
