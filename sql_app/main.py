@@ -104,6 +104,7 @@ def get_current_auth(token: str, credentials_exception: Exception, ip: str):
         exp: int = payload.get("exp")
         token_data = schemas.TokenDataBase(username=username, source_ip=source_ip)
     except JWTError:
+        print("잘못된 토큰")
         raise credentials_exception
     auth = get_auth(username=token_data.username)
     if auth is None:
@@ -131,14 +132,14 @@ async def get_current_auth_http(request: Request, token: str = Depends(oauth2_sc
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    return get_current_auth(token, credentials_exception, request.client.host)
+    return get_current_auth(token, credentials_exception, request.headers.get("X-Forwarded-For", request.client.host))
 
 async def get_current_auth_websocket(websocket: WebSocket, token: str = Depends(oauth2_scheme)):
     credentials_exception = WebSocketException(
         code=status.WS_1008_POLICY_VIOLATION,
         reason="Could not validate credentials"
     )
-    return get_current_auth(token, credentials_exception, websocket.client.host)
+    return get_current_auth(token, credentials_exception, websocket.headers.get("X-Forwarded-For", websocket.client.host))
 
 @app.post("/token", response_model=schemas.TokenBase)
 async def login_for_access_token(
@@ -152,7 +153,7 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    client_ip = request.client.host
+    client_ip = request.headers.get("X-Forwarded-For", request.client.host)
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": auth["username"], "source_ip": client_ip}, expires_delta=access_token_expires
