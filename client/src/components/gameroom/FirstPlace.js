@@ -40,14 +40,14 @@ export default function FirstPlace({ place }) {
       height={isMobile ? "10vh" : "100px"}
     >
       <Row>
-        <SvgIcon src={TrophySrc} size={isMobile ? "50px" : "80px"} />
+        <SvgIcon src={TrophySrc} size={isMobile ? "30px" : "60px"} />
         <Col>
           <Medium size={`var(--font-size-md)`}>{team_color[team]}</Medium>
 
           <Medium
             size={
               isMobile
-                ? String(10 - 4 * (name.length / 5)) + "vw"
+                ? String(8 - name.length / 5) + "vw"
                 : String(30 - 6 * (name.length / 7)) + "px"
             }
           >
