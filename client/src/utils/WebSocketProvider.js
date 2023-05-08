@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { createContext } from "react";
-import { BASE_WEBSOCKET_URL } from "../Config";
 import { setUserId, setUserName } from "./User";
 import { useNavigate } from "react-router-dom";
 import { setIsLogin } from "./User";
+import { Language } from "../db/Language";
+import { LanguageContext } from "./LanguageProvider";
+import { useContext } from "react";
 export const WebsocketContext = createContext([
   () => {},
   false,
@@ -20,6 +22,8 @@ export const WebsocketProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [res, setRes] = useState(null);
 
+  const mode = useContext(Language);
+
   const navigate = useNavigate();
   const ws = useRef(null);
   // 웹소켓 연결
@@ -29,17 +33,17 @@ export const WebsocketProvider = ({ children }) => {
 
     console.log(token);
     const socket = new WebSocket(
-      `${BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
+      `${process.env.REACT_APP_BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
     );
 
     socket.onopen = (event) => {
       console.log("Socket open", event);
-      alert("성공");
       setIsReady(true);
     };
 
     socket.onclose = (event) => {
       console.log("onclose!", event);
+      alert(Language[mode].reconnection_request);
       setIsReady(false);
       navigate("/");
     };
