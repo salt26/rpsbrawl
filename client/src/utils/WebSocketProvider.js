@@ -36,7 +36,7 @@ export const WebsocketProvider = ({ children }) => {
       console.log(token);
 
       const socket = new WebSocket(
-        `${process.env.RPS_BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
+        `${process.env.REACT_APP_RPS_BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
       );
 
       socket.onopen = (event) => {

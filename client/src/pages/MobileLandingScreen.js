@@ -131,8 +131,8 @@ function LoginBox() {
       console.log("요청!");
       var body = {
         grant_type: "",
-        username: process.env.RPS_USERNAME,
-        password: process.env.RPS_PASSWORD,
+        username: process.env.REACT_APP_RPS_USERNAME,
+        password: process.env.REACT_APP_RPS_PASSWORD,
         scope: "",
         client_id: "",
         client_secret: "",
@@ -141,7 +141,7 @@ function LoginBox() {
       try {
         /*비동기 요청*/
         const response = await axios.post(
-          `${process.env.RPS_BASE_SERVER_URL}/token`,
+          `${process.env.REACT_APP_RPS_BASE_SERVER_URL}/token`,
           qs.stringify(body),
           {
             headers: {
