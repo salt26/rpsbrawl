@@ -24,7 +24,7 @@ import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
 import axios from "axios";
 import qs from "qs";
-import { BASE_SERVER_URL } from "../Config";
+
 function Tabs({ currentTab, setCurrentTab }) {
   const mode = useContext(LanguageContext);
   return (
@@ -131,8 +131,8 @@ function LoginBox() {
       console.log("요청!");
       var body = {
         grant_type: "",
-        username: "rpsbro",
-        password: "rpsDance",
+        username: process.env.RPS_USERNAME,
+        password: process.env.RPS_PASSWORD,
         scope: "",
         client_id: "",
         client_secret: "",
@@ -141,7 +141,7 @@ function LoginBox() {
       try {
         /*비동기 요청*/
         const response = await axios.post(
-          `${BASE_SERVER_URL}/token`,
+          `${process.env.RPS_BASE_SERVER_URL}/token`,
           qs.stringify(body),
           {
             headers: {

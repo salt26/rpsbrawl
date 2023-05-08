@@ -10,7 +10,6 @@ import {
   MobileRoomListScreen,
 } from "./pages";
 import { Route, Routes } from "react-router-dom";
-import { BASE_WEBSOCKET_URL } from "./Config";
 import styled from "styled-components";
 import "./App.css";
 import { useState, useRef, useEffect, createContext } from "react";

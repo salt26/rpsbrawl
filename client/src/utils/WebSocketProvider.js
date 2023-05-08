@@ -6,7 +6,6 @@ import { setIsLogin } from "./User";
 import { Language } from "../db/Language";
 import { LanguageContext } from "./LanguageProvider";
 import { useContext } from "react";
-import { BASE_WEBSOCKET_URL } from "../Config";
 
 export const WebsocketContext = createContext([
   () => {},
@@ -37,7 +36,7 @@ export const WebsocketProvider = ({ children }) => {
       console.log(token);
 
       const socket = new WebSocket(
-        `${BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
+        `${process.env.RPS_BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
       );
 
       socket.onopen = (event) => {
