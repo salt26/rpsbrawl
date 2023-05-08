@@ -7,7 +7,7 @@ import Button from "../components/common/Button";
 import SizedBox from "../components/common/SizedBox";
 import UserList from "../components/gameroom/UserList";
 import { useNavigate } from "react-router-dom";
-import HTTP from "../utils/HTTP";
+
 import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
 import { useLocation } from "react-router";

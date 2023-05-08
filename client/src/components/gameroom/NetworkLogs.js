@@ -6,7 +6,7 @@ import { Rock, Paper, Scissor } from "./RPS.js";
 import SizedBox from "../common/SizedBox";
 import useInterval from "../../utils/useInterval";
 import { useParams } from "react-router-dom";
-import HTTP from "../../utils/HTTP";
+
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useContext, useEffect } from "react";
 import "./networklog.css";

@@ -16,7 +16,7 @@ import { Medium, MediumOutline } from "../styles/font";
 import { useNavigate } from "react-router-dom";
 import { useRef, createContext, useEffect } from "react";
 import { LanguageContext } from "../utils/LanguageProvider";
-import HTTP from "../utils/HTTP";
+
 import { getUserName, setUserName } from "../utils/User";
 import { Language } from "../db/Language";
 import { BASE_WEBSOCKET_URL } from "../Config";
@@ -135,7 +135,7 @@ function LoginBox() {
 
     axios
       .post(
-        "http://localhost:8000/token",
+        `${process.env.REACT_APP_BASE_SERVER_URL}/token`,
         /*json을 queryString 타입의 text로 변환*/
         qs.stringify(body),
         {

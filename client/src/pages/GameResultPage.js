@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import ResultBoard from "../components/gameroom/ResultBoard";
 import Button from "../components/common/Button";
 import styled from "styled-components";
-import HTTP from "../utils/HTTP";
+
 import { useParams } from "react-router-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getUserId } from "../utils/User";
