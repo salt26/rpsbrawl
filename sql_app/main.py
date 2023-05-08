@@ -389,7 +389,10 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
                 'hand_list': read_hands(recon_room_id, 6, db),
                 'game_list': read_game(recon_room_id, db)
             }
+            print(event_loop_for_main is asyncio.get_running_loop())
             asyncio.set_event_loop(event_loop_for_main)
+            print(event_loop_for_main is asyncio.get_running_loop())
+            #event_loop_for_main.run_forever()
             await ConnectionManager.send_json("signin", 'reconnected_game', "recon_data", recon_data, websocket)
 
         else:
@@ -403,6 +406,7 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
                 'game_list': read_game(recon_room_id, db)
             }
             asyncio.set_event_loop(event_loop_for_main)
+            print(event_loop_for_main is asyncio.get_running_loop())
             await ConnectionManager.send_json("signin", 'reconnected_result', "recon_data", recon_data, websocket)
 
         # 무한 루프를 돌면서 클라이언트에게 요청을 받고 처리하고 응답
@@ -425,17 +429,22 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
         room_id = cManager.find_connection_by_websocket(websocket)[2]
         if websocket.state == 1:
             # CONNECTED
+            print("CONNECTED -> close()")
             await cManager.close(websocket)
         else:
             # DISCONNECTED or CONNECTING
+            print("DISCONNECTED or CONNECTING -> disconnect()")
             cManager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
+        print("update_room_to_quit")
         room, error_code = crud.update_room_to_quit(db, room_id, person.id)
 
         if error_code == 0 and room is not None:
             #print("접속 끊긴 사람 퇴장 완료")
+            print("broadcast_json disconnect game_list")
             await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
+        print("dirty_bit set")
         room_list_dirty_bit.set()
     
 
@@ -473,6 +482,7 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
     it = ""
     st = ""
     et = ""
+    np = len(db_room.persons)
     if db_room.time_offset is not None:
         to = db_room.time_offset
     if db_room.time_duration is not None:
@@ -483,6 +493,8 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
         st = db_room.start_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
     if db_room.end_time is not None:
         et = db_room.end_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+    if db_room.state == schemas.RoomStateEnum.Wait:
+        np += db_room.bot_skilled + db_room.bot_dumb
 
     return {
         'id': room_id,
@@ -498,7 +510,7 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
         'bot_skilled': db_room.bot_skilled,
         'bot_dumb': db_room.bot_dumb,
         'max_persons': db_room.max_persons,
-        'num_persons': len(db_room.persons) + db_room.bot_skilled + db_room.bot_dumb
+        'num_persons': np
     }
 
 
@@ -516,6 +528,7 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
         it = ""
         st = ""
         et = ""
+        np = len(room.persons)
         if room.time_offset is not None:
             to = room.time_offset
         if room.time_duration is not None:
@@ -526,6 +539,8 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
             st = room.start_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
         if room.end_time is not None:
             et = room.end_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+        if room.state == schemas.RoomStateEnum.Wait:
+            np += room.bot_skilled + room.bot_dumb
 
         rooms.append({
             'id': room.id,
@@ -541,7 +556,7 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
             'bot_skilled': room.bot_skilled,
             'bot_dumb': room.bot_dumb,
             'max_persons': room.max_persons,
-            'num_persons': len(room.persons) + room.bot_skilled + room.bot_dumb
+            'num_persons': np
         })
     
     return rooms
@@ -916,6 +931,7 @@ async def periodic_manager(time_interval: int):
     # DB 세션을 새로 만들어서, 스레드 당 하나의 세션을 가지도록 해야 여러 스레드가 DB에 동시에 접근해서 생기는 문제가 발생하지 않는다.
     db = SessionLocal()
     try:
+        crud.delete_non_end_rooms(db)
         while True:
             tasks = []
             tasks.append(remove_dormancy_person(db))
