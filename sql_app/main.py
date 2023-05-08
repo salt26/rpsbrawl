@@ -389,9 +389,10 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
                 'hand_list': read_hands(recon_room_id, 6, db),
                 'game_list': read_game(recon_room_id, db)
             }
-            print(event_loop_for_main is asyncio.get_running_loop())
             asyncio.set_event_loop(event_loop_for_main)
-            print(event_loop_for_main is asyncio.get_running_loop())
+
+            # https://github.com/python/cpython/issues/95474
+
             #event_loop_for_main.run_forever()
             await ConnectionManager.send_json("signin", 'reconnected_game', "recon_data", recon_data, websocket)
 
@@ -406,7 +407,6 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
                 'game_list': read_game(recon_room_id, db)
             }
             asyncio.set_event_loop(event_loop_for_main)
-            print(event_loop_for_main is asyncio.get_running_loop())
             await ConnectionManager.send_json("signin", 'reconnected_result', "recon_data", recon_data, websocket)
 
         # 무한 루프를 돌면서 클라이언트에게 요청을 받고 처리하고 응답
