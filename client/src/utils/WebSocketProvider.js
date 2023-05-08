@@ -6,6 +6,7 @@ import { setIsLogin } from "./User";
 import { Language } from "../db/Language";
 import { LanguageContext } from "./LanguageProvider";
 import { useContext } from "react";
+import { BASE_WEBSOCKET_URL } from "../Config";
 export const WebsocketContext = createContext([
   () => {},
   false,
@@ -33,7 +34,7 @@ export const WebsocketProvider = ({ children }) => {
 
     console.log(token);
     const socket = new WebSocket(
-      `${process.env.REACT_APP_BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
+      `${BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
     );
 
     socket.onopen = (event) => {
@@ -43,6 +44,9 @@ export const WebsocketProvider = ({ children }) => {
 
     socket.onclose = (event) => {
       console.log("onclose!", event);
+
+      // 방목록에서 <- 버튼 눌렀을때는 제외하구
+
       alert(Language[mode].reconnection_request);
       setIsReady(false);
       navigate("/");

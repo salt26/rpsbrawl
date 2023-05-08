@@ -8,7 +8,7 @@ import { useParams } from "react-router-dom";
 import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import useInterval from "../../utils/useInterval";
-import { COOL_TIME } from "../../Config";
+import { COOL_TIME } from "../../Constants";
 import { GradientText } from "../../styles/font";
 import { isMobile } from "react-device-detect";
 

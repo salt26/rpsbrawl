@@ -20,8 +20,8 @@ import {
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useContext } from "react";
 import { useRef } from "react";
-import { TIME_DURATION, TIME_OFFSET } from "../Config";
-import { PASSWORD } from "../Config";
+import { TIME_DURATION, TIME_OFFSET } from "../Constants";
+
 import { Language } from "../db/Language";
 import { LanguageContext } from "../utils/LanguageProvider";
 import { MediumOutline } from "../styles/font";

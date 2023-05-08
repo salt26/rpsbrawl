@@ -14,7 +14,7 @@ import { LanguageContext } from "../utils/LanguageProvider";
 import { Medium } from "../styles/font";
 import { useMediaQuery } from "react-responsive";
 import SizedBox from "../components/common/SizedBox";
-import { RESULT_TIME } from "../Config";
+import { RESULT_TIME } from "../Constants";
 import useInterval from "../utils/useInterval";
 
 export default function MobileGameResultScreen() {

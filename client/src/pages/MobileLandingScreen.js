@@ -19,11 +19,12 @@ import { LanguageContext } from "../utils/LanguageProvider";
 
 import { getUserName, setUserName } from "../utils/User";
 import { Language } from "../db/Language";
-import { BASE_WEBSOCKET_URL } from "../Config";
+
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
 import axios from "axios";
 import qs from "qs";
+import { BASE_SERVER_URL } from "../Config";
 function Tabs({ currentTab, setCurrentTab }) {
   const mode = useContext(LanguageContext);
   return (
@@ -135,7 +136,7 @@ function LoginBox() {
 
     axios
       .post(
-        `${process.env.REACT_APP_BASE_SERVER_URL}/token`,
+        `${BASE_SERVER_URL}/token`,
         /*json을 queryString 타입의 text로 변환*/
         qs.stringify(body),
         {
