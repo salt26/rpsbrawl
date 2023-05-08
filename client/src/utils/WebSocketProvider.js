@@ -7,6 +7,7 @@ import { Language } from "../db/Language";
 import { LanguageContext } from "./LanguageProvider";
 import { useContext } from "react";
 import { BASE_WEBSOCKET_URL } from "../Config";
+
 export const WebsocketContext = createContext([
   () => {},
   false,
@@ -29,64 +30,81 @@ export const WebsocketProvider = ({ children }) => {
   const ws = useRef(null);
   // 웹소켓 연결
 
-  function createWebSocketConnection(name) {
-    const token = localStorage.getItem("access_token");
+  function createWebSocketConnection(name, setIsLoading) {
+    return new Promise((resolve, reject) => {
+      const token = localStorage.getItem("access_token");
 
-    console.log(token);
-    const socket = new WebSocket(
-      `${BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
-    );
+      console.log(token);
 
-    socket.onopen = (event) => {
-      console.log("Socket open", event);
-      setIsReady(true);
-    };
+      const socket = new WebSocket(
+        `${BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
+      );
 
-    socket.onclose = (event) => {
-      console.log("onclose!", event);
+      socket.onopen = (event) => {
+        console.log("Socket open", event);
+        setIsReady(true);
+        resolve(socket);
+      };
 
-      // 방목록에서 <- 버튼 눌렀을때는 제외하구
+      socket.onclose = (event) => {
+        console.log("onclose!", event);
+        const currentPath = window.location.href.replace(
+          window.location.origin,
+          ""
+        );
+        console.log("경로명", currentPath);
+        // 방목록에서 <- 버튼 눌렀을때는 제외하구
 
-      alert(Language[mode].reconnection_request);
-      setIsReady(false);
-      navigate("/");
-    };
+        if (currentPath === "/rooms") {
+          navigate("/");
+          return;
+        }
 
-    socket.onmessage = function (event) {
-      const res = JSON.parse(event.data);
-      // 전달된 json string을 object로 변환
-      console.log("onmessage", res.type, res);
-      console.log(res);
-      if (res?.response === "error") {
-        alert(res.message);
-        return;
-      }
+        alert(Language[mode].reconnection_request);
+        setIsReady(false);
+        navigate("/");
+        reject();
+      };
 
-      switch (res?.type) {
-        case "profile_and_room_list":
-          const { data } = res;
+      socket.onmessage = function (event) {
+        const res = JSON.parse(event.data);
+        // 전달된 json string을 object로 변환
+        console.log("onmessage", res.type, res);
+        console.log(res);
+        if (res?.response === "error") {
+          alert(res.message);
+          return;
+        }
 
-          setUserName(data.name);
+        switch (res?.type) {
+          case "profile_and_room_list":
+            const { data } = res;
 
-          setUserId(data.person_id);
-          setIsLogin(true);
-          navigate(`/rooms`, { state: data.rooms });
-          break;
-        case "recon_data": //재접속시
-          setUserName(res.data.name);
+            setUserName(data.name);
 
-          setUserId(res.data.person_id);
-          // 재접속 분기
-          if (res.response === "reconnected_game") {
-            navigate(`/rooms/${res.data.room.id}/game`, { state: res.data });
-          }
+            setUserId(data.person_id);
+            setIsLogin(true);
+            navigate(`/rooms`, { state: data.rooms });
+            break;
+          case "recon_data": //재접속시
+            setIsLoading(false);
+            setUserName(res.data.name);
 
-          if (res.response === "reconnected_result") {
-            navigate(`/rooms/${res.data.room.id}/result`, { state: res.data });
-          }
-      }
-    };
-    ws.current = socket;
+            setUserId(res.data.person_id);
+            // 재접속 분기
+            if (res.response === "reconnected_game") {
+              navigate(`/rooms/${res.data.room.id}/game`, { state: res.data });
+            }
+
+            if (res.response === "reconnected_result") {
+              navigate(`/rooms/${res.data.room.id}/result`, {
+                state: res.data,
+              });
+            }
+        }
+      };
+      ws.current = socket;
+    });
   }
 
   const ret = [createWebSocketConnection, isReady, ws.current];
