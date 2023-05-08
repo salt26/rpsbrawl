@@ -153,7 +153,6 @@ function LoginBox() {
       .catch(function (error) {
         console.log(error);
       });
-    createWebSocketConnection(name); // Socket Connection 생성
   };
   return (
     <BgBox width="80%" height="30vh" color="white">

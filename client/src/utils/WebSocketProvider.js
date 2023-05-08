@@ -22,7 +22,7 @@ export const WebsocketProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
   const [res, setRes] = useState(null);
 
-  const mode = useContext(Language);
+  const mode = useContext(LanguageContext);
 
   const navigate = useNavigate();
   const ws = useRef(null);
