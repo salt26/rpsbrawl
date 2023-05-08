@@ -92,6 +92,7 @@ function LoginBox() {
       } catch (error) {
         console.log(error);
       } finally {
+        setIsLoading(false); // 소켓 연결 실패했을 때에도
       }
     }
   };
@@ -135,7 +136,6 @@ function LoginBox() {
           height="40px"
           text={Language[mode].join}
           onClick={_joinGame}
-          disabled={isLoading}
         />
       </Col>
     </BgBox>
