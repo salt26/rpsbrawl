@@ -1,5 +1,23 @@
 services:
 
+  frontend:
+    build: ./client
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.app2.loadbalancer.server.port=80
+      - traefik.http.routers.app2-http.entrypoints=http
+      - traefik.http.routers.app2-http.rule=Host(`rpsbrawl.dantae.net`)
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.app2-https.entrypoints=https
+      - traefik.http.routers.app2-https.rule=Host(`rpsbrawl.dantae.net`)
+      - traefik.http.routers.app2-https.tls=true
+      - traefik.http.routers.app2-https.tls.certresolver=le
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.app2-http.middlewares=https-redirect
+    networks:
+      - traefik-public
   backend:
     build: ./
     restart: always
@@ -28,25 +46,6 @@ services:
     networks:
       # Use the public network created to be shared between Traefik and
       # any other service that needs to be publicly available with HTTPS
-      - traefik-public
-  frontend:
-    build: ./client
-    expose:
-      - "80"
-    labels:
-      - traefik.enable=true
-      - traefik.http.services.app2.loadbalancer.server.port=80
-      - traefik.http.routers.app2-http.entrypoints=http
-      - traefik.http.routers.app2-http.rule=Host(`rpsbrawl.dantae.net`)
-      - traefik.docker.network=traefik-public
-      - traefik.http.routers.app2-https.entrypoints=https
-      - traefik.http.routers.app2-https.rule=Host(`rpsbrawl.dantae.net`)
-      - traefik.http.routers.app2-https.tls=true
-      - traefik.http.routers.app2-https.tls.certresolver=le
-      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-      - traefik.http.routers.app2-http.middlewares=https-redirect
-    networks:
       - traefik-public
 
 networks:
