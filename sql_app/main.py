@@ -1,6 +1,6 @@
 from typing import List, Union, Dict, Tuple
 from datetime import datetime, timedelta
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status, Request
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, WebSocketException, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -88,12 +88,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_auth(request: Request, token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+def get_current_auth(token: str, credentials_exception: Exception, ip: str):
     if token not in valid_tokens:
         # 토큰은 1회용 - 재사용 방지
         print("소멸한 토큰 사용")
@@ -107,13 +102,14 @@ async def get_current_auth(request: Request, token: str = Depends(oauth2_scheme)
         exp: int = payload.get("exp")
         token_data = schemas.TokenDataBase(username=username, source_ip=source_ip)
     except JWTError:
+        print("잘못된 토큰")
         raise credentials_exception
     auth = get_auth(username=token_data.username)
     if auth is None:
         # 등록되지 않은 사용자 이름일 경우
         print("등록되지 않은 사용자")
         raise credentials_exception
-    if source_ip is None or source_ip != request.client.host:
+    if source_ip is None or source_ip != ip:
         # 토큰을 생성할 때의 클라이언트 IP가 현재 요청을 보낸 IP와 일치하지 않는 경우
         print("IP 불일치")
         raise credentials_exception
@@ -128,6 +124,21 @@ async def get_current_auth(request: Request, token: str = Depends(oauth2_scheme)
         pass
     return auth
 
+async def get_current_auth_http(request: Request, token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    return get_current_auth(token, credentials_exception, request.headers.get("X-Forwarded-For", request.client.host))
+
+async def get_current_auth_websocket(websocket: WebSocket, token: str = Depends(oauth2_scheme)):
+    credentials_exception = WebSocketException(
+        code=status.WS_1008_POLICY_VIOLATION,
+        reason="Could not validate credentials"
+    )
+    return get_current_auth(token, credentials_exception, websocket.headers.get("X-Forwarded-For", websocket.client.host))
+
 @app.post("/token", response_model=schemas.TokenBase)
 async def login_for_access_token(
     request: Request,
@@ -140,7 +151,7 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    client_ip = request.client.host
+    client_ip = request.headers.get("X-Forwarded-For", request.client.host)
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": auth["username"], "source_ip": client_ip}, expires_delta=access_token_expires
@@ -327,8 +338,8 @@ event_loop_for_main = asyncio.get_event_loop()
 event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
-async def websocket_endpoint(websocket: WebSocket, name: str, token: str, request: Request, db: Session = Depends(get_db)):
-    await get_current_auth(request, token)
+async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Session = Depends(get_db)):
+    await get_current_auth_websocket(websocket, token)
 
     if name is None or name == "":
         await websocket.accept()
@@ -379,6 +390,10 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, reques
                 'game_list': read_game(recon_room_id, db)
             }
             asyncio.set_event_loop(event_loop_for_main)
+
+            # https://github.com/python/cpython/issues/95474
+
+            #event_loop_for_main.run_forever()
             await ConnectionManager.send_json("signin", 'reconnected_game', "recon_data", recon_data, websocket)
 
         else:
@@ -414,17 +429,22 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, reques
         room_id = cManager.find_connection_by_websocket(websocket)[2]
         if websocket.state == 1:
             # CONNECTED
+            print("CONNECTED -> close()")
             await cManager.close(websocket)
         else:
             # DISCONNECTED or CONNECTING
+            print("DISCONNECTED or CONNECTING -> disconnect()")
             cManager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
+        print("update_room_to_quit")
         room, error_code = crud.update_room_to_quit(db, room_id, person.id)
 
         if error_code == 0 and room is not None:
             #print("접속 끊긴 사람 퇴장 완료")
+            print("broadcast_json disconnect game_list")
             await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
+        print("dirty_bit set")
         room_list_dirty_bit.set()
     
 
@@ -434,7 +454,7 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get("/connections")
-def read_connections(current_auth: schemas.AuthBase = Depends(get_current_auth)):
+def read_connections(current_auth: schemas.AuthBase = Depends(get_current_auth_http)):
     # (디버깅 용도)
     ret = []
     for con in cManager.active_connections:
@@ -462,6 +482,7 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
     it = ""
     st = ""
     et = ""
+    np = len(db_room.persons)
     if db_room.time_offset is not None:
         to = db_room.time_offset
     if db_room.time_duration is not None:
@@ -472,6 +493,8 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
         st = db_room.start_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
     if db_room.end_time is not None:
         et = db_room.end_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+    if db_room.state == schemas.RoomStateEnum.Wait:
+        np += db_room.bot_skilled + db_room.bot_dumb
 
     return {
         'id': room_id,
@@ -487,7 +510,7 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
         'bot_skilled': db_room.bot_skilled,
         'bot_dumb': db_room.bot_dumb,
         'max_persons': db_room.max_persons,
-        'num_persons': len(db_room.persons) + db_room.bot_skilled + db_room.bot_dumb
+        'num_persons': np
     }
 
 
@@ -505,6 +528,7 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
         it = ""
         st = ""
         et = ""
+        np = len(room.persons)
         if room.time_offset is not None:
             to = room.time_offset
         if room.time_duration is not None:
@@ -515,6 +539,8 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
             st = room.start_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
         if room.end_time is not None:
             et = room.end_time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z")
+        if room.state == schemas.RoomStateEnum.Wait:
+            np += room.bot_skilled + room.bot_dumb
 
         rooms.append({
             'id': room.id,
@@ -530,7 +556,7 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
             'bot_skilled': room.bot_skilled,
             'bot_dumb': room.bot_dumb,
             'max_persons': room.max_persons,
-            'num_persons': len(room.persons) + room.bot_skilled + room.bot_dumb
+            'num_persons': np
         })
     
     return rooms
@@ -905,6 +931,7 @@ async def periodic_manager(time_interval: int):
     # DB 세션을 새로 만들어서, 스레드 당 하나의 세션을 가지도록 해야 여러 스레드가 DB에 동시에 접근해서 생기는 문제가 발생하지 않는다.
     db = SessionLocal()
     try:
+        crud.delete_non_end_rooms(db)
         while True:
             tasks = []
             tasks.append(remove_dormancy_person(db))

@@ -18,31 +18,6 @@ export default function MyPlace({ place }) {
     "purple",
   ];
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
-  const getNameSize = (name) => {
-    console.log(name);
-
-    if (isMobile) {
-      if (name.length <= 5) {
-        return "35px";
-      } else if (name.length <= 10) {
-        return "20px";
-      } else if (name.length <= 20) {
-        return "15px";
-      } else {
-        return "8px";
-      }
-    } else {
-      if (name.length <= 5) {
-        return "40px";
-      } else if (name.length <= 10) {
-        return "25px";
-      } else if (name.length <= 20) {
-        return "20px";
-      } else {
-        return "10px";
-      }
-    }
-  };
 
   return (
     <BgBox
@@ -57,7 +32,7 @@ export default function MyPlace({ place }) {
           <Medium
             size={
               isMobile
-                ? String(10 - 4 * (name.length / 5)) + "vw"
+                ? String(8 - name.length / 5) + "vw"
                 : String(30 - 6 * (name.length / 7)) + "px"
             }
           >
@@ -119,6 +94,6 @@ const Col = styled.div`
   display: flex;
 
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: space-around;
   align-items: flex-start;
 `;

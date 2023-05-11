@@ -9,19 +9,20 @@ import ScissorSrc from "../assets/images/scissor.png";
 import PaperSrc from "../assets/images/paper.png";
 import SvgIcon from "../components/common/SvgIcon";
 import SizedBox from "../components/common/SizedBox";
-
+import axios from "axios";
 import Button from "../components/common/Button";
 import { useContext } from "react";
 import { Medium, MediumOutline } from "../styles/font";
 import { useNavigate } from "react-router-dom";
 import { useRef, createContext, useEffect } from "react";
 import { LanguageContext } from "../utils/LanguageProvider";
-import HTTP from "../utils/HTTP";
 import { getUserName, setUserName } from "../utils/User";
 import { Language } from "../db/Language";
-import { BASE_WEBSOCKET_URL } from "../Config";
+
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
+
+import qs from "qs";
 function RuleBox() {
   const mode = useContext(LanguageContext);
   return (
@@ -48,8 +49,9 @@ function LoginBox() {
   var navigate = useNavigate();
   const mode = useContext(LanguageContext);
   const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
+  const [isLoading, setIsLoading] = useState(false); // 버튼 클릭 후 처리 중인지
 
-  const _joinGame = () => {
+  const _joinGame = async () => {
     if (name === "") {
       alert(Language[mode].name_blank);
       return;
@@ -59,7 +61,41 @@ function LoginBox() {
       return;
     }
 
-    createWebSocketConnection(name); // Socket Connection 생성
+    if (!isLoading) {
+      setIsLoading(true);
+      console.log("요청!");
+
+      var body = {
+        grant_type: "",
+        username: process.env.REACT_APP_RPS_USERNAME,
+        password: process.env.REACT_APP_RPS_PASSWORD,
+        scope: "",
+        client_id: "",
+        client_secret: "",
+      };
+
+      try {
+        /*비동기 요청*/
+        const response = await axios.post(
+          `${process.env.REACT_APP_RPS_BASE_SERVER_URL}/token`,
+          qs.stringify(body),
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Accept: "application/json",
+            },
+          }
+        );
+        console.log(response);
+        localStorage.setItem("access_token", response.data.access_token);
+
+        await createWebSocketConnection(name, setIsLoading); // Socket Connection 생성
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false); // 소켓 연결 실패했을 때에도
+      }
+    }
   };
   return (
     <BgBox width="250px" height="300px" color="white">

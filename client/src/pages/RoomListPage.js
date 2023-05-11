@@ -22,7 +22,6 @@ function RoomListPage() {
       };
       ws.send(JSON.stringify(request));
       console.log(request);
-      navigate("/");
     }
   };
   useEffect(

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import ResultBoard from "../components/gameroom/ResultBoard";
 import Button from "../components/common/Button";
 import styled from "styled-components";
-import HTTP from "../utils/HTTP";
+
 import { useParams } from "react-router-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getUserId } from "../utils/User";
@@ -14,7 +14,7 @@ import { LanguageContext } from "../utils/LanguageProvider";
 import { Medium } from "../styles/font";
 import { useMediaQuery } from "react-responsive";
 import SizedBox from "../components/common/SizedBox";
-import { RESULT_TIME } from "../Config";
+import { RESULT_TIME } from "../Constants";
 import useInterval from "../utils/useInterval";
 
 export default function MobileGameResultScreen() {

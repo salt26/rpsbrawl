@@ -25,7 +25,6 @@ function MobileRoomListScreen() {
       };
       ws.send(JSON.stringify(request));
       console.log(request);
-      navigate("/");
     }
   };
 

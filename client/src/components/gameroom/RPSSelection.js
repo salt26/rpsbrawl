@@ -3,12 +3,12 @@ import styled, { css } from "styled-components";
 import RockSrc from "../../assets/images/rock.png";
 import ScissorSrc from "../../assets/images/scissor.png";
 import PaperSrc from "../../assets/images/paper.png";
-import HTTP from "../../utils/HTTP";
+
 import { useParams } from "react-router-dom";
 import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import useInterval from "../../utils/useInterval";
-import { COOL_TIME } from "../../Config";
+import { COOL_TIME } from "../../Constants";
 import { GradientText } from "../../styles/font";
 import { isMobile } from "react-device-detect";
 

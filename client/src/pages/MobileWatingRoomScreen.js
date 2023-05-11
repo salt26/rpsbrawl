@@ -7,7 +7,7 @@ import Button from "../components/common/Button";
 import SizedBox from "../components/common/SizedBox";
 import UserList from "../components/gameroom/UserList";
 import { useNavigate } from "react-router-dom";
-import HTTP from "../utils/HTTP";
+
 import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
 import { useLocation } from "react-router";
@@ -20,8 +20,8 @@ import {
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useContext } from "react";
 import { useRef } from "react";
-import { RESULT_TIME, TIME_DURATION, TIME_OFFSET } from "../Config";
-import { PASSWORD } from "../Config";
+import { RESULT_TIME, TIME_DURATION, TIME_OFFSET } from "../Constants";
+
 import { Language } from "../db/Language";
 import { LanguageContext } from "../utils/LanguageProvider";
 import { MediumOutline } from "../styles/font";
