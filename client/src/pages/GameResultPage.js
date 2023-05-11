@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import ResultBoard from "../components/gameroom/ResultBoard";
 import Button from "../components/common/Button";
 import styled from "styled-components";
-import HTTP from "../utils/HTTP";
+import { RESULT_TIME } from "../Constants";
 import { useParams } from "react-router-dom";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getUserId } from "../utils/User";
@@ -15,7 +15,6 @@ import { Medium } from "../styles/font";
 import { useMediaQuery } from "react-responsive";
 import SizedBox from "../components/common/SizedBox";
 import useInterval from "../utils/useInterval";
-import { RESULT_TIME } from "../Config";
 
 export default function GameResultPage() {
   const mode = useContext(LanguageContext);

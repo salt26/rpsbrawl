@@ -313,6 +313,20 @@ def update_room_to_quit(db: Session, room_id: int, person_id: int):
         #print("refresh next_host_id")
     return (schemas.Room.from_orm(db_room.first()), 0)
 
+def delete_non_end_rooms(db: Session):
+    # 모든 방 제거
+    rooms = db.query(models.Room).filter(models.Room.state != schemas.RoomStateEnum.End)
+    if rooms.first() is None:
+        return False
+
+    for room in rooms.all():
+        db.query(models.Game).filter(models.Game.room_id == room.id).delete()
+
+    rooms.delete()
+    db.commit()
+
+    return True
+
 def update_room_setting(db: Session, room_id: int, name: str or None = None, mode: schemas.RoomModeEnum or None = None, \
     password: str or None = None, bot_skilled: int or None = None, bot_dumb: int or None = None, max_persons: int or None = None):
     db_room = db.query(models.Room).filter(models.Room.id == room_id)
