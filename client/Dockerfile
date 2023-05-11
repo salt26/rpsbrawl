@@ -1,9 +1,9 @@
 FROM node:18
 
-ARG DEFAULT_RPS_USERNAME="hello"
-ARG DEFAULT_RPS_PASSWORD="changethis"
-ARG DEFAULT_RPS_BASE_SERVER_URL="http://localhost:8000"
-ARG DEFAULT_RPS_BASE_WEBSOCKET_URL="ws://localhost:8000"
+ARG DEFAULT_RPS_USERNAME="hello" \
+    DEFAULT_RPS_PASSWORD="changethis" \
+    DEFAULT_RPS_BASE_SERVER_URL="http://localhost:8000" \
+    DEFAULT_RPS_BASE_WEBSOCKET_URL="ws://localhost:8000"
 
 WORKDIR /client
 
@@ -22,4 +22,4 @@ ENV REACT_APP_RPS_USERNAME=$DEFAULT_RPS_USERNAME \
 
 COPY /build /client/build
 
-CMD ["serve", "-s", "build"]
+CMD ["serve", "-l", "3000", "-s", "build"]
