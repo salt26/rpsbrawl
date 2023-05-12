@@ -3,6 +3,8 @@ services:
   frontend:
     build: ./client
     restart: always
+    env_file:
+      - ./client/.env
     labels:
       - traefik.enable=true
       - traefik.http.services.app2.loadbalancer.server.port=3000
