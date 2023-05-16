@@ -18,6 +18,4 @@ RUN npm run build
 
 RUN npm install -g serve
 
-COPY /build /client/build
-
 CMD ["serve", "-l", "3000", "-s", "build"]
