@@ -62,12 +62,12 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    print(pwd_context.hash(password))
     return pwd_context.hash(password)
 
 def get_auth(username):
     try:
-        auths = json.loads(os.environ.get('RPS_AUTH'))
+        with open('sql_app/auths.json') as f:
+            auths = json.load(f)
     except:
         auths = []
     return next((x for x in auths if x["username"] == username), None)
@@ -431,22 +431,22 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
         room_id = cManager.find_connection_by_websocket(websocket)[2]
         if websocket.state == 1:
             # CONNECTED
-            print("CONNECTED -> close()")
+            #print("CONNECTED -> close()")
             await cManager.close(websocket)
         else:
             # DISCONNECTED or CONNECTING
-            print("DISCONNECTED or CONNECTING -> disconnect()")
+            #print("DISCONNECTED or CONNECTING -> disconnect()")
             cManager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
-        print("update_room_to_quit")
+        #print("update_room_to_quit")
         room, error_code = crud.update_room_to_quit(db, room_id, person.id)
 
         if error_code == 0 and room is not None:
             #print("접속 끊긴 사람 퇴장 완료")
-            print("broadcast_json disconnect game_list")
+            #print("broadcast_json disconnect game_list")
             await cManager.broadcast_json("disconnect", "game_list", read_game(room_id, db), room_id)   # disconnect
-        print("dirty_bit set")
+        #print("dirty_bit set")
         room_list_dirty_bit.set()
     
 
