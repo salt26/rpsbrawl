@@ -1,7 +1,7 @@
 # 가위바위보 난투
 <img src="./client/public/RPS%20Brawl_logo_animated.gif" height=300>
 
-**플레이**: https://rpsbrawl.swygbro.com  
+**플레이**: https://rpsbrawl.dantae.net  
 **소스 코드**: https://github.com/salt26/rpsbrawl
 
 **[Read English documentation](./README.md)**
@@ -43,7 +43,7 @@
 <img src="./client/src/assets/images/step6.png" height=200>
 
 ## 플레이 방법
-1. **https://rpsbrawl.swygbro.com**
+1. **https://rpsbrawl.dantae.net**
    * PC 또는 스마트폰에서도 즐길 수 있습니다!
    * 프로그램을 설치하지 않아도 됩니다.
 2. 접속하기 전에 먼저 **언어**를 설정하고 **음악**을 켜세요. 🎵

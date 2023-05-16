@@ -1,7 +1,7 @@
 # Rock-Paper-Scissors Brawl
 <img src="./client/public/RPS%20Brawl_logo_animated.gif" height=300>
 
-**Play**: https://rpsbrawl.swygbro.com  
+**Play**: https://rpsbrawl.dantae.net  
 **Source code**: https://github.com/salt26/rpsbrawl
 
 **[한글 설명 보기](./README_Kor.md)**
@@ -44,7 +44,7 @@ Get the most points in 60 seconds! 🤩
 <img src="./client/src/assets/images/step6.png" height=200>
 
 ## How to play
-1. **https://rpsbrawl.swygbro.com**
+1. **https://rpsbrawl.dantae.net**
    * You can play this on your PC or smartphone.
    * No installation required.
 2. Set your **language** and turn on the **music**. 🎵
