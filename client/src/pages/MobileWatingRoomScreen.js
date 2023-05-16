@@ -139,6 +139,9 @@ export default function MobileWatingRoomScreen() {
           alert(res.message);
           return;
         }
+        if (res?.request === "dormancy") {
+          navigate(`/rooms`, { state: res.data });
+        }
 
         switch (res?.type) {
           case "game_list": // 팀 변경 요청에 대한 응답 , 접속 끊겼을때
