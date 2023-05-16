@@ -89,4 +89,4 @@ Get the most points in 60 seconds! 🤩
      * So, all you have to do is wait. 😄
    * You can save the results of the game as a file.
    * You may capture the screen and show off to your friends!
-10. If you find a bug, please report it [here](https://github.com/salt26/rpsbrawl/issues).
+10. If you find a bug, feel free to report it [here](https://github.com/salt26/rpsbrawl/issues).
