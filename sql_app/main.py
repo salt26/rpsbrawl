@@ -902,7 +902,11 @@ async def run_game_for_room(room_id: int, time_offset: int, time_duration: int):
 
 # 멀티스레드로 방의 시간 관리 함수를 돌려서, 요청을 보낸 사람의 접속이 끊어져서 메인 스레드에서 Exception이 발생하더라도 끝까지 게임이 진행될 수 있게 함
 def manage_time_for_room_threading(room_id: int, time_offset: int, time_duration: int):
+<<<<<<< HEAD
     asyncio.set_event_loop(asyncio.new_event_loop())
+=======
+    asyncio.set_event_loop(event_loop_for_game)
+>>>>>>> 7115e3d (backend game loop bug fixed)
     asyncio.get_event_loop().run_until_complete(run_game_for_room(room_id, time_offset, time_duration))
     #asyncio.run(run_game_for_room(room_id, time_offset, time_duration))
 
@@ -1245,4 +1249,8 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             # 오류 메시지 응답
             await ConnectionManager.send_text("", "error", "Bad request.", websocket)
 
+<<<<<<< HEAD
 threading.Thread(target=periodic_manager_threading, args=(3,), daemon=True).start()
+=======
+threading.Thread(target=periodic_manager_threading, args=(3,), daemon=True).start()
+>>>>>>> 7115e3d (backend game loop bug fixed)
