@@ -1,31 +1,31 @@
 import React, { useState, useRef } from "react";
 import TrophySrc from "../../assets/images/1st_trophy.svg";
-import { Medium } from "../../styles/font";
+import { GradientText, Medium } from "../../styles/font";
 import styled from "styled-components";
-import BgBox from "../common/BgBox";
 import { Rock, Paper, Scissor } from "./RPS.js";
 import SizedBox from "../common/SizedBox";
 import useInterval from "../../utils/useInterval";
 import { useParams } from "react-router-dom";
-import HTTP from "../../utils/HTTP";
+
 import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useContext, useEffect } from "react";
 import "./networklog.css";
+import { Language } from "../../db/Language";
+import { LanguageContext } from "../../utils/LanguageProvider";
+import palette from "../../styles/palette";
+import { useMediaQuery } from "react-responsive";
+import { isMobile } from "react-device-detect";
 
 //1등 점수 정보
-export default function NetworkLogs({ hand_list }) {
+export default function NetworkLogs({ logs }) {
   var rpsDic = { 0: "rock", 1: "scissor", 2: "paper" };
-  const [logs, setLogs] = useState(hand_list);
-  const [createSocketConnection, ready, res, send] =
-    useContext(WebsocketContext); //전역 소켓 불러오기
-
+  const mode = useContext(LanguageContext);
   const scrollRef = useRef();
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   useEffect(() => {
     // 스크롤 위치 하단 고정 -> 좀 부자연스러운 느낌?
     /*https://velog.io/@matajeu/React-div-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EB%A7%A8-%EB%B0%91%EC%9C%BC%EB%A1%9C-%EB%82%B4%EB%A6%AC%EA%B8%B0-%EC%8A%A4%ED%81%AC%EB%A1%A4-%EC%9C%84%EC%B9%98-%EC%A1%B0%EC%9E%91%ED%95%98%EA%B8%B0*/
-
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    console.log(scrollRef.current);
   }, [logs]);
 
   /*
@@ -35,97 +35,113 @@ export default function NetworkLogs({ hand_list }) {
     $scroll.scrollTop = $scroll.scrollHeight;
   }, []);
 */
-  useEffect(() => {
-    console.log(res);
+  const team_color = [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "navy",
+    "purple",
+  ];
 
-    if (res?.response === "error") {
-      alert(res.message);
-      return;
-    }
-
-    /*손목록 갱신하기*/
-    if (ready) {
-      switch (res.request) {
-        case "hand":
-          if (res.type === "hand_list") {
-            setLogs(res.data.slice().reverse()); // 원본 immutable 하게 변경!
-          }
-      }
-    }
-  }, [ready, send, res]); // 메시지가 도착하면
   return (
-    <div>
-      <Medium size={"40px"} color={"white"}>
-        NetworkLogs
+    <div
+      style={{
+        width: isMobile ? "90%" : "60%",
+        height: isMobile ? "35vh" : "360px",
+
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-start",
+        alignItems: "flex-start",
+      }}
+    >
+      <Medium size={"30px"} color={"white"}>
+        {Language[mode].network_logs}
       </Medium>
       <SizedBox height={"10px"} />
-      <BgBox width={"350px"} height={"300px"}>
-        <ScrollView ref={scrollRef} id="log_container">
-          {/*네트워크 로그*/}
 
+      <ScrollView ref={scrollRef} id="log_container">
+        {/*네트워크 로그*/}
+        <table>
           {logs &&
-            logs.map(({ affiliation, name, hand, score }, idx) => (
+            logs.map(({ team, name, hand, score }, idx) => (
               <Log
-                belong={affiliation}
+                belong={team === -1 ? "bot" : team_color[team]}
                 key={idx}
                 name={name}
                 rps={rpsDic[hand]}
                 score={score}
               />
             ))}
-        </ScrollView>
-      </BgBox>
+        </table>
+      </ScrollView>
     </div>
   );
 }
 
 function Log({ belong, name, rps, score }) {
   var rpsDic = {
-    rock: <Rock size="50px" />,
-    scissor: <Scissor size="50px" />,
-    paper: <Paper size="50px" />,
+    rock: <Rock size={isMobile ? "10vw" : "40px"} />,
+    scissor: <Scissor size={isMobile ? "10vw" : "40px"} />,
+    paper: <Paper size={isMobile ? "10vw" : "40px"} />,
   };
 
   return (
     <Row>
-      <Medium size={"30px"}>{belong}</Medium>
-      <Medium size={"30px"}>{name}</Medium>
-      {rpsDic[rps]}
-      {score >= 0 ? (
-        <Medium color="var(--mint)" size={"30px"}>
-          +{score}
-        </Medium>
-      ) : (
-        <Medium color="var(--red)" size={"30px"}>
-          {score}
-        </Medium>
-      )}
+      <Td width={"25%"}>
+        <GradientText size="var(--font-size-md)" bg={palette[belong]}>
+          {belong}
+        </GradientText>
+      </Td>
+      <Td width={"35%"}>
+        {/**/}
+        <Medium size={"var(--font-size-ms)"}>{name}</Medium>
+      </Td>
+      <Td width={"10%"}>{rpsDic[rps]}</Td>
+      <Td width={"10%"}>
+        {score >= 0 ? (
+          <Medium color="var(--mint)" size={"30px"}>
+            +{score}
+          </Medium>
+        ) : (
+          <Medium color="var(--red)" size={"30px"}>
+            {score}
+          </Medium>
+        )}
+      </Td>
     </Row>
   );
 }
+const Td = styled.td`
+  width: ${({ width }) => (width ? width : "25%")};
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+`;
 const ScrollView = styled.div`
   width: 100%;
   height: 100%;
+
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+
   background-color: white;
   border-radius: 10px;
+
+  padding-left: 10px;
+
   overflow-x: hidden;
   overflow-y: scroll;
+  flex-wrap: wrap;
 `;
-const Row = styled.div`
+const Row = styled.tr`
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
-  gap: 20px;
-`;
-
-const Col = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
+  margin-bottom: 10px;
 `;

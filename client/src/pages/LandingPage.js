@@ -9,36 +9,34 @@ import ScissorSrc from "../assets/images/scissor.png";
 import PaperSrc from "../assets/images/paper.png";
 import SvgIcon from "../components/common/SvgIcon";
 import SizedBox from "../components/common/SizedBox";
-import SelectBox from "../components/common/SelectBox";
+import axios from "axios";
 import Button from "../components/common/Button";
-import { Medium } from "../styles/font";
+import { useContext } from "react";
+import { Medium, MediumOutline } from "../styles/font";
 import { useNavigate } from "react-router-dom";
 import { useRef, createContext, useEffect } from "react";
+import { LanguageContext } from "../utils/LanguageProvider";
+import { getUserName, setUserName } from "../utils/User";
+import { Language } from "../db/Language";
 
-import { useContext } from "react";
-import HTTP from "../utils/HTTP";
-import {
-  setUserName,
-  getUserName,
-  getUserAffiliation,
-  setUserId,
-  setUserAffiliation,
-} from "../utils/User";
-
-import { BASE_WEBSOCKET_URL } from "../Config";
 import { WebsocketContext } from "../utils/WebSocketProvider";
+import { useMediaQuery } from "react-responsive";
+
+import qs from "qs";
 function RuleBox() {
+  const mode = useContext(LanguageContext);
   return (
     <BgBox width="250px" height="300px" color="white">
       <Col>
         <Row>
           {" "}
-          <Medium>규칙</Medium>
+          <MediumOutline size="30px" color="var(--purple)">
+            {Language[mode].rule}
+          </MediumOutline>
         </Row>
-        <SizedBox height={"20px"} />
-        <Medium size="25px">
-          가장 마지막에 낸 사람의 손이 화면에 크게 보입니다. 이 손을 이기면
-          +1점! 지면 -1점! 60초 안에 가장 많은 점수를 획득하세요!
+        <SizedBox height={"50px"} />
+        <Medium size="23px" color="var(--purple)">
+          {Language[mode].explanation}
         </Medium>
       </Col>
     </BgBox>
@@ -47,76 +45,86 @@ function RuleBox() {
 
 function LoginBox() {
   const [name, setName] = useState(getUserName());
-  const [selectedOption, setSelectedOption] = useState(getUserAffiliation()); //소속
-  const [roomId, setRoomId] = useState();
+
   var navigate = useNavigate();
+  const mode = useContext(LanguageContext);
+  const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
+  const [isLoading, setIsLoading] = useState(false); // 버튼 클릭 후 처리 중인지
 
-  const [createWebSocketConnection, ready, res, send] =
-    useContext(WebsocketContext); //전역 소켓 사용
-
-  useEffect(() => {
-    if (ready) {
-      if (res?.response === "error") {
-        alert(res.message);
-        return;
-      }
-
-      switch (res?.type) {
-        case "profile":
-          // 사용자 정보(이름,소속,저장,관리자 여부)를 로컬스토리지에 저장
-          const { data } = res;
-          console.log(data);
-          setUserName(data.name);
-          setUserAffiliation(data.affiliation);
-          setUserId(data.person_id);
-          setRoomId(data.room_id); // 할당된 룸 번호 저장
-          localStorage.setItem("is_admin", data.is_admin); // 관리자 여부
-
-          break;
-
-        case "game_list":
-          console.log(res.data);
-          if (roomId) {
-            navigate(`/room/${roomId}/waiting`, { state: res.data }); // 게임 대기화면 이동 + 해당 방 목록 인원 전달
-          }
-      }
-    }
-  }, [ready, send, res]); // 소켓연결에 성공했다면
-
-  const _joinGame = () => {
-    if (selectedOption === "" || name === "") {
-      alert("소속과 이름을 모두 채워주세요.");
+  const _joinGame = async () => {
+    if (name === "") {
+      alert(Language[mode].name_blank);
       return;
     }
-    createWebSocketConnection(selectedOption, name); // Socket Connection 생성
+    if (name.length > 32) {
+      alert(Language[mode].name_long);
+      return;
+    }
+
+    if (!isLoading) {
+      setIsLoading(true);
+      console.log("요청!");
+
+      var body = {
+        grant_type: "",
+        username: process.env.REACT_APP_RPS_USERNAME,
+        password: process.env.REACT_APP_RPS_PASSWORD,
+        scope: "",
+        client_id: "",
+        client_secret: "",
+      };
+
+      try {
+        /*비동기 요청*/
+        const response = await axios.post(
+          `${process.env.REACT_APP_RPS_BASE_SERVER_URL}/token`,
+          qs.stringify(body),
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Accept: "application/json",
+            },
+          }
+        );
+        console.log(response);
+        localStorage.setItem("access_token", response.data.access_token);
+
+        await createWebSocketConnection(name, setIsLoading); // Socket Connection 생성
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false); // 소켓 연결 실패했을 때에도
+      }
+    }
   };
   return (
     <BgBox width="250px" height="300px" color="white">
       <Col>
         <Row>
-          {" "}
-          <Medium>입장</Medium>
+          <MediumOutline size="30px" color="var(--purple)">
+            {Language[mode].entrance}
+          </MediumOutline>
         </Row>
-        <SizedBox height={"20px"} />
-        <Row>
-          <Medium size="30px">소속</Medium>
-          <SelectBox
-            selectedOption={selectedOption}
-            setSelectedOption={setSelectedOption}
-          />
-        </Row>
+        <SizedBox height={"60px"} />
 
-        <SizedBox height={"20px"} />
         <Row>
           {" "}
-          <Medium size="30px">이름</Medium>
+          <Medium size="25px" color="var(--purple)">
+            {Language[mode].name}
+          </Medium>
           <input
             type={"text"}
+            onKeyUp={(e) => {
+              if (e.key === "Enter") {
+                // 엔터키를 누르면
+                _joinGame();
+              }
+            }}
             value={name}
             onChange={(e) => setName(e.target.value)}
             style={{
               borderRadius: "5px",
-              width: "150px",
+              width: "130px",
               marginLeft: "10px",
               height: "30px",
               borderColor: "var(--border)",
@@ -124,24 +132,46 @@ function LoginBox() {
           />
         </Row>
         <SizedBox height={"50px"} />
-        <Button width="100px" height="40px" text="입장" onClick={_joinGame} />
+        <Button
+          width="100px"
+          height="40px"
+          text={Language[mode].join}
+          onClick={_joinGame}
+        />
       </Col>
     </BgBox>
   );
 }
 
 export default function LandingPage() {
+  const mode = useContext(LanguageContext);
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
+
   return (
     <Container>
-      <Logo />
-      <Row>
-        <SvgIcon src={ScissorSrc} size="200px" />
-        <SvgIcon src={RockSrc} size="200px" />
-        <SvgIcon src={PaperSrc} size="200px" />
-      </Row>
       <SizedBox height={"50px"} />
+
+      <Anim2 delay={5}>
+        <Logo size="m" />
+      </Anim2>
+
+      <RPSBox delay={5}>
+        <Anim delay={1}>
+          <SvgIcon src={ScissorSrc} size="100px" />
+        </Anim>
+
+        <Anim delay={2}>
+          <SvgIcon src={RockSrc} size="100px" />
+        </Anim>
+        <Anim delay={3}>
+          <SvgIcon src={PaperSrc} size="100px" />
+        </Anim>
+      </RPSBox>
+
+      <SizedBox height={"10px"} />
       <Row>
         <RuleBox />
+
         <SizedBox width={"150px"} />
 
         <LoginBox />
@@ -150,20 +180,95 @@ export default function LandingPage() {
   );
 }
 
+/*
+https://apes0113.postype.com/post/2620
+linear | ease | ease-in | ease-out | ease-in-out | step-start | step-end | steps(int,start|end) | cubic-bezier(n,n,n,n)
+*/
+
+const Anim = styled.div`
+  animation: anim1 5s infinite ease-in-out;
+  animation-delay: ${({ delay }) => delay}s;
+  @keyframes anim1 {
+    0% {
+      transform: translate(0);
+    }
+    8% {
+      transform: translateY(-10px);
+    }
+
+    16% {
+      transform: translate(0);
+    }
+    100% {
+      transform: translate(0);
+    }
+  }
+`;
+
+const Anim2 = styled.div`
+  animation: anim2 5s infinite ease-in-out;
+  animation-delay: ${({ delay }) => delay}s;
+  @keyframes anim2 {
+    0% {
+      transform: scale(1);
+    }
+
+    80% {
+      transform: scale(1);
+    }
+    90% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+`;
 const Container = styled.div`
-  height: 100vh;
   display: flex;
   flex-direction: column;
 
-  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  padding-bottom: 50px;
+
   align-items: center;
+
+  height: 100vh;
+  justify-content: center;
 `;
 
 const Row = styled.div`
   display: flex;
+
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
+`;
+const RPSBox = styled.div`
+  display: flex;
+  width: 30%;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+
+  animation: anim2 5s infinite ease-in-out;
+  animation-delay: ${({ delay }) => delay}s;
+  @keyframes anim2 {
+    0% {
+      transform: scale(1);
+    }
+
+    80% {
+      transform: scale(1);
+    }
+    90% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
 `;
 
 const Col = styled.div`
@@ -171,6 +276,6 @@ const Col = styled.div`
   flex-direction: column;
   height: 100%;
   align-items: center;
-
-  padding: 20px;
+  justify-content: space-between;
+  padding: 30px;
 `;

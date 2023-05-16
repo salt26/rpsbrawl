@@ -1,9 +1,12 @@
 __pycache__/
 sql_app.db
 ignore/
-alembic/
-alembic.ini
+alembic/versions/
+#alembic.ini
 setupProxy.js
+Config.js
+config.json
+.env.dev
 
 # Virtualenv
 # http://iamzed.com/2009/05/07/a-primer-on-virtualenv/

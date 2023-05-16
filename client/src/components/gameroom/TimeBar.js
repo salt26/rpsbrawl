@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ProgressBar from "@ramonak/react-progress-bar";
 import styled from "styled-components";
-import Clock from "./Clock";
+
 import SizedBox from "../common/SizedBox";
 import ClockSrc from "../../assets/images/clock.png";
 import SvgIcon from "../common/SvgIcon";
@@ -11,18 +11,28 @@ import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { WebsocketContext } from "../../utils/WebSocketProvider";
+import { useMediaQuery } from "react-responsive";
 
-export default function TimeBar({ duration }) {
-  const [sec, setSec] = useState(60);
+export default function TimeBar({ roomInfo }) {
+  const { time_duration, start_time } = roomInfo;
+  const [sec, setSec] = useState(time_duration);
   const [isRunning, setIsRunning] = useState(false);
 
-  //console.log(sec, isWaiting, isRunning);
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
+
   const [createSocketConnection, ready, res, send] =
     useContext(WebsocketContext); //전역 소켓 불러오기
 
   var navigate = useNavigate();
 
   const { room_id } = useParams();
+
+  useEffect(() => {
+    if (start_time) {
+      _getLeftTime(start_time);
+      setIsRunning(true);
+    }
+  }, [roomInfo]);
 
   useInterval(
     () => {
@@ -40,42 +50,30 @@ export default function TimeBar({ duration }) {
     // start_time이랑 비교해서 남은시간제한 구하기.
     // 형식 => 2023-01-03 00:35:41.029853 KST
     const current = new Date();
-    var start = new Date(targetISOString.slice(0, 19));
-    var offset = Math.floor((current.getTime() - start.getTime()) / 1000);
-    const left = 60 - parseInt(offset / 1000);
+    var end = new Date(targetISOString.slice(0, 19).replace(" ", "T"));
+    end.setSeconds(end.getSeconds() + roomInfo["time_duration"]);
+    var left = Math.floor((end.getTime() - current.getTime()) / 1000);
 
     if (left <= 0) {
       // 시간이 지나치게 경과한 경우..
-      navigate(`/room/${room_id}/result`); // 바로 결과창으로 이동
+
+      navigate(`/rooms`, { state: [] }); // 룸 목록으로 이동
     } else {
-      setSec(duration - parseInt(offset / 1000)); //타이머 초깃값 세팅
+      setSec(left); //타이머 초깃값 세팅
       setIsRunning(true);
     }
   };
 
-  useEffect(() => {
-    if (ready) {
-      switch (res.request) {
-        case "start":
-          if (res.type === "room_start") {
-            console.log(res.data["start_time"]);
-            _getLeftTime(res.data["start_time"]);
-          }
-
-          break;
-      }
-    }
-  }, [ready, send, res]); // 메시지가 도착하면
   return (
     <Row>
-      <SvgIcon src={ClockSrc} size="100px" />
-      <SizedBox width={"50px"} />
+      <SvgIcon src={ClockSrc} size={isMobile ? `30vw` : "50px"} />
+      <SizedBox width={"6vw"} />
       <ProgressBar
-        completed={String((sec * 100) / 60)}
+        completed={String((sec * 100) / time_duration)}
         customLabel=" "
-        bgColor={sec < 20 ? "var(--red)" : "var(--yellow)"}
-        width="550px"
-        height="40px"
+        bgColor={sec / time_duration <= 0.2 ? "var(--red)" : "#BDFF00"}
+        width={isMobile ? `70vw` : "550px"}
+        height="5vh"
       />
       <SizedBox width={"10px"} />
       <Medium color="white" size={"25px"}>
@@ -87,6 +85,7 @@ export default function TimeBar({ duration }) {
 const Row = styled.div`
   display: flex;
   width: 100%;
+
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;

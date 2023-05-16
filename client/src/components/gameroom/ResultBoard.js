@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import ClockSrc from "../../assets/images/clock.png";
-import { Medium } from "../../styles/font";
+import { Medium, GradientText } from "../../styles/font";
 import SvgIcon from "../common/SvgIcon";
 import BgBox from "../common/BgBox";
 import styled from "styled-components";
@@ -9,26 +9,31 @@ import SilverSrc from "../../assets/images/2nd.svg";
 import BronzeSrc from "../../assets/images/3rd.svg";
 import SizedBox from "../common/SizedBox";
 import { getUserName, getUserAffiliation } from "../../utils/User";
+import { Language } from "../../db/Language";
+import { LanguageContext } from "../../utils/LanguageProvider";
+import { useMediaQuery } from "react-responsive";
+import palette from "../../styles/palette";
+
 export default function ResultBoard({ result }) {
-  console.log(result);
+  const mode = useContext(LanguageContext);
   const [myPlace, setMyPlace] = useState({
     name: "이름",
-    affiliation: "소속",
+    team: 0,
     rank: 0,
     score: 0,
   });
   const my_name = getUserName();
-  const my_affiliation = getUserAffiliation();
+
   const _findMyPlace = () => {
     for (var place of result) {
-      if (place.name == my_name && place.affiliation == my_affiliation) {
-        // 소속, 이름이 같으면
+      if (place.name === my_name) {
+        //이름이 같으면
         return place;
       }
     }
     return {
       name: "이름",
-      affiliation: "소속",
+      team: 0,
       rank: 0,
       score: 0,
     };
@@ -37,20 +42,34 @@ export default function ResultBoard({ result }) {
   useEffect(() => {
     setMyPlace(_findMyPlace());
   }, []);
+  const team_color = [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "navy",
+    "purple",
+  ];
 
+  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   return (
-    <BgBox width="30%" height="90%" bgColor={"var(--light-purple)"}>
+    <BgBox
+      width={isMobile ? "100%" : "30%"}
+      height={isMobile ? "70%" : "90%"}
+      bgColor={"var(--light-purple)"}
+    >
       <Col>
         <Title>
-          <SvgIcon src={ClockSrc} size="80px" />
-          <Medium color={"var(--mint)"}>시간종료</Medium>
+          <SvgIcon src={ClockSrc} size="50px" />
+          <Medium color={"var(--mint)"}>{Language[mode].time_over}</Medium>
         </Title>
         <SizedBox height={10} />
         <BgBox width="90%" height="10%" bgColor={"white"}>
           <Center>
             <Place
               rank={myPlace?.rank}
-              belong={myPlace?.affiliation}
+              belong={team_color[myPlace?.team]}
               name={myPlace?.name}
               score={myPlace?.score}
             />
@@ -58,11 +77,11 @@ export default function ResultBoard({ result }) {
         </BgBox>
 
         <ScrollView>
-          {result.map(({ affiliation, rank, name, score }, idx) => (
+          {result.map(({ team, rank, name, score }, idx) => (
             <Place
               key={idx}
               rank={rank}
-              belong={affiliation}
+              belong={team === -1 ? "bot" : team_color[team]}
               name={name}
               score={score}
             />
@@ -99,12 +118,13 @@ function Place({ rank, belong, name, score }) {
       <Sector>{img}</Sector>
 
       <Sector>
-        <Medium size={"30px"} color="black">
+        <GradientText size="30px" bg={palette[belong]}>
           {belong}
-        </Medium>
+        </GradientText>
+        <Medium size={"30px"} color="black"></Medium>
       </Sector>
       <Sector>
-        <Medium size={"30px"} color="black">
+        <Medium size={"15px"} color="black">
           {name}
         </Medium>
       </Sector>
@@ -133,7 +153,7 @@ const Circle = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--mint);
+  background: linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%);
 `;
 
 const Title = styled.div`
@@ -144,7 +164,7 @@ const Title = styled.div`
   width: 100%;
   gap: 20px;
   position: absolute;
-  top: -50px;
+  top: -7%;
 `;
 
 const Row = styled.div`

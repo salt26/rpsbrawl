@@ -16,7 +16,6 @@ import GameResultPage from "./GameResultPage";
  *
  */
 export default function GameRoomPage() {
-  var number_of_user = 1;
   return (
     <>
       <Routes>
