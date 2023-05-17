@@ -63,7 +63,6 @@ function LoginBox() {
 
     if (!isLoading) {
       setIsLoading(true);
-      console.log("요청!");
 
       var body = {
         grant_type: "",
@@ -86,7 +85,7 @@ function LoginBox() {
             },
           }
         );
-        console.log(response);
+
         localStorage.setItem("access_token", response.data.access_token);
 
         await createWebSocketConnection(name, setIsLoading); // Socket Connection 생성

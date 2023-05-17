@@ -20,18 +20,7 @@ export default function FirstPlace({ place }) {
     "navy",
     "purple",
   ];
-  const getNameSize = (name) => {
-    console.log(name);
-    if (name.length <= 5) {
-      return "35px";
-    } else if (name.length <= 10) {
-      return "20px";
-    } else if (name.length <= 20) {
-      return "15px";
-    } else {
-      return "8px";
-    }
-  };
+
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const mode = useContext(LanguageContext);
   return (

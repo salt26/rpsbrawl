@@ -4,10 +4,12 @@ import { MediumOutline } from "../styles/font";
 
 function Toggle({ mode, setMode }) {
   const clickedToggle = () => {
-    if (mode == 0) {
+    if (mode === 0) {
       setMode(1);
+      localStorage.setItem("language_mode", 1);
     } else {
       setMode(0);
+      localStorage.setItem("language_mode", 0);
     }
   };
 
@@ -16,7 +18,7 @@ function Toggle({ mode, setMode }) {
       <ToggleBtn onClick={clickedToggle} mode={mode}>
         <Circle mode={mode} />
 
-        {mode == 0 ? (
+        {mode === 0 ? (
           <MediumOutline color="white" size="25px">
             ㅤ ENG
           </MediumOutline>

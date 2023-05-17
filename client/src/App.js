@@ -36,8 +36,10 @@ const Background = styled.div`
 `;
 
 function App() {
+  const savedMode = Number(localStorage.getItem("language_mode"));
+
   //언어 모드
-  const [mode, setMode] = useState(0);
+  const [mode, setMode] = useState(savedMode === null ? 0 : savedMode);
   const { pathname } = useLocation();
 
   const params = pathname.split("/");
@@ -82,9 +84,10 @@ function App() {
     top: "3%",
     left: "8%",
   };
+  console.log(mode);
   return (
-    <WebsocketProvider>
-      <LanguageContext.Provider value={mode}>
+    <LanguageContext.Provider value={mode}>
+      <WebsocketProvider>
         <BrowserView>
           <Background>
             {inGame ? (
@@ -240,8 +243,8 @@ function App() {
             </Routes>
           </Background>
         </MobileView>
-      </LanguageContext.Provider>
-    </WebsocketProvider>
+      </WebsocketProvider>{" "}
+    </LanguageContext.Provider>
   );
 }
 const LeftTop = styled.div`

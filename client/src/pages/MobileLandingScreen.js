@@ -150,7 +150,7 @@ function LoginBox() {
             },
           }
         );
-        console.log(response);
+
         localStorage.setItem("access_token", response.data.access_token);
 
         await createWebSocketConnection(name, setIsLoading); // Socket Connection 생성
