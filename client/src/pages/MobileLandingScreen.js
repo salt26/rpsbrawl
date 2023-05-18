@@ -3,13 +3,12 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import Logo from "../components/common/Logo";
-
 import RockSrc from "../assets/images/rock.png";
 import ScissorSrc from "../assets/images/scissor.png";
 import PaperSrc from "../assets/images/paper.png";
 import SvgIcon from "../components/common/SvgIcon";
 import SizedBox from "../components/common/SizedBox";
-
+import Github from "../components/Github";
 import Button from "../components/common/Button";
 import { useContext } from "react";
 import { Medium, MediumOutline } from "../styles/font";
@@ -232,6 +231,9 @@ export default function MobileLandingScreen() {
 
         {currentTab === 0 ? <RuleBox /> : <LoginBox />}
       </div>
+      <GithubBox>
+        <Github />
+      </GithubBox>
     </Container>
   );
 }
@@ -240,6 +242,13 @@ export default function MobileLandingScreen() {
 https://apes0113.postype.com/post/2620
 linear | ease | ease-in | ease-out | ease-in-out | step-start | step-end | steps(int,start|end) | cubic-bezier(n,n,n,n)
 */
+const GithubBox = styled.div`
+  position: absolute;
+  right: 4%;
+  top: 3%;
+  width: 40px;
+  height: 40px;
+`;
 
 const Anim = styled.div`
   animation: anim1 5s infinite ease-in-out;

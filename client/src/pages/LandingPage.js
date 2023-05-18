@@ -18,7 +18,7 @@ import { useRef, createContext, useEffect } from "react";
 import { LanguageContext } from "../utils/LanguageProvider";
 import { getUserName, setUserName } from "../utils/User";
 import { Language } from "../db/Language";
-
+import Github from "../components/Github";
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
 
@@ -175,6 +175,9 @@ export default function LandingPage() {
 
         <LoginBox />
       </Row>
+      <GithubBox>
+        <Github />
+      </GithubBox>
     </Container>
   );
 }
@@ -183,7 +186,14 @@ export default function LandingPage() {
 https://apes0113.postype.com/post/2620
 linear | ease | ease-in | ease-out | ease-in-out | step-start | step-end | steps(int,start|end) | cubic-bezier(n,n,n,n)
 */
-
+const GithubBox = styled.div`
+  width: 100%;
+  position: relative;
+  display: flex;
+  padding-right: 3%;
+  flex-direction: row;
+  justify-content: flex-end;
+`;
 const Anim = styled.div`
   animation: anim1 5s infinite ease-in-out;
   animation-delay: ${({ delay }) => delay}s;
@@ -229,7 +239,7 @@ const Container = styled.div`
 
   width: 100%;
   height: 100%;
-  padding-bottom: 50px;
+  padding-bottom: 3%;
 
   align-items: center;
 
