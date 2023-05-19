@@ -20,6 +20,7 @@ const Btn = styled.button`
       : "linear-gradient(180deg, #3ab6bc 0%, #3a66bc 100%, #2f508e 100%)"};
   &:hover {
     background-color: var(--light-mint);
+    transform: scale(1.1);
   }
 `;
 export default function Button({ text, onClick, width, height, bg }) {

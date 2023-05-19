@@ -10,6 +10,8 @@ import { WebsocketContext } from "./WebSocketProvider";
 // 비로그인 유저 접근 불가
 const PrivateRoute = () => {
   const mode = useContext(LanguageContext);
+
+  const savedMode = localStorage.getItem("language_mode");
   const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
 
   if (!ready) {

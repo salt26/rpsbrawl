@@ -21,7 +21,6 @@ function RoomListPage() {
         request: "signout",
       };
       ws.send(JSON.stringify(request));
-      console.log(request);
     }
   };
   useEffect(

@@ -67,7 +67,6 @@ function SettingModal({ modalVisible, setModalVisible, roomInfo }) {
     };
 
     ws.send(JSON.stringify(request));
-    console.log(request);
 
     setModalVisible(false);
   };
