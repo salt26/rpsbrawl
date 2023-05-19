@@ -63,7 +63,6 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
   };
 
   const _quickStart = () => {
-    // console.log("quick start success");
     var enter_id = 0;
     var room_num = 0;
 

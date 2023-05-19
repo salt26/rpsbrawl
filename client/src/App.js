@@ -29,6 +29,7 @@ import TutorialModal from "./components/common/TutorialModal";
 import SvgIcon from "./components/common/SvgIcon";
 import MusicOnSrc from "./assets/images/music_on.png";
 import MusicOffSrc from "./assets/images/music_off.png";
+import Github from "./components/Github";
 const Background = styled.div`
   width: 100%;
   height: 100vh;
@@ -36,8 +37,10 @@ const Background = styled.div`
 `;
 
 function App() {
+  const savedMode = Number(localStorage.getItem("language_mode"));
+
   //언어 모드
-  const [mode, setMode] = useState(0);
+  const [mode, setMode] = useState(savedMode === null ? 0 : savedMode);
   const { pathname } = useLocation();
 
   const params = pathname.split("/");
@@ -82,9 +85,10 @@ function App() {
     top: "3%",
     left: "8%",
   };
+
   return (
-    <WebsocketProvider>
-      <LanguageContext.Provider value={mode}>
+    <LanguageContext.Provider value={mode}>
+      <WebsocketProvider>
         <BrowserView>
           <Background>
             {inGame ? (
@@ -121,6 +125,7 @@ function App() {
             ) : (
               <></>
             )}
+
             {pathname == "/" && (
               <TutorialBtn
                 setTutorialModalVisible={setTutorialModalVisible}
@@ -201,6 +206,7 @@ function App() {
             ) : (
               <></>
             )}
+
             {pathname === "/" && (
               <TutorialBtn
                 setTutorialModalVisible={setTutorialModalVisible}
@@ -212,7 +218,6 @@ function App() {
               setModalVisible={setTutorialModalVisible}
             />
             {pathname === "/" && <Toggle mode={mode} setMode={setMode} />}
-
             <Routes>
               <Route path="/" element={<MobileLandingScreen />} />
 
@@ -240,25 +245,9 @@ function App() {
             </Routes>
           </Background>
         </MobileView>
-      </LanguageContext.Provider>
-    </WebsocketProvider>
+      </WebsocketProvider>{" "}
+    </LanguageContext.Provider>
   );
 }
-const LeftTop = styled.div`
-  position: absolute;
-  left: 3%;
-  top: 3%;
-  z-index: 10;
-`;
 
-const Bottom = styled.div`
-  position: absolute;
-  width: 100%;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  bottom: 1%;
-  z-index: 1;
-`;
 export default App;
