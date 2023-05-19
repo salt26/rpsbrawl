@@ -51,6 +51,7 @@ Get the most points in 60 seconds! 🤩
    * You can change the language. Both English and Korean are available.
    * Play RPS Brawl with fluttering background music!  
    <img src="./client/src/assets/images/music_on.png" height=30>
+   
    * You can see the manual in the upper right corner of the screen.  
    <img src="./client/src/assets/images/question.svg" height=30>
 3. Join with your own unique **nickname**.
@@ -64,6 +65,7 @@ Get the most points in 60 seconds! 🤩
 5. **Set up** your room if you are a host.
    * Only the room host can set the room name, mode and password(optional).  
    <img src="./client/src/assets/images/lock_black.svg" height=30>
+
    * In **normal** mode, you can throw any hands. This is recommended for beginners.
    * In **limited** mode, you cannot throw the same hand in a row. This is recommended for skilled players.  
    <img src="./client/src/assets/images/step3.png" height=200>
@@ -81,6 +83,7 @@ Get the most points in 60 seconds! 🤩
 8. **Start** the game and enjoy RPS Brawl!
    * Only the room host can start the game.  
    <img src="./client/src/assets/images/step5.png" height=30>
+
    * If you are a beginner, see the [Rule section](#rule).
    * Sometimes you might be disconnected. **If the screen is frozen, press F5 and join again with the same nickname.**
      * This feature enables you to reconnect to an ongoing game. (if exists)
