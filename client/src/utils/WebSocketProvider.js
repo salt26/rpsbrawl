@@ -29,7 +29,6 @@ export const WebsocketProvider = ({ children }) => {
   const ws = useRef(null);
   // 웹소켓 연결
 
-  const savedMode = localStorage.getItem("language_mode");
   function createWebSocketConnection(name, setIsLoading) {
     return new Promise((resolve, reject) => {
       const token = localStorage.getItem("access_token");
@@ -58,11 +57,8 @@ export const WebsocketProvider = ({ children }) => {
           return;
         }
 
-        if (savedMode) {
-          alert(Language[1].reconnection_request);
-        } else {
-          alert(Language[0].reconnection_request);
-        }
+        alert(Language[mode].reconnection_request);
+
         setIsReady(false);
         navigate("/");
         reject();

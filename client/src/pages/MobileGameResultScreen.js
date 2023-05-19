@@ -33,12 +33,8 @@ export default function MobileGameResultScreen() {
     end.setSeconds(end.getSeconds() + RESULT_TIME); // 종료되는 시간
     var left = parseInt((end.getTime() - current.getTime()) / 1000);
 
-    if (left < 0) {
-      // 남은 시간이 지난경우
-      alert(Language[mode].already_end);
-      navigate(`/rooms`);
-    } else {
-      setCount(left); //타이머 초깃값 세팅
+    if (left >= 0) {
+      setCount(left);
     }
   };
 
