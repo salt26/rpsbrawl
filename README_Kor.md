@@ -50,6 +50,7 @@
    * 화면 왼쪽 위에서 언어를 ENG에서 KOR로 바꾸세요!
    * 설레는 배경음악을 들으면서 가위바위보 난투를 즐겨보세요!  
    <img src="./client/src/assets/images/music_on.png" height=30>
+
    * 화면 오른쪽 위에서 도움말을 볼 수 있습니다.  
    <img src="./client/src/assets/images/question.svg" height=30>
 3. 개성 있는 **닉네임**을 입력하고 난투에 뛰어드세요!
@@ -63,6 +64,7 @@
 5. 방장이라면 방을 **설정**하세요.
    * 방장만이 방 이름, 모드, 그리고 비밀번호(선택)를 설정할 수 있습니다.  
    <img src="./client/src/assets/images/lock_black.svg" height=30>
+
    * **일반** 모드에서는 마음껏 아무 손이나 낼 수 있습니다. 초보자에게 추천하는 모드입니다.
    * **한 손 제한** 모드에서는 연속으로 같은 손을 낼 수 없습니다. 숙련된 플레이어에게 추천하는 모드입니다.  
    <img src="./client/src/assets/images/step3.png" height=200>
@@ -80,6 +82,7 @@
 8. 게임을 **시작**하고 가위바위보 난투를 즐기세요!
    * 방장만이 게임을 시작할 수 있습니다.  
    <img src="./client/src/assets/images/step5.png" height=30>
+   
    * 처음 해보는 분은 [규칙 섹션](#규칙)을 읽어보세요.
    * 가끔 연결이 끊기기도 합니다. **만약 화면이 멈춘다면, F5를 누르고 같은 닉네임으로 다시 입장해주세요.**
      * 게임이 진행 중이라면 재접속할 수 있습니다!
