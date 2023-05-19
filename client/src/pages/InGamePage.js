@@ -135,7 +135,6 @@ export default function InGamePage() {
   useEffect(() => {
     ws.onmessage = function (event) {
       const res = JSON.parse(event.data);
-      console.log(res);
 
       if (ready) {
         if (res?.response === "error") {

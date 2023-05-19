@@ -61,10 +61,8 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
       password: privateMode ? password : "", // 비밀번호가 없는 경우 ""(빈 문자열) 전송할 것, 20글자 이내여야 함
     };
     ws.send(JSON.stringify(request));
-    console.log(request);
-    setModalVisible(false);
 
-    console.log(request);
+    setModalVisible(false);
   };
   useEffect(() => {
     ws.onmessage = function (event) {
@@ -93,7 +91,7 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
                 backgroundColor: "red",
                 height: "35vh",
                 display: "flex",
-        
+
                 flexDirection: "column",
                 justifyContent: "flex-start",
 

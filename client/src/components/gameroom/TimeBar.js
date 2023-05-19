@@ -37,10 +37,8 @@ export default function TimeBar({ roomInfo }) {
   useInterval(
     () => {
       setSec(sec - 1);
-      //console.log(sec);
       if (sec === 1) {
         setIsRunning(false);
-        //navigate(`/room/${room_id}/result`); // 결과창으로 이동
       }
     },
     isRunning ? 1000 : null

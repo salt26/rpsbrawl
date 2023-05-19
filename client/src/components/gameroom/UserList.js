@@ -6,7 +6,6 @@ import MyNameTag from "../common/MyNameTag";
 
 export default function UserList({ users }) {
   const my_name = getUserName();
-  console.log(users);
 
   const team_color = [
     "red",

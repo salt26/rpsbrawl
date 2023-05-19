@@ -29,29 +29,28 @@ export const WebsocketProvider = ({ children }) => {
   const ws = useRef(null);
   // 웹소켓 연결
 
+  const savedMode = localStorage.getItem("language_mode");
   function createWebSocketConnection(name, setIsLoading) {
     return new Promise((resolve, reject) => {
       const token = localStorage.getItem("access_token");
-
-      console.log(token);
 
       const socket = new WebSocket(
         `${process.env.REACT_APP_RPS_BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
       );
 
       socket.onopen = (event) => {
-        console.log("Socket open", event);
+        //console.log("Socket open", event);
         setIsReady(true);
         resolve(socket);
       };
 
       socket.onclose = (event) => {
-        console.log("onclose!", event);
+        //console.log("onclose!", event);
         const currentPath = window.location.href.replace(
           window.location.origin,
           ""
         );
-        console.log("경로명", currentPath);
+
         // 방목록에서 <- 버튼 눌렀을때는 제외하구
 
         if (currentPath === "/rooms") {
@@ -59,7 +58,11 @@ export const WebsocketProvider = ({ children }) => {
           return;
         }
 
-        alert(Language[mode].reconnection_request);
+        if (savedMode) {
+          alert(Language[1].reconnection_request);
+        } else {
+          alert(Language[0].reconnection_request);
+        }
         setIsReady(false);
         navigate("/");
         reject();
@@ -68,8 +71,7 @@ export const WebsocketProvider = ({ children }) => {
       socket.onmessage = function (event) {
         const res = JSON.parse(event.data);
         // 전달된 json string을 object로 변환
-        console.log("onmessage", res.type, res);
-        console.log(res);
+
         if (res?.response === "error") {
           alert(res.message);
           return;

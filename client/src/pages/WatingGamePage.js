@@ -88,14 +88,12 @@ export default function WatingGamePage() {
   const [skilledBot, setSkilledBot] = useState(state.room.bot_skilled);
   const [dumbBot, setDumbBot] = useState(state.room.bot_dumb);
 
-  console.log(_findHost(users));
   var navigate = useNavigate();
 
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   useEffect(() => {
     ws.onmessage = function (event) {
       const res = JSON.parse(event.data);
-      console.log(res);
 
       if (ready) {
         if (res?.response === "error") {

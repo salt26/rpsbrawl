@@ -133,19 +133,16 @@ export default function MobileInGameScreen() {
   useEffect(() => {
     ws.onmessage = function (event) {
       const res = JSON.parse(event.data);
-      console.log(res);
 
       if (ready) {
         if (res?.response === "error") {
           if (
-            res.message === "Cannot play the same hand in a row (limited mode)."
+            res.message === "Cannot play the same hand in a row. (limited mode)"
           ) {
             setMsg(Language[mode].limited_text);
             setShowTime(true);
             return;
           }
-          alert(res.message);
-          return;
         }
         if (res?.request === "disconnected") {
           //기존 인원과 새인원 비교
