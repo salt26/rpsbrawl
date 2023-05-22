@@ -27,6 +27,7 @@ export const WebsocketProvider = ({ children }) => {
 
   const navigate = useNavigate();
   const ws = useRef(null);
+  const samePersonErr = useRef(false);
   // 웹소켓 연결
 
   function createWebSocketConnection(name, setIsLoading) {
@@ -38,13 +39,14 @@ export const WebsocketProvider = ({ children }) => {
       );
 
       socket.onopen = (event) => {
-        //console.log("Socket open", event);
+        console.log("Socket open", event);
         setIsReady(true);
         resolve(socket);
       };
 
       socket.onclose = (event) => {
-        //console.log("onclose!", event);
+        console.log("onclose!", event);
+
         const currentPath = window.location.href.replace(
           window.location.origin,
           ""
@@ -56,10 +58,15 @@ export const WebsocketProvider = ({ children }) => {
           navigate("/");
           return;
         }
+        setIsReady(false);
+
+        if (samePersonErr) {
+          samePersonErr.current = false;
+
+          return;
+        }
 
         alert(Language[mode].reconnection_request);
-
-        setIsReady(false);
         navigate("/");
         reject();
       };
@@ -70,6 +77,12 @@ export const WebsocketProvider = ({ children }) => {
 
         if (res?.response === "error") {
           alert(res.message);
+          if (
+            res.message ===
+            "The same person has already entered in non-end room."
+          ) {
+            samePersonErr.current = true;
+          }
           return;
         }
 
