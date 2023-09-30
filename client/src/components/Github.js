@@ -19,7 +19,6 @@ const IconContainer = styled.a`
   width: 30px;
   height: 40px;
   background-color: white;
-  position: absolute;
 `;
 
 export default Github;

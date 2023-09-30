@@ -20,20 +20,20 @@ import { LanguageContext } from "./utils/LanguageProvider";
 import Toggle from "./components/Toggle";
 import { useLocation } from "react-router-dom";
 import { BrowserView, MobileView } from "react-device-detect";
-import WatingMusicSrc from "../src/assets/bgm/Melody_of_travel_fluttering_ver..mp3";
-import GameMusicSrc from "../src/assets/bgm/Melody_of_tongtong.mp3";
+
 import PrivateRoute from "./utils/PrivateRoute";
 import { Navigate } from "react-router-dom";
-import TutorialBtn from "./components/common/TutorialBtn";
-import TutorialModal from "./components/common/TutorialModal";
-import SvgIcon from "./components/common/SvgIcon";
-import MusicOnSrc from "./assets/images/music_on.png";
-import MusicOffSrc from "./assets/images/music_off.png";
-import Github from "./components/Github";
+
+import Header from "./components/Header";
+
 const Background = styled.div`
   width: 100%;
-  height: 100vh;
+  height: 100%;
   background: linear-gradient(180deg, #524fa1 0%, #3b36cf 100%);
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 function App() {
@@ -73,70 +73,20 @@ function App() {
 
   const audioIconShow = pathname === "/" || params[3] === "waiting";
 
-  const musicIconStyle = {
-    cursor: "pointer",
-    position: "absolute",
-    top: "3%",
-    right: "2%",
-  };
-  const mobileMusicIconStyle = {
-    cursor: "pointer",
-    position: "absolute",
-    top: "3%",
-    left: "8%",
-  };
-
   return (
     <LanguageContext.Provider value={mode}>
       <WebsocketProvider>
-        <BrowserView>
-          <Background>
-            {inGame ? (
-              <audio
-                src={GameMusicSrc}
-                autoPlay={audioAllowed}
-                loop={true}
-                ref={inGameAudio}
-              ></audio>
-            ) : (
-              <audio
-                src={WatingMusicSrc}
-                loop={true}
-                autoPlay={audioAllowed}
-                ref={basicAudio}
-              ></audio>
-            )}
-            {audioIconShow ? (
-              audioAllowed ? (
-                <img
-                  src={MusicOnSrc}
-                  onClick={onPauseMusic}
-                  width={"40px"}
-                  style={musicIconStyle}
-                />
-              ) : (
-                <img
-                  src={MusicOffSrc}
-                  onClick={onPlayMusic}
-                  width={"40px"}
-                  style={musicIconStyle}
-                />
-              )
-            ) : (
-              <></>
-            )}
-
-            {pathname == "/" && (
-              <TutorialBtn
-                setTutorialModalVisible={setTutorialModalVisible}
-                tutorialModalVisible={tutorialModalVisible}
-              />
-            )}
-            <TutorialModal
-              modalVisible={tutorialModalVisible}
-              setModalVisible={setTutorialModalVisible}
-            />
-            {pathname == "/" && <Toggle mode={mode} setMode={setMode} />}
+        <Background>
+          <BrowserView
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <Header />
             <Routes>
               <Route path="/" element={<LandingPage />} />
 
@@ -168,56 +118,9 @@ function App() {
                 }}
               />
             </Routes>
-          </Background>
-        </BrowserView>
-        <MobileView>
-          <Background>
-            {inGame ? (
-              <audio
-                src={GameMusicSrc}
-                autoPlay={audioAllowed}
-                loop={true}
-                ref={inGameAudio}
-              ></audio>
-            ) : (
-              <audio
-                src={WatingMusicSrc}
-                loop={true}
-                autoPlay={audioAllowed}
-                ref={basicAudio}
-              ></audio>
-            )}
-            {audioIconShow ? (
-              audioAllowed ? (
-                <img
-                  src={MusicOnSrc}
-                  onClick={onPauseMusic}
-                  width={"30px"}
-                  style={mobileMusicIconStyle}
-                />
-              ) : (
-                <img
-                  src={MusicOffSrc}
-                  onClick={onPlayMusic}
-                  width={"30px"}
-                  style={mobileMusicIconStyle}
-                />
-              )
-            ) : (
-              <></>
-            )}
-
-            {pathname === "/" && (
-              <TutorialBtn
-                setTutorialModalVisible={setTutorialModalVisible}
-                tutorialModalVisible={tutorialModalVisible}
-              />
-            )}
-            <TutorialModal
-              modalVisible={tutorialModalVisible}
-              setModalVisible={setTutorialModalVisible}
-            />
-            {pathname === "/" && <Toggle mode={mode} setMode={setMode} />}
+          </BrowserView>
+          <MobileView style={{ width: "100%", height: "100%" }}>
+            <Header />
             <Routes>
               <Route path="/" element={<MobileLandingScreen />} />
 
@@ -243,9 +146,9 @@ function App() {
                 }}
               />
             </Routes>
-          </Background>
-        </MobileView>
-      </WebsocketProvider>{" "}
+          </MobileView>
+        </Background>
+      </WebsocketProvider>
     </LanguageContext.Provider>
   );
 }

@@ -6,10 +6,9 @@ import SvgIcon from "./SvgIcon";
 import { useMediaQuery } from "react-responsive";
 
 export default function Logo({ size }) {
-  const isMobile = useMediaQuery({ query: "(max-width:768px)" });
   const sizes = {
-    m: isMobile ? "120%" : "550px",
-    s: isMobile ? "50%" : "300px",
+    m: "550px",
+    s: "300px",
   };
   return <SvgIcon src={LogoSrc} width={sizes[size]} height={"auto"} />;
 }

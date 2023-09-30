@@ -26,7 +26,7 @@ import qs from "qs";
 function RuleBox() {
   const mode = useContext(LanguageContext);
   return (
-    <BgBox width="250px" height="300px" color="white">
+    <BgBox width="100%" height="300px" color="white">
       <Col>
         <Row>
           {" "}
@@ -97,7 +97,7 @@ function LoginBox() {
     }
   };
   return (
-    <BgBox width="250px" height="300px" color="white">
+    <BgBox width="100%" height="300px" color="white">
       <Col>
         <Row>
           <MediumOutline size="30px" color="var(--purple)">
@@ -175,9 +175,6 @@ export default function LandingPage() {
 
         <LoginBox />
       </Row>
-      <GithubBox>
-        <Github />
-      </GithubBox>
     </Container>
   );
 }
@@ -186,14 +183,7 @@ export default function LandingPage() {
 https://apes0113.postype.com/post/2620
 linear | ease | ease-in | ease-out | ease-in-out | step-start | step-end | steps(int,start|end) | cubic-bezier(n,n,n,n)
 */
-const GithubBox = styled.div`
-  width: 100%;
-  position: relative;
-  display: flex;
-  padding-right: 3%;
-  flex-direction: row;
-  justify-content: flex-end;
-`;
+
 const Anim = styled.div`
   animation: anim1 5s infinite ease-in-out;
   animation-delay: ${({ delay }) => delay}s;
@@ -236,20 +226,17 @@ const Anim2 = styled.div`
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-
+  background-color: blue;
   width: 100%;
   height: 100%;
-  padding-bottom: 3%;
-
   align-items: center;
-
-  height: 100vh;
   justify-content: center;
 `;
 
 const Row = styled.div`
   display: flex;
 
+  max-width: 600px;
   flex-direction: row;
   justify-content: space-around;
   align-items: center;

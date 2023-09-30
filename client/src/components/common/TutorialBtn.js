@@ -19,8 +19,5 @@ export default function TutorialBtn({
 }
 
 const IconContainer = styled.div`
-  position: absolute;
-  right: calc(4% + 50px);
-  top: 3%;
   cursor: pointer;
 `;
