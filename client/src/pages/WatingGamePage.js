@@ -188,15 +188,15 @@ export default function WatingGamePage() {
   };
 
   return (
-    <Container>
+    <WaitingGamePageLayout>
       <SettingModal
         modalVisible={settingModalVisible}
         setModalVisible={setSettingModalVisible}
         roomInfo={roomInfo}
       />
-      <Row2>
+      <TopBar>
         <TitleContainer>
-          <Row2>
+          <RowBetween>
             <Medium color="white" size="25px">
               {roomInfo.num_persons} / {roomInfo.max_persons}
             </Medium>
@@ -208,78 +208,70 @@ export default function WatingGamePage() {
               )}
               {roomInfo.has_password && <SvgIcon src={LockSrc} size="20px" />}
             </div>
-          </Row2>
+          </RowBetween>
+
           <BgBox bgColor={"white"} width="230px" height="60px">
             <Medium color="#6E3D9D" size={getTitleSize(roomInfo.name)}>
               {roomInfo.name}
             </Medium>
           </BgBox>
         </TitleContainer>
-      </Row2>
-      <div
-        style={{
-          display: isMobile ? "none" : "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
+        {isAdmin && (
+          <SvgIcon
+            src={SettingSrc}
+            size="40px"
+            onClick={() => setSettingModalVisible(true)}
+          />
+        )}
+      </TopBar>
+
+      <Center>
         <Anim>
           <MediumOutline color="#6E3D9D" size={"60px"}>
             {Language[mode].ingame_title_text}
           </MediumOutline>
         </Anim>
 
-        <SizedBox height={"50px"} />
-
-        <MediumOutline color="#6E3D9D" size={isMobile ? "15px" : "30px"}>
+        <MediumOutline color="#6E3D9D" size="30px">
           {Language[mode].ingame_describe_text(roomInfo.num_persons)}
         </MediumOutline>
-      </div>
+      </Center>
+
       <Box>
-        <Sector>
-          <Col>
-            <TeamSelection />
-            <Button text={Language[mode].quit} onClick={_quitGame} />
-          </Col>
-        </Sector>
-        <SizedBox height={"50px"} />
-        <Sector>
-          <BgBox width="950px" height={"500px"} bgColor={"var(--light-purple)"}>
-            <UserList users={users} />
-          </BgBox>
-        </Sector>
-        <SizedBox width={"50px"} />
+        <Col>
+          <TeamSelection />
+          <Button text={Language[mode].quit} onClick={_quitGame} />
+        </Col>
 
-        <Sector>
-          <Col>
-            {isAdmin && (
-              <SettingContainer>
-                <SvgIcon
-                  src={SettingSrc}
-                  size="40px"
-                  onClick={() => setSettingModalVisible(true)}
-                />
-              </SettingContainer>
-            )}
+        <BgBox width="100%" height={"100%"} bgColor={"var(--light-purple)"}>
+          <UserList users={users} />
+        </BgBox>
 
-            <AddBot skilledBot={skilledBot} dumbBot={dumbBot} />
-            <BottomRight>
-              {isAdmin ? (
-                <Button
-                  text={Language[mode].start}
-                  onClick={_startGame}
-                  bg={`linear-gradient(180deg, #FA1515 0%, #F97916 100%);`}
-                />
-              ) : (
-                <></>
-              )}
-            </BottomRight>
-          </Col>
-        </Sector>
+        <Col>
+          <AddBot skilledBot={skilledBot} dumbBot={dumbBot} />
+
+          {isAdmin && (
+            <Button
+              text={Language[mode].start}
+              onClick={_startGame}
+              bg={`linear-gradient(180deg, #FA1515 0%, #F97916 100%);`}
+            />
+          )}
+        </Col>
       </Box>
-    </Container>
+    </WaitingGamePageLayout>
   );
 }
+
+const TopBar = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+`;
+
 const Anim = styled.div`
   animation: ani 0.5s infinite alternate;
   @keyframes ani {
@@ -291,28 +283,15 @@ const Anim = styled.div`
     }
   }
 `;
-const SettingContainer = styled.div`
-  position: absolute;
-  z-index: 1;
-  right: 0;
-  top: -130px;
-`;
+
 const TitleContainer = styled.div`
-  position: absolute;
-  z-index: 1;
-
-  // 데스크탑 일반
-  left: 5%;
-  top: 5%;
-`;
-
-const Container = styled.div`
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 30px;
+`;
 
-  justify-content: space-around;
+const WaitingGamePageLayout = styled.div`
+  display: flex;
+  flex-direction: column;
 
   align-items: center;
 `;
@@ -321,14 +300,24 @@ const Box = styled.div`
   display: flex;
 
   width: 100%;
+  gap: 20px;
 
   // 데스크탑 일반
+
   flex-direction: row;
   align-items: flex-end;
   justify-content: center;
 `;
 
-const Row2 = styled.div`
+const Center = styled.div`
+  display: flex;
+
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+`;
+const RowBetween = styled.div`
   display: flex;
   width: 100%;
   flex-direction: row;
@@ -344,23 +333,4 @@ const Col = styled.div`
 
   align-items: center;
   justify-content: space-between;
-`;
-const Sector = styled.div`
-  display: flex;
-
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-`;
-
-const BottomRight = styled.div`
-  @media (max-width: 767px) {
-    //모바일
-    position: absolute;
-    bottom: 5%;
-    right: 5%;
-  }
-  @media (min-width: 1200px) {
-    // 데스크탑 일반
-  }
 `;

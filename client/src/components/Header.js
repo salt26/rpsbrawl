@@ -79,7 +79,6 @@ const HeaderBox = styled.div`
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  background-color: red;
 `;
 
 const Icon = styled.img`
@@ -93,14 +92,5 @@ const Row = styled.div`
   justify-content: space-between;
   gap: 20px;
 `;
-const GithubBox = styled.div`
-  width: 100%;
-  position: relative;
-  display: flex;
-  padding-right: 3%;
-  flex-direction: row;
-  justify-content: flex-end;
-`;
 
-const ToggleContainer = styled.div``;
 export default Header;

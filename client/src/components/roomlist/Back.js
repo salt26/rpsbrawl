@@ -10,11 +10,7 @@ function Back({ onClick }) {
   );
 }
 
-const ImgBtn = styled.div`
-  position: absolute;
-  top: 5%;
-  left: 5%;
-
+const ImgBtn = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -23,7 +19,8 @@ const ImgBtn = styled.div`
   border-radius: 10px;
   width: 50px;
   height: 50px;
-
+  cursor: pointer;
+  border: none;
   &:hover {
     background: rgba(255, 255, 255, 0.5);
   }

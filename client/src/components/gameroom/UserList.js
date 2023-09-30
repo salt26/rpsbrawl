@@ -61,6 +61,7 @@ export default function UserList({ users }) {
 }
 const Anim = styled.div`
   animation: ani 0.5s infinite alternate;
+
   @keyframes ani {
     0% {
       transform: translate(0, 0);
@@ -71,15 +72,15 @@ const Anim = styled.div`
   }
 `;
 const Container = styled.div`
-  box-sizing: border-box;
   display: flex;
   flex-direction: row;
+  width: 100%;
   flex-wrap: wrap;
   justify-content: flex-start;
-  align-items: flex-start;
   align-self: flex-start;
-  padding: 20px;
-  gap: 30px 15px;
+
+  padding: 40px;
+  gap: 30px;
 
   overflow-x: hidden;
   overflow-y: scroll;

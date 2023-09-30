@@ -55,36 +55,58 @@ function RoomListPage() {
   //방만들기
   const [CreateRoomModalVisible, setCreateRoomModalVisible] = useState(false);
 
-  const [rooms, setRooms] = useState(state);
+  const [rooms, setRooms] = useState([]);
   const mode = useContext(LanguageContext);
 
   return (
-    <Col>
+    <RoomListPageLayout>
       <CreateRoomModal
         modalVisible={CreateRoomModalVisible}
         setModalVisible={setCreateRoomModalVisible}
       />
-      <SizedBox height={"20px"} />
-      <Medium shadow color="white" size="80px">
-        {Language[mode].rooms}
-      </Medium>
-      <Back onClick={_backToHome} />
-      <MyNameTag size="m" color="var(--yellow)">
-        {my_name}
-      </MyNameTag>
+
+      <NavBar>
+        <Back onClick={_backToHome} />
+
+        <TitleContainer>
+          <Medium shadow color="white" size="80px">
+            {Language[mode].rooms}
+          </Medium>
+        </TitleContainer>
+        <MyNameTag size="m" color="var(--yellow)">
+          {my_name}
+        </MyNameTag>
+      </NavBar>
+      <SizedBox height={"30px"} />
       <RoomList
         rooms={rooms}
         setCreateRoomModalVisible={setCreateRoomModalVisible}
       />
-    </Col>
+    </RoomListPageLayout>
   );
 }
+const NavBar = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 
-const Col = styled.div`
+  background-color: orange;
+`;
+
+const TitleContainer = styled.div`
+  margin-left: 125px;
+`;
+const RoomListPageLayout = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
+  height: 100%;
+  width: 100%;
 `;
 
+const Center = styled.div`
+  align-self: center;
+`;
 export default RoomListPage;

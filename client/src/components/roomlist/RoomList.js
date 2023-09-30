@@ -15,7 +15,173 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
   const mode = useContext(LanguageContext);
 
   var navigate = useNavigate();
-  const [roomLists, setRoomLists] = useState(rooms);
+  const [roomLists, setRoomLists] = useState([
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+    {
+      state: 0, // Wait
+      time_offset: -1, // 대기 방에서는 -1
+      time_duration: -1, // 대기 방에서는 -1
+      init_time: "", // 대기 방에서는 빈 문자열로 반환
+      start_time: "", // 대기 방에서는 빈 문자열로 반환
+      end_time: "", // 대기 방에서는 빈 문자열로 반환
+      name: "Welcome!",
+      mode: 0, // Normal
+      has_password: true,
+      bot_skilled: 2,
+      bot_dumb: 3,
+      max_persons: 30,
+      num_person: 7, // 봇 + 사람(접속 끊긴 사람 포함) 인원
+    },
+  ]);
 
   const [createSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 불러오기
   const _enterRoom = (id, pwd) => {
@@ -115,16 +281,9 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
   return (
-    <BgBox width="100%" height="80%">
+    <BgBox>
       <Row>
-        <div
-          style={{
-            display: "flex",
-            width: isMobile ? "100%" : "auto",
-            flexDirection: "row",
-            gap: "30px",
-          }}
-        >
+        <BtnWrapper>
           <GradientBtn
             text={Language[mode].create_room}
             onClick={_openCreateRoomModal}
@@ -138,7 +297,7 @@ function RoomList({ rooms, setCreateRoomModalVisible }) {
             style={redBtnStyle}
             anim
           />
-        </div>
+        </BtnWrapper>
 
         <RefreshBtn onClick={_refreshRoomList} />
       </Row>
@@ -176,23 +335,11 @@ const BgBox = styled.div`
   flex-wrap: wrap;
 
   align-self: center;
-  margin: auto;
-  margin-top: 5%;
   background: rgba(123, 120, 213, 0.22);
   width: 100%;
-  height: 500px;
+  height: 80%;
   padding: 40px;
   border-radius: 10px;
-
-  @media (max-width: 767px) {
-    //모바일
-    width: 80%;
-    height: 65%;
-  }
-  @media (min-width: 1200px) {
-    // 데스크탑 일반
-    width: 50%;
-  }
 `;
 
 const RoomContainer = styled.div`
@@ -201,13 +348,9 @@ const RoomContainer = styled.div`
   justify-content: space-between;
   flex-wrap: wrap;
   width: 100%;
-  height: 70%;
-  overflow-y: auto;
-
-  @media (min-width: 1200px) {
-    // 데스크탑 일반
-    padding-right: 15px;
-  }
+  height: calc(100% - 60px);
+  overflow-y: scroll;
+  padding-right: 5%;
   grid-gap: 30px 20px;
   ::-webkit-scrollbar {
     width: 15px; /* 스크롤바의 너비 */
@@ -232,5 +375,13 @@ const Row = styled.div`
   justify-content: space-between;
 
   gap: 20px;
+`;
+
+const BtnWrapper = styled.div`
+  display: flex;
+
+  gap: 20px;
+  flex-direction: row;
+  justify-content: space-between;
 `;
 export default RoomList;

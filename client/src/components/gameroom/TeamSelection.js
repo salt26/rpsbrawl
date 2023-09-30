@@ -11,7 +11,7 @@ import { WebsocketContext } from "../../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
 import CancelIconSrc from "../../assets/images/cancel.svg";
 import SvgIcon from "../common/SvgIcon";
-function TeamSelection({ setTeamSelectionVisible }) {
+function TeamSelection({ teamSelectionVisible, setTeamSelectionVisible }) {
   const teams = ["red", "orange", "yellow", "green", "blue", "navy", "purple"];
   const isMobile = useMediaQuery({ query: "(max-width:768px)" });
 
@@ -41,7 +41,7 @@ function TeamSelection({ setTeamSelectionVisible }) {
             {Language[mode].team}
           </MediumOutline>
         </TextContainer>
-        {isMobile && (
+        {teamSelectionVisible && (
           <RightTop>
             <SvgIcon src={CancelIconSrc} onClick={_closeModal} />
           </RightTop>
