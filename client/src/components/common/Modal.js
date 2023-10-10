@@ -57,20 +57,23 @@ const Overlay = styled.div`
   align-items: center;
   opacity: ${(props) => (props.tstate === "entered" ? 1 : 0)};
   transition: opacity ${duration}ms ease-in-out;
-  z-index: 2;
+  z-index: 10;
 `;
 
 const ModalWrapper = styled.div`
   background-color: rgba(255, 255, 255, 1);
 
   transform: scale(0.8);
-  z-index: 3;
-  padding: 20px;
+  z-index: 15;
+  padding: 30px;
+
   display: flex;
 
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   border-radius: 20px;
+  position: fixed;
 
   @media (max-width: 767px) {
     //모바일
@@ -78,10 +81,9 @@ const ModalWrapper = styled.div`
     height: 80vh;
   }
 
-  @media (min-width: 1200px) {
+  @media (min-width: 767px) {
     // 데스크탑 일반
-
-    width: 70vw;
-    height: 85vh;
+    width: 1000px;
+    height: 700px;
   }
 `;

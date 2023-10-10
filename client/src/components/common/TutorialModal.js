@@ -31,21 +31,24 @@ export default function TutorialModal({ modalVisible, setModalVisible }) {
   const content = [
     <Col>
       {isMobile ? <Logo size="s" /> : <Logo size="m" />}
-      <GradientText bg={blueGradient} size="var(--font-size-lg)">
-        {Language[mode].tutorial[0]}
-      </GradientText>
-      <MediumOutline size="var(--font-size-ms)" color="var(--background)">
-        {isMobile === false && Language[mode].tutorial_details[0][0]}
 
-        <br />
-        {Language[mode].tutorial_details[0][1]}
-        <br />
-        {Language[mode].tutorial_details[0][2]}
-        <br />
-        {Language[mode].tutorial_details[0][3]}
-        <br />
-        {Language[mode].tutorial_details[0][4]}
-      </MediumOutline>
+      <Section>
+        <GradientText bg={blueGradient} size="var(--font-size-lg)">
+          {Language[mode].tutorial[0]}
+        </GradientText>
+        <MediumOutline size="var(--font-size-ms)" color="var(--background)">
+          {isMobile === false && Language[mode].tutorial_details[0][0]}
+          {isMobile === false && <br />}
+
+          {Language[mode].tutorial_details[0][1]}
+          <br />
+          {Language[mode].tutorial_details[0][2]}
+          <br />
+          {Language[mode].tutorial_details[0][3]}
+          <br />
+          {Language[mode].tutorial_details[0][4]}
+        </MediumOutline>
+      </Section>
     </Col>,
     <Col>
       <GradientText bg={blueGradient} size="var(--font-size-lg)">
@@ -127,47 +130,62 @@ export default function TutorialModal({ modalVisible, setModalVisible }) {
   };
   return (
     <Modal isOpen={modalVisible} closeModal={() => setModalVisible(false)}>
-      {currentTabIdx !== 0 && (
-        <Left>
-          <SvgIcon
-            src={BeforeIconSrc}
-            size="30px"
-            onClick={_moveToPreviousTab}
-          />
-        </Left>
-      )}
-      {content[currentTabIdx]}
-      {currentTabIdx !== LAST_TAP_IDX && (
-        <Right>
-          <SvgIcon src={NextIconSrc} size="30px" onClick={_moveToNextTab} />
-        </Right>
-      )}
       <RightTop onClick={_closeModal}>
         <SvgIcon src={CancelIconSrc} />
       </RightTop>
+
+      <Row>
+        <Col>
+          {currentTabIdx !== 0 && (
+            <SvgIcon
+              src={BeforeIconSrc}
+              size="30px"
+              onClick={_moveToPreviousTab}
+            />
+          )}
+        </Col>
+        <ModalContent>{content[currentTabIdx]}</ModalContent>
+        <Col>
+          {currentTabIdx !== LAST_TAP_IDX && (
+            <SvgIcon src={NextIconSrc} size="30px" onClick={_moveToNextTab} />
+          )}
+        </Col>
+      </Row>
     </Modal>
   );
 }
 
 const RightTop = styled.div`
-  position: absolute;
-  top: 5%;
-  right: 5%;
   cursor: pointer;
+  align-self: flex-end;
+`;
+
+const Row = styled.div`
+  display: grid;
+  grid-template-columns: 100px 1fr 100px; /* 각 열의 비율을 1:5:1로 지정 */
+  align-items: center;
+  justify-items: center;
+  width: 100%;
+  height: 100%;
+`;
+
+const ModalContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  align-items: center;
 `;
 
 const Col = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 20px;
+  justify-content: center;
   align-items: center;
-  height: 80%;
-
+  gap: 50px;
   @media (max-width: 767px) {
     //모바일
     overflow: hidden scroll;
-    transform: scale(1vw * 0.8); // 사이즈에 비례해서 작아지도록
   }
 `;
 
@@ -192,15 +210,9 @@ const Box = styled.div`
     justify-content: space-between;
   }
 `;
-const Right = styled.div`
-  position: absolute;
-  right: 5%;
-  top: 50%;
-  cursor: pointer;
-`;
-const Left = styled.div`
-  position: absolute;
-  left: 5%;
-  top: 50%;
-  cursor: pointer;
+
+const Section = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 `;
