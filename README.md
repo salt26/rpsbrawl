@@ -1,7 +1,10 @@
 # Rock-Paper-Scissors Brawl
 <img src="./client/public/RPS%20Brawl_logo_animated.gif" height=300>
 
-**Play**: https://rpsbrawl.swygbro.com  
+## The game service ended on January 3, 2024.
+If you want to play the game, please contact [our developer](mailto:01030263252a@gmail.com).
+
+**Play**: ~~https://rpsbrawl.swygbro.com~~  
 **Source code**: https://github.com/salt26/rpsbrawl
 
 **[한글 설명 보기](./README_Kor.md)**
@@ -44,8 +47,9 @@ Get the most points in 60 seconds! 🤩
 <img src="./client/src/assets/images/step6.png" height=200>
 
 ## How to play
-1. **https://rpsbrawl.swygbro.com**
-   * You can play this on your PC or smartphone.
+1. ~~**https://rpsbrawl.swygbro.com**~~
+   * **Unfortunately, the service has ended.** 😢
+   * ~~You can play this on your PC or smartphone.~~
    * No installation required.
 2. Set your **language** and turn on the **music**. 🎵
    * You can change the language. Both English and Korean are available.

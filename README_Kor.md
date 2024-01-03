@@ -1,7 +1,10 @@
 # 가위바위보 난투
 <img src="./client/public/RPS%20Brawl_logo_animated.gif" height=300>
 
-**플레이**: https://rpsbrawl.swygbro.com  
+## 게임 서비스가 2024년 1월 3일에 종료되었습니다.
+만약 게임을 플레이하고 싶으시다면 [개발자](mailto:01030263252a@gmail.com)에게 연락 바랍니다.
+
+**플레이**: ~~https://rpsbrawl.swygbro.com~~  
 **소스 코드**: https://github.com/salt26/rpsbrawl
 
 **[Read English documentation](./README.md)**
@@ -43,8 +46,9 @@
 <img src="./client/src/assets/images/step6.png" height=200>
 
 ## 플레이 방법
-1. **https://rpsbrawl.swygbro.com**
-   * PC 또는 스마트폰에서도 즐길 수 있습니다!
+1. ~~**https://rpsbrawl.swygbro.com**~~
+   * **아쉽게도 서비스가 종료되었습니다.** 😢
+   * ~~PC 또는 스마트폰에서도 즐길 수 있습니다!~~
    * 프로그램을 설치하지 않아도 됩니다.
 2. 접속하기 전에 먼저 **언어**를 설정하고 **음악**을 켜세요. 🎵
    * 화면 왼쪽 위에서 언어를 ENG에서 KOR로 바꾸세요!
@@ -86,7 +90,7 @@
    * 처음 해보는 분은 [규칙 섹션](#규칙)을 읽어보세요.
    * 가끔 연결이 끊기기도 합니다. **만약 화면이 멈춘다면, F5를 누르고 같은 닉네임으로 다시 입장해주세요.**
      * 게임이 진행 중이라면 재접속할 수 있습니다!
-9. 게임이 끝나면 **결과** 화면을 보게 됩니다.
+9.  게임이 끝나면 **결과** 화면을 보게 됩니다.
    * 20초가 지나면 자동으로 방으로 이동됩니다.
      * 그러니 가만히 기다려주시면 되겠습니다. 😄
    * 게임 결과를 파일로 저장할 수 있습니다.
