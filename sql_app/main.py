@@ -159,11 +159,26 @@ async def login_for_access_token(
     valid_tokens.append(access_token)
     return {"access_token": access_token, "token_type": "bearer"}
 
+# 웹소켓이 속한 이벤트 루프가 멈췄을 때 무한정 기다리지 않도록 하는 제한 시간 (초)
+SENDING_TIMEOUT = 20
+
+async def run_in_loop(coroutine, loop: asyncio.AbstractEventLoop):
+    # 웹소켓은 연결을 맺은 이벤트 루프(메인 스레드)에서만 안전하게 사용할 수 있으므로,
+    # 게임 스레드나 주기 관리 스레드에서 메시지를 보낼 때에는 그 루프에 작업을 맡기고 끝나기를 기다린다.
+    # 같은 루프에서 호출하더라도 같은 대기열을 거치게 하여, 나중에 만든 메시지가 먼저 전송되는 일을 줄인다.
+    try:
+        future = asyncio.run_coroutine_threadsafe(coroutine, loop)
+    except RuntimeError:
+        # 이미 닫힌 이벤트 루프
+        coroutine.close()
+        raise
+    return await asyncio.wait_for(asyncio.wrap_future(future), SENDING_TIMEOUT)
+
 class ConnectionManager:
     def __init__(self):
-        # List[WebSocket, int, int]: [연결된 웹소켓 클래스, person_id, room_id]
+        # List[WebSocket, int, int, AbstractEventLoop]: [연결된 웹소켓 클래스, person_id, room_id, 웹소켓이 속한 이벤트 루프]
         # 방에 입장하지 않은 사람은 room_id = -1
-        self.active_connections: List[List[Union[WebSocket, int]]] = []
+        self.active_connections: List[List[Union[WebSocket, int, asyncio.AbstractEventLoop]]] = []
 
     def find_connection_by_websocket(self, websocket: WebSocket):
         return next((x for x in self.active_connections if x[0] == websocket), None)
@@ -184,7 +199,7 @@ class ConnectionManager:
 
     async def connect(self, websocket: WebSocket, person_id: int, room_id: int = -1):
         await websocket.accept()
-        self.active_connections.append([websocket, person_id, room_id])
+        self.active_connections.append([websocket, person_id, room_id, asyncio.get_running_loop()])
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections = list(filter(lambda x: x[0] != websocket, self.active_connections))
@@ -225,11 +240,7 @@ class ConnectionManager:
         obj["response"] = "broadcast"
         obj["type"] = type
         obj["data"] = data
-        for connection in self.find_all_connections_by_room_id(room_id):
-            try:
-                await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
-            except Exception:
-                traceback.print_exc()
+        await self.send_to_room(obj, room_id)
 
     async def broadcast_text(self, request: str, message: str, room_id: int):
         # 한 방 전체의 사람들에게 공통된 JSON을 보냄
@@ -238,11 +249,31 @@ class ConnectionManager:
         obj["response"] = "broadcast"
         obj["type"] = "message"
         obj["message"] = message
+        await self.send_to_room(obj, room_id)
+
+    async def send_to_room(self, obj: dict, room_id: int):
+        # JSON 문자열은 한 번만 만들어 한 방 전체의 사람들에게 똑같이 보냄
+        text = json.dumps(obj)
+        websockets_by_loop = {}
         for connection in self.find_all_connections_by_room_id(room_id):
+            websockets_by_loop.setdefault(connection[3], []).append(connection[0])
+        for loop, websockets in websockets_by_loop.items():
             try:
-                await connection[0].send_json(obj, mode=JSON_SENDING_MODE)
+                await run_in_loop(ConnectionManager.send_to_websockets(text, websockets), loop)
             except Exception:
                 traceback.print_exc()
+
+    async def send_to_websockets(text: str, websockets: List[WebSocket]):
+        # 동시에 보내서, 전송이 느리거나 실패한 사람이 있더라도 다른 사람에게 영향을 주지 않게 함
+        async def send(websocket: WebSocket):
+            try:
+                if JSON_SENDING_MODE == "text":
+                    await websocket.send_text(text)
+                else:
+                    await websocket.send_bytes(text.encode("utf-8"))
+            except Exception:
+                traceback.print_exc()
+        await asyncio.gather(*[send(websocket) for websocket in websockets])
 
 class BotManager:
     def __init__(self) -> None:
@@ -563,35 +594,20 @@ def read_non_end_rooms(db: Session = Depends(get_db)):
 
 def read_hands(room_id: int, limit: int = 6, db: Session = Depends(get_db)):
     # 해당 방에서 사람들이 낸 손 목록 limit개 반환 (마지막으로 낸 손이 마지막 인덱스)
-    hands = crud.get_hands_from_last(db, room_id=room_id, limit=limit)
-    ret = []
-    for hand in hands:
-        person = crud.get_person(db, person_id=hand.person_id)
-        game = crud.get_game(db, room_id, person.id)
-        ret.append({
-            'team': game.team,
-            'name': person.name,
-            'is_human': person.is_human,
-            'hand': hand.hand,
-            'score': hand.score,
-            'time': hand.time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z"),
-            'room_id': hand.room_id,
-            #'person_id': hand.person_id
-        })
-    return ret
+    return format_hands(crud.get_hands_with_person(db, room_id=room_id, limit=limit))
 
 def read_all_hands(room_id: int, db: Session = Depends(get_db)):
     # 해당 방에서 사람들이 낸 손 목록 모두 반환 (가장 먼저 낸 손이 [0]번째 인덱스, 마지막으로 낸 손이 마지막 인덱스)
-    hands = crud.get_hands(db, room_id=room_id)
+    return format_hands(crud.get_hands_with_person(db, room_id=room_id))
+
+def format_hands(hands):
     ret = []
     for hand in hands:
-        person = crud.get_person(db, person_id=hand.person_id)
-        game = crud.get_game(db, room_id, person.id)
         ret.append({
-            'team': game.team,
-            'name': person.name,
-            'is_human': person.is_human,
-            'hand': hand.hand,
+            'team': hand.team,
+            'name': hand.name,
+            'is_human': hand.is_human,
+            'hand': int(hand.hand),
             'score': hand.score,
             'time': hand.time.astimezone(timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S.%f %Z"),
             'room_id': hand.room_id,
@@ -603,20 +619,19 @@ def read_game(room_id: int, db: Session = Depends(get_db)):
     # 해당 방의 사람들의 {순위, 팀 번호, 이름, 방장 여부, 점수, win, draw, lose, 방 번호} 반환
     # person_id가 -1이 아닌 값으로 주어지는 경우, 해당 사람이 있으면 그 사람은 항상 목록의 0번째 인덱스에 정렬
 
-    games = crud.get_games_in_room(db, room_id=room_id, only_human=False)
+    games = crud.get_games_with_person(db, room_id=room_id)
     # 점수가 같다면 이긴 횟수가 많을수록 높은 순위, 이긴 횟수도 같다면 비긴 횟수가 많을수록 높은 순위
     # (많이 낼수록 유리)
-        
+
     games.sort(key=lambda e: (e.score, e.win, e.draw), reverse=True)
     ret = []
     for index, game in enumerate(games):
-        person = crud.get_person(db, person_id=game.person_id)
         ret.append({
             'rank': index + 1, # 순위는 점수가 가장 높은 사람이 1
             'team': game.team,
-            'name': person.name,
+            'name': game.name,
             'is_host': game.is_host,
-            'is_human': person.is_human,
+            'is_human': game.is_human,
             'score': game.score,
             'win': game.win,
             'draw': game.draw,
@@ -917,15 +932,24 @@ async def remove_dormancy_person(db: Session):
                 if error_code == 0:
                     if con is not None:
                         cManager.change_room_id(game.person_id, -1)
-                        await ConnectionManager.send_json("dormancy", "quit", "room_list", read_non_end_rooms(db), con[0])
+                        try:
+                            await run_in_loop(ConnectionManager.send_json("dormancy", "quit", "room_list", read_non_end_rooms(db), con[0]), con[3])
+                        except Exception:
+                            # 전송에 실패하더라도 주기 관리 스레드가 멈추지 않게 함
+                            traceback.print_exc()
                     await cManager.broadcast_json("dormancy", "game_list", read_game(game.room_id, db), game.room_id)
                     room_list_dirty_bit.set()
 
 async def auto_refresh_room_list(db: Session):
     if room_list_dirty_bit.is_set():
         room_list_dirty_bit.clear()
-        for con in cManager.find_all_connections_by_room_id(-1):
-            await ConnectionManager.send_json("auto_refresh", "success", "room_list", read_non_end_rooms(db), con[0])
+        if len(cManager.find_all_connections_by_room_id(-1)) > 0:
+            obj = {}
+            obj["request"] = "auto_refresh"
+            obj["response"] = "success"
+            obj["type"] = "room_list"
+            obj["data"] = read_non_end_rooms(db)
+            await cManager.send_to_room(obj, -1)
 
 async def periodic_manager(time_interval: int):
     # DB 세션을 새로 만들어서, 스레드 당 하나의 세션을 가지도록 해야 여러 스레드가 DB에 동시에 접근해서 생기는 문제가 발생하지 않는다.

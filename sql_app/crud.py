@@ -488,14 +488,25 @@ def get_hands(db: Session, room_id: int):
 def get_hands_from_last(db: Session, room_id: int, limit: int = 6):
     if limit <= 0:
         limit = 1
-    hands = db.query(models.Hand).filter(models.Hand.room_id == room_id).all()
+    hands = db.query(models.Hand).filter(models.Hand.room_id == room_id) \
+        .order_by(models.Hand.time.desc(), models.Hand.id.desc()).limit(limit).all()
     if len(hands) <= 0:
         return None
-    hands.sort(key=lambda e: e.time)
-    n = len(hands) - limit
-    if n < 0:
-        n = 0
-    return parse_obj_as(schemas.List[schemas.Hand], hands[n:])
+    hands.reverse()
+    return parse_obj_as(schemas.List[schemas.Hand], hands)
+
+def get_hands_with_person(db: Session, room_id: int, limit: int or None = None):
+    # 해당 방에서 낸 손을 낸 사람의 팀, 이름, 봇 여부와 함께 한 번의 쿼리로 반환 (가장 최근에 입력된 손이 마지막 인덱스)
+    # limit이 주어지면 마지막 limit개만 반환
+    hands = db.query(models.Hand.hand, models.Hand.score, models.Hand.time, models.Hand.room_id, \
+        models.Game.team, models.Person.name, models.Person.is_human) \
+        .join(models.Game, and_(models.Game.room_id == models.Hand.room_id, models.Game.person_id == models.Hand.person_id)) \
+        .join(models.Person, models.Person.id == models.Hand.person_id) \
+        .filter(models.Hand.room_id == room_id) \
+        .order_by(models.Hand.time.desc(), models.Hand.id.desc())
+    if limit is not None:
+        hands = hands.limit(max(limit, 1))
+    return list(reversed(hands.all()))
 
 def get_hands_by_person(db: Session, room_id: int, person_id: int):
     hands = db.query(models.Hand).filter(and_(models.Hand.room_id == room_id, \
@@ -521,23 +532,23 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
     if db_game.first() is None:
         return (None, 3)
 
-    hands = get_hands(db, room_id)
-    if hands is None or len(hands) <= 0:
+    prev_hands = get_hands_from_last(db, room_id, 1)
+    if prev_hands is None:
         return (None, 4)
-    
+
     if room.mode == schemas.RoomModeEnum.Limited:
         if last_hand == int(hand):
             return (None, 7)
-    
-    score = hand_score(hand, hands[-1].hand)
+
+    score = hand_score(hand, prev_hands[-1].hand)
     hands = models.Hand(room_id=room_id, person_id=person_id, hand=hand, time=datetime.now(), score=score)
     db.add(hands)
+    # 개인 점수 변경 (손 추가와 함께 한 번에 커밋)
+    update_game(db, room_id=room_id, person_id=person_id, score=score)
     db.commit()
     db.refresh(hands)
-    # 개인 점수 변경
-    _, error_code = update_game(db, room_id=room_id, person_id=person_id, score=score)
-    
-    return (schemas.Hand.from_orm(hands), error_code)
+
+    return (schemas.Hand.from_orm(hands), 0)
 
 def get_game(db: Session, room_id: int, person_id: int):
     game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
@@ -568,41 +579,26 @@ def create_game_for_all(db: Session, room_id: int, person_ids: list):
 """
 
 def update_game(db: Session, room_id: int, person_id: int, score: int):
-    room = db.query(models.Room).filter(models.Room.id == room_id).first()
-    if room is None:
-        # 오류
-        return (None, 15)
-    elif room.state != schemas.RoomStateEnum.Play:
-        # 오류
-        return (None, 11)
-    if room.start_time is None or room.start_time > datetime.now():
-        return (None, 12)
-    elif room.end_time is not None and room.end_time < datetime.now():
-        return (None, 16)
+    # 방과 사람의 유효성 검사 및 커밋은 이 함수를 호출하는 create_hand()에서 수행
     db_game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id))
-    if db_game.first() is None:
-        return (None, 13)
     if score == 0:
         # draw
         db_game.update({
-            "draw": db_game.first().draw + 1
-        })
+            "draw": models.Game.draw + 1
+        }, synchronize_session=False)
     elif score == 1:
         # win
         db_game.update({
-            "win": db_game.first().win + 1,
-            "score": db_game.first().score + 1
-        })
+            "win": models.Game.win + 1,
+            "score": models.Game.score + 1
+        }, synchronize_session=False)
     elif score == -1:
         # lose
         db_game.update({
-            "lose": db_game.first().lose + 1,
-            "score": db_game.first().score - 1
-        })
-    db.commit()
-    db.refresh(db_game.first())
-    return (schemas.Game.from_orm(db_game.first()), 0)
+            "lose": models.Game.lose + 1,
+            "score": models.Game.score - 1
+        }, synchronize_session=False)
 
 def update_game_for_team(db: Session, room_id: int, person_id: int, team: int):
     if team < 0 or team > 6:
@@ -642,6 +638,14 @@ def get_games_in_room(db: Session, room_id: int, only_human: bool):
         return parse_obj_as(schemas.List[schemas.Game], list(filter(lambda g: check_human_from_game(db, g), games)))
     else:
         return parse_obj_as(schemas.List[schemas.Game], games)
+
+def get_games_with_person(db: Session, room_id: int):
+    # 해당 방의 모든 사람(봇 포함)의 전적을 이름, 봇 여부와 함께 한 번의 쿼리로 반환
+    return db.query(models.Game.team, models.Game.is_host, models.Game.score, models.Game.win, models.Game.draw, models.Game.lose, \
+        models.Game.room_id, models.Person.name, models.Person.is_human) \
+        .join(models.Person, models.Person.id == models.Game.person_id) \
+        .filter(models.Game.room_id == room_id) \
+        .order_by(models.Game.person_id).all()
 
 def get_expired_rooms(db: Session):
     room = db.query(models.Room).filter(and_(models.Room.state == schemas.RoomStateEnum.Play,
