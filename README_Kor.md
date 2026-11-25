@@ -1,10 +1,9 @@
 # 가위바위보 난투
 <img src="./client/public/RPS%20Brawl_logo_animated.gif" height=300>
 
-## 게임 서비스가 2024년 1월 3일에 종료되었습니다.
-만약 게임을 플레이하고 싶으시다면 [개발자](mailto:01030263252a@gmail.com)에게 연락 바랍니다.
+## 2026년 11월 30일, 가위바위보 난투가 돌아왔습니다!
 
-**플레이**: ~~https://rpsbrawl.swygbro.com~~  
+**플레이**: https://rpsbrawl.ravitastudio.com  
 **소스 코드**: https://github.com/salt26/rpsbrawl
 
 **[Read English documentation](./README.md)**
@@ -46,9 +45,8 @@
 <img src="./client/src/assets/images/step6.png" height=200>
 
 ## 플레이 방법
-1. ~~**https://rpsbrawl.swygbro.com**~~
-   * **아쉽게도 서비스가 종료되었습니다.** 😢
-   * ~~PC 또는 스마트폰에서도 즐길 수 있습니다!~~
+1. https://rpsbrawl.ravitastudio.com
+   * PC 또는 스마트폰에서도 즐길 수 있습니다!
    * 프로그램을 설치하지 않아도 됩니다.
 2. 접속하기 전에 먼저 **언어**를 설정하고 **음악**을 켜세요. 🎵
    * 화면 왼쪽 위에서 언어를 ENG에서 KOR로 바꾸세요!

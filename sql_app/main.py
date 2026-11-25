@@ -535,6 +535,7 @@ def read_room(room_id: int, db: Session = Depends(get_db)):
         'init_time': it,
         'start_time': st,
         'end_time': et,
+        'server_time': int(datetime.now().timestamp() * 1000),  # 클라이언트가 자기 시계와의 차이를 보정하는 데 사용
         'name': db_room.name,
         'mode': db_room.mode,
         'has_password': not(db_room.password is None or db_room.password == ""),

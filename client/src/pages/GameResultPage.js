@@ -15,6 +15,7 @@ import { Medium } from "../styles/font";
 import { useMediaQuery } from "react-responsive";
 import SizedBox from "../components/common/SizedBox";
 import useInterval from "../utils/useInterval";
+import { serverNow, parseServerTime } from "../utils/ServerTime";
 
 export default function GameResultPage() {
   const mode = useContext(LanguageContext);
@@ -41,13 +42,11 @@ export default function GameResultPage() {
 
   const [count, setCount] = useState(20); // 게임 종료까지 남은 시간
   const _getTimeOffset = (room) => {
-    const current = new Date();
-    var end = new Date(room["end_time"].slice(0, 19));
-    end.setSeconds(end.getSeconds() + RESULT_TIME); // 종료되는 시간
-    var left = parseInt((end.getTime() - current.getTime()) / 1000);
+    const end = parseServerTime(room["end_time"]) + RESULT_TIME * 1000; // 종료되는 시간
+    const left = Math.ceil((end - serverNow()) / 1000);
 
     if (left >= 0) {
-      setCount(left);
+      setCount(Math.min(left, RESULT_TIME));
     }
   };
 

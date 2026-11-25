@@ -6,6 +6,7 @@ import SizedBox from "../common/SizedBox";
 import ClockSrc from "../../assets/images/clock.png";
 import SvgIcon from "../common/SvgIcon";
 import useInterval from "../../utils/useInterval";
+import { serverNow, parseServerTime } from "../../utils/ServerTime";
 import { Medium } from "../../styles/font";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -36,21 +37,24 @@ export default function TimeBar({ roomInfo }) {
 
   useInterval(
     () => {
-      setSec(sec - 1);
-      if (sec === 1) {
+      const left = _calcLeft(start_time);
+      setSec(Math.max(left, 0));
+      if (left <= 0) {
         setIsRunning(false);
       }
     },
-    isRunning ? 1000 : null
+    isRunning ? 200 : null
   );
+
+  const _calcLeft = (startTime) => {
+    const end = parseServerTime(startTime) + time_duration * 1000;
+    return Math.min(Math.ceil((end - serverNow()) / 1000), time_duration);
+  };
 
   const _getLeftTime = (targetISOString) => {
     // start_time이랑 비교해서 남은시간제한 구하기.
     // 형식 => 2023-01-03 00:35:41.029853 KST
-    const current = new Date();
-    var end = new Date(targetISOString.slice(0, 19).replace(" ", "T"));
-    end.setSeconds(end.getSeconds() + roomInfo["time_duration"]);
-    var left = Math.floor((end.getTime() - current.getTime()) / 1000);
+    const left = _calcLeft(targetISOString);
 
     if (left <= 0) {
       // 시간이 지나치게 경과한 경우..

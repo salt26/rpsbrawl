@@ -8,7 +8,7 @@ const duration = 200;
 class Modal extends Component {
   componentDidUpdate(prevProps) {
     if (!prevProps.isOpen && this.props.isOpen) {
-      TweenLite.to(this.myElement, 0.35, { y: 30, scale: 1 });
+      TweenLite.to(this.myElement, 0.35, { y: 0, scale: 1 });
     }
 
     if (prevProps.isOpen && !this.props.isOpen) {
@@ -61,11 +61,14 @@ const Overlay = styled.div`
 `;
 
 const ModalWrapper = styled.div`
-  background-color: rgba(255, 255, 255, 1);
+  position: relative;
+  overflow: hidden;
+  width: 85vw;
+  height: 85vh;
+  background: linear-gradient(160deg, #f1eeff 0%, #e6f1fc 55%, #def5f2 100%);
 
   transform: scale(0.8);
   z-index: 3;
-  padding: 20px;
   display: flex;
 
   justify-content: center;
@@ -76,12 +79,12 @@ const ModalWrapper = styled.div`
     //모바일
     width: 90vw;
     height: 80vh;
+    height: 80dvh;
   }
 
   @media (min-width: 1200px) {
     // 데스크탑 일반
 
     width: 70vw;
-    height: 85vh;
   }
 `;

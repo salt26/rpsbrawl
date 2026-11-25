@@ -1,0 +1,6 @@
+# 실제 값과 인증서, 배포할 때 복사하는 파일은 올리지 않는다.
+.env
+caddy/certs/
+api/sql_app/
+api/requirements.txt
+web/html/

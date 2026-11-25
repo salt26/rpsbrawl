@@ -16,6 +16,12 @@
   background: rgba(33, 122, 244, 0.1); /*스크롤바 뒷 배경 색상*/
 }
 
+/* 키보드 등으로 화면이 밀려도 배경 그라데이션과 이어져 보이도록 */
+html,
+body {
+  background-color: #3b36cf;
+}
+
 #root {
   --background: #524fa1;
   --white: #ffffff;
