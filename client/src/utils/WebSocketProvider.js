@@ -3,6 +3,7 @@ import { createContext } from "react";
 import { setUserId, setUserName } from "./User";
 import { useNavigate } from "react-router-dom";
 import { setIsLogin } from "./User";
+import { syncServerTime } from "./ServerTime";
 import { Language } from "../db/Language";
 import { LanguageContext } from "./LanguageProvider";
 import { useContext } from "react";
@@ -37,6 +38,13 @@ export const WebsocketProvider = ({ children }) => {
       const socket = new WebSocket(
         `${process.env.REACT_APP_RPS_BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
       );
+
+      // 페이지마다 onmessage를 바꿔 끼우므로, 시각 동기화는 별도 리스너로 처리
+      socket.addEventListener("message", (event) => {
+        if (!event.data.includes('"server_time"')) return;
+        const data = JSON.parse(event.data)?.data;
+        syncServerTime(data?.server_time ?? data?.room?.server_time);
+      });
 
       socket.onopen = (event) => {
         console.log("Socket open", event);

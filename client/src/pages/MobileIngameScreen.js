@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { getUserName, getUserAffiliation } from "../utils/User";
 import { useParams } from "react-router-dom";
 import useInterval from "../utils/useInterval";
+import { serverNow, parseServerTime } from "../utils/ServerTime";
 import { getUserId } from "../utils/User";
 import MessageBox from "../components/gameroom/MessageBox";
 import { useMediaQuery } from "react-responsive";
@@ -55,18 +56,23 @@ export default function MobileInGameScreen() {
     };
   }, []);
   const _getTimeOffset = (room) => {
-    const current = new Date();
-    var start = new Date(room["init_time"].slice(0, 19).replace(" ", "T"));
-    /* IOS에서만 NaN 뜨는 오류 
-  https://stackoverflow.com/questions/66252303/time-shows-as-nan-on-iphone-only*/
-    start.setSeconds(start.getSeconds() + room["time_offset"]);
-    var left = parseInt((start.getTime() - current.getTime()) / 1000);
+    if (room["start_time"]) {
+      // 이미 시작한 게임에 들어온 경우
+      setIsWaiting(false);
+      return;
+    }
 
-    if (left < 0) {
-      // 화면 넘어가는데 지연이 너무 오래걸린 경우 바로 게임 시작
-      setIsWaiting(false); //게임 시작
+    const left =
+      parseServerTime(room["init_time"]) +
+      room["time_offset"] * 1000 -
+      serverNow();
+
+    if (left <= -1000) {
+      // 시작 신호(room_start)를 받지 못한 경우 바로 게임 시작
+      setIsWaiting(false);
     } else {
-      setCount(left); //타이머 초깃값 세팅
+      // 타이머 값 세팅
+      setCount(Math.min(Math.max(Math.ceil(left / 1000), 0), room["time_offset"]));
     }
   };
 
@@ -90,7 +96,7 @@ export default function MobileInGameScreen() {
       }
   */
     },
-    isWaiting ? 500 : null // 타이머 갱신 간격을 짧게하면 좀 더 정확하게 카운트다운이 가능
+    isWaiting ? 100 : null // 타이머 갱신 간격을 짧게하면 좀 더 정확하게 카운트다운이 가능
   );
 
   const my_name = getUserName();
@@ -184,6 +190,7 @@ export default function MobileInGameScreen() {
           case "start":
             if (res.type === "room_start") {
               setRoomInfo(res.data);
+              setIsWaiting(false); // 서버가 손을 받기 시작한 순간 바로 시작
             }
 
             break;
