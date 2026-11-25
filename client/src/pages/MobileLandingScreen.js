@@ -304,6 +304,7 @@ const Container = styled.div`
   width: 100%;
   height: 100%;
   padding-bottom: 50px;
+  overflow-x: clip; // 로고 이미지의 투명한 양옆이 화면 폭을 넓히지 않도록
 
   align-items: center;
 

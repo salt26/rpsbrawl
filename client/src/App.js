@@ -33,6 +33,7 @@ import Github from "./components/Github";
 const Background = styled.div`
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   background: linear-gradient(180deg, #524fa1 0%, #3b36cf 100%);
 `;
 
