@@ -217,9 +217,11 @@ async def run_in_loop(coroutine, loop: asyncio.AbstractEventLoop):
 
 class ConnectionManager:
     def __init__(self):
-        # List[WebSocket, int, int, AbstractEventLoop]: [연결된 웹소켓 클래스, person_id, room_id, 웹소켓이 속한 이벤트 루프]
+        # List[WebSocket, int, int, AbstractEventLoop, str]: [연결된 웹소켓 클래스, person_id, room_id, 웹소켓이 속한 이벤트 루프, 재접속 키]
         # 방에 입장하지 않은 사람은 room_id = -1
+        # 재접속 키: 브라우저 탭마다 만드는 임의의 문자열. 같은 탭에서 다시 접속할 때 이전 연결을 대신하는 데 쓴다. (없으면 "")
         self.active_connections: List[List[Union[WebSocket, int, asyncio.AbstractEventLoop]]] = []
+        self._closing_tasks = set()  # 백그라운드로 닫는 중인 이전 연결 (작업이 중간에 사라지지 않게 참조를 잡아 둠)
 
     def find_connection_by_websocket(self, websocket: WebSocket):
         return next((x for x in self.active_connections if x[0] == websocket), None)
@@ -238,9 +240,9 @@ class ConnectionManager:
         connection = self.find_connection_by_person_id(person_id)
         return connection[2]
 
-    async def connect(self, websocket: WebSocket, person_id: int, room_id: int = -1):
+    async def connect(self, websocket: WebSocket, person_id: int, room_id: int = -1, key: str = ""):
         await websocket.accept()
-        self.active_connections.append([websocket, person_id, room_id, asyncio.get_running_loop()])
+        self.active_connections.append([websocket, person_id, room_id, asyncio.get_running_loop(), key])
 
     def disconnect(self, websocket: WebSocket):
         self.active_connections = list(filter(lambda x: x[0] != websocket, self.active_connections))
@@ -252,11 +254,22 @@ class ConnectionManager:
     async def close_with_person_id(self, person_id: int):
         connection = self.find_connection_by_person_id(person_id)
         if connection:
-            await connection[0].close()
+            # 목록에서 먼저 빼서, 닫히는 연결의 정리 코드가 이 사람을 방에서 내보내지 않게 함
             try:
                 self.active_connections.remove(connection)
             except:
                 pass
+            # 네트워크가 끊긴 연결이면 닫기가 10초 넘게 걸리고(websockets 라이브러리가 취소도 무시함) 그동안 새 연결을 받지 못하므로,
+            # 닫기는 백그라운드로 맡기고 기다리지 않는다.
+            task = asyncio.ensure_future(self._close_quietly(connection[0]))
+            self._closing_tasks.add(task)
+            task.add_done_callback(self._closing_tasks.discard)
+
+    async def _close_quietly(self, websocket: WebSocket):
+        try:
+            await websocket.close()
+        except Exception:
+            pass
 
     async def send_text(request: str, response: str, message: str, websocket: WebSocket):
         obj = {}
@@ -565,7 +578,7 @@ event_loop_for_main = asyncio.get_event_loop()
 event_loop_for_periodic_manager = asyncio.new_event_loop()
 
 @app.websocket("/signin")
-async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Session = Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket, name: str, token: str, key: str = "", db: Session = Depends(get_db)):
     await get_current_auth_websocket(websocket, token)
 
     name_error = check_name(name)
@@ -580,10 +593,15 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
         person = crud.create_person(db, name=name)
 
     
+    key = key[:64]
     connection = cManager.find_connection_by_person_id(person.id)
     if connection:
-        # 같은 이름의 사람이 현재 접속 중이고 그 사람이 대기 방 또는 플레이 중인 방에 있는 경우에는 로그인할 수 없음
-        if connection[2] != -1:
+        # 같은 브라우저 탭에서 다시 접속하는 경우(새로고침, 네트워크 끊김 후 재접속): 서버가 아직 끊김을 모르는 이전 연결을 대신한다.
+        same_client = key != "" and connection[4] == key
+        old_room_id = connection[2]
+
+        # 같은 이름의 사람이 현재 접속 중이고 그 사람이 대기 방 또는 플레이 중인 방에 있는 경우에는 (같은 탭이 아니면) 로그인할 수 없음
+        if old_room_id != -1 and not same_client:
             await websocket.accept()
             await ConnectionManager.send_text("signin", "error", "The same person has already entered in non-end room.", websocket)
             await websocket.close()
@@ -591,9 +609,16 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
 
         # 같은 이름으로 중복 접속하는 경우, 기존의 사람이 방 목록 화면에 있었다면 그 사람을 강제로 로그아웃시킴
         await cManager.close_with_person_id(person.id)
-        
+
+        if old_room_id != -1:
+            # 이전 연결이 끊긴 것처럼 처리: 대기 방에 있었다면 퇴장시킴 (플레이 중인 방은 아래에서 재접속 처리)
+            room, error_code = crud.update_room_to_quit(db, old_room_id, person.id)
+            if error_code == 0 and room is not None:
+                await cManager.broadcast_json("disconnected", "game_list", read_game(old_room_id, db), old_room_id)
+            room_list_dirty_bit.set()
+
     # 웹소켓 연결 시작
-    await cManager.connect(websocket, person.id)
+    await cManager.connect(websocket, person.id, key=key)
     try:
         # 재접속(Play 중인 방에서 연결이 끊겼다가 다시 접속하는 경우)인지 확인
         # 이때 방 garbage collection(종료 시간이 넘었는데 여전히 Play 상태인 방들을 End 상태로 변경)도 일어남
@@ -642,7 +667,11 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
 
     except WebSocketDisconnect:
         #print("연결 끊어짐")
-        room_id = cManager.find_connection_by_websocket(websocket)[2]
+        connection = cManager.find_connection_by_websocket(websocket)
+        if connection is None:
+            # 같은 탭의 새 연결로 대체되어 이미 목록에서 빠진 연결: 방에서 내보내지 않음
+            return
+        room_id = connection[2]
         cManager.disconnect(websocket)
 
         # 접속이 끊긴 사람이 대기 방에 있었다면 자동으로 퇴장시킴
@@ -654,7 +683,11 @@ async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Se
     except Exception:
         #print("다른 예외")
         traceback.print_exc()
-        room_id = cManager.find_connection_by_websocket(websocket)[2]
+        connection = cManager.find_connection_by_websocket(websocket)
+        if connection is None:
+            # 같은 탭의 새 연결로 대체되어 이미 목록에서 빠진 연결: 방에서 내보내지 않음
+            return
+        room_id = connection[2]
         if websocket.state == 1:
             # CONNECTED
             #print("CONNECTED -> close()")

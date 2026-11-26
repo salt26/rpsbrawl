@@ -24,6 +24,7 @@ export const Language = [
     update: "Update",
     settings: "Settings",
     reconnection_request: "Please reconnect with the same username.",
+    reconnecting: "Reconnecting...",
     ingame_title_text: "Thinking about which hand to play...",
     ingame_describe_text: (num) => {
       return `The game starts soon ( connected : ${num} ) `;
@@ -119,6 +120,7 @@ Get the most points in 60 seconds! 🤩`,
     settings: "설정",
     limited_explain_text: " ",
     reconnection_request: "같은 이름으로 재접속해주시기 바랍니다.",
+    reconnecting: "재접속 중...",
     ingame_title_text: "무엇을 낼지 고민하는 중..",
     ingame_describe_text: (num) => {
       return `난투가 곧 시작됩니다. ( 현재 : ${num}명 ) `;
