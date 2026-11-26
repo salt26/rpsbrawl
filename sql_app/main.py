@@ -37,6 +37,8 @@ NAME_MAX_LENGTH = 32
 NAME_FORBIDDEN_CHARS = set("&#%+?=/\\'\"`<>;")
 # 제어 문자, 보이지 않는 서식 문자, 사용자 정의 문자, 줄·문단 구분자
 NAME_FORBIDDEN_CATEGORIES = {"Cc", "Cf", "Co", "Cs", "Zl", "Zp"}
+# 이름 맨 앞에 올 수 없는 글자(결과 .csv를 엑셀에서 열 때 수식으로 해석되는 것을 막는다). 중간에는 써도 된다.
+NAME_FORBIDDEN_FIRST_CHARS = set("-@")
 # 봇 이름 형식(새 형식 "S-0001-bot", 옛 형식 "S-1676609745-962277"). 대소문자, 숫자 길이와 관계없이 막는다.
 NAME_BOT_RE = re.compile(r'^[SD]-[0-9]+-(bot|[0-9]+)$', re.IGNORECASE)
 
@@ -51,6 +53,8 @@ def check_name(name: str):
     for ch in name:
         if ch in NAME_FORBIDDEN_CHARS or unicodedata.category(ch) in NAME_FORBIDDEN_CATEGORIES:
             return "Name contains characters that cannot be used."
+    if name[0] in NAME_FORBIDDEN_FIRST_CHARS:
+        return "Name cannot start with - or @."
     if NAME_BOT_RE.match(name):
         return "This name cannot be used."
     return None
