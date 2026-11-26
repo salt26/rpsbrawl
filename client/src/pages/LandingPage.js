@@ -23,6 +23,7 @@ import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
 
 import qs from "qs";
+import { getNameError } from "../utils/NameRule";
 function RuleBox() {
   const mode = useContext(LanguageContext);
   return (
@@ -52,12 +53,9 @@ function LoginBox() {
   const [isLoading, setIsLoading] = useState(false); // 버튼 클릭 후 처리 중인지
 
   const _joinGame = async () => {
-    if (name === "") {
-      alert(Language[mode].name_blank);
-      return;
-    }
-    if (name.length > 32) {
-      alert(Language[mode].name_long);
+    const nameError = getNameError(name);
+    if (nameError) {
+      alert(Language[mode][nameError]);
       return;
     }
 

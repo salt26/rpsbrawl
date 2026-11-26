@@ -6,6 +6,7 @@ from . import models, schemas
 
 from pydantic import parse_obj_as
 import random
+import re
 
 # 팁:
 # db.query().filter()는 lazy evaluation을 하기 때문에 이것을 변수로 선언해 두고
@@ -55,14 +56,43 @@ def create_person(db: Session, name: str):
     db.refresh(person)
     return schemas.Person.from_orm(person)
 
+BOT_NAME_RE = re.compile(r'^([SD])-(\d+)-bot$')
+OLD_BOT_NAME_RE = re.compile(r'^([SD])-\d+-\d+$')
+
+def _next_bot_number(db: Session, name_prefix: str):
+    # 같은 접두어를 가진 봇 이름 중 가장 큰 번호 + 1
+    names = db.query(models.Person.name).filter(and_(not_(models.Person.is_human), models.Person.name.like(name_prefix + "-%"))).all()
+    numbers = [int(m.group(2)) for (n,) in names for m in [BOT_NAME_RE.match(n)] if m and m.group(1) == name_prefix]
+    return max(numbers, default=0) + 1
+
+def make_bot_name(name_prefix: str, number: int):
+    # 예: "S-0001-bot" (숫자는 네 자리)
+    return f"{name_prefix}-{number:04d}-bot"
+
 def create_bot(db: Session, name_prefix: str):
     # 새로운 봇 생성
     # name_prefix는 대문자 한 글자 ("S": skilled, "D": dumb)
-    bot = models.Person(name=name_prefix + "-" + str(datetime.now().timestamp()).replace('.', '-'), is_human=False)
+    bot = models.Person(name=make_bot_name(name_prefix, _next_bot_number(db, name_prefix)), is_human=False)
     db.add(bot)
     db.commit()
     db.refresh(bot)
     return schemas.Person.from_orm(bot)
+
+def rename_old_bots(db: Session):
+    # 옛 형식(예: "S-1676609745-962277")의 봇 이름을 새 형식(예: "S-0001-bot")으로 바꾼다. 서버 시작 시 한 번 호출
+    bots = db.query(models.Person).filter(not_(models.Person.is_human)).order_by(models.Person.id).all()
+    renamed = 0
+    for prefix in ("S", "D"):
+        number = _next_bot_number(db, prefix)
+        for bot in bots:
+            m = OLD_BOT_NAME_RE.match(bot.name)
+            if m and m.group(1) == prefix:
+                bot.name = make_bot_name(prefix, number)
+                number += 1
+                renamed += 1
+    if renamed:
+        db.commit()
+    return renamed
 
 def check_person_playing(db: Session, person_id: int):
     update_expired_rooms_to_end(db)

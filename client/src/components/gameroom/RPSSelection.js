@@ -53,11 +53,27 @@ function RPSSelection({ lastHand, rejectCount }) {
     onContextMenu: (e) => e.preventDefault(),
   };
 
+  // 손 버튼 입력. 터치는 길게 눌렀다 떼도 입력되도록 손가락을 떼는 순간에 처리하고,
+  // 손가락이 버튼 밖에서 떨어지면 취소한다. 마우스는 click으로 처리한다.
+  const handProps = (hand) => ({
+    ...noMenu,
+    onClick: () => {
+      if (!coolTime) _addHand(hand);
+    },
+    onTouchEnd: (e) => {
+      e.preventDefault(); // 뒤따르는 click으로 두 번 입력되지 않게
+      const t = e.changedTouches[0];
+      const target = t && document.elementFromPoint(t.clientX, t.clientY);
+      if (!coolTime && e.currentTarget.contains(target)) _addHand(hand);
+    },
+  });
+
   const selectImgStyle = {
     height: isMobile ? "10vh" : "100px",
     WebkitTouchCallout: "none",
     WebkitUserSelect: "none",
     userSelect: "none",
+    touchAction: "none", // 버튼 위에서는 스크롤·확대 제스처가 입력을 가로채지 않게
   };
   return (
     <div
@@ -84,33 +100,24 @@ function RPSSelection({ lastHand, rejectCount }) {
         <ImgBox coolTime={coolTime}>
           <img
             src={RockSrc}
-            {...noMenu}
+            {...handProps(0)}
             style={selectImgStyle}
-            onClick={() => {
-              if (!coolTime) _addHand(0);
-            }}
           />
         </ImgBox>
 
         <ImgBox coolTime={coolTime}>
           <img
             src={ScissorSrc}
-            {...noMenu}
+            {...handProps(1)}
             style={selectImgStyle}
-            onClick={() => {
-              if (!coolTime) _addHand(1);
-            }}
           />
         </ImgBox>
         <ImgBox coolTime={coolTime}>
           {" "}
           <img
             src={PaperSrc}
-            {...noMenu}
+            {...handProps(2)}
             style={selectImgStyle}
-            onClick={() => {
-              if (!coolTime) _addHand(2);
-            }}
           />
         </ImgBox>
       </Row>

@@ -256,16 +256,16 @@ function CreateRoomModal({ modalVisible, setModalVisible }) {
         <SizedBox height={"3vh"} />
         <Row>
           <GradientBtn
-            text={Language[mode].create}
+            text={Language[mode].cancel}
             style={blueBtnStyle}
             anim
-            onClick={_createRoom}
+            onClick={() => setModalVisible(false)}
           />
           <GradientBtn
-            text={Language[mode].cancel}
+            text={Language[mode].create}
             style={redBtnStyle}
             anim
-            onClick={() => setModalVisible(false)}
+            onClick={_createRoom}
           />
         </Row>
         <SizedBox height={"3vh"} />

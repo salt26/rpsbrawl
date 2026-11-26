@@ -14,11 +14,46 @@ import json
 import traceback
 import random
 import os
+import re
+import time
+import unicodedata
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
+
+# 옛 형식의 봇 이름을 새 형식으로 바꿈
+with SessionLocal() as _db:
+    _renamed = crud.rename_old_bots(_db)
+    if _renamed:
+        print(f"renamed {_renamed} bots to the new name format", flush=True)
+
+MIN_HAND_INTERVAL = 0.8 # 같은 사람이 받아들여진 손을 낸 뒤 다음 손을 낼 수 있기까지의 최소 시간(초)
+
+# 사용자 이름 검사
+NAME_MAX_LENGTH = 32
+# 주소·쿼리·HTML 등에서 다르게 해석될 수 있는 글자
+NAME_FORBIDDEN_CHARS = set("&#%+?=/\\'\"`<>;")
+# 제어 문자, 보이지 않는 서식 문자, 사용자 정의 문자, 줄·문단 구분자
+NAME_FORBIDDEN_CATEGORIES = {"Cc", "Cf", "Co", "Cs", "Zl", "Zp"}
+# 봇 이름 형식(새 형식 "S-0001-bot", 옛 형식 "S-1676609745-962277"). 대소문자, 숫자 길이와 관계없이 막는다.
+NAME_BOT_RE = re.compile(r'^[SD]-[0-9]+-(bot|[0-9]+)$', re.IGNORECASE)
+
+def check_name(name: str):
+    # 사용할 수 없는 이름이면 오류 메시지를, 사용할 수 있으면 None을 반환
+    if name is None or name.strip() == "":
+        return "Name is required."
+    if len(name) > NAME_MAX_LENGTH:
+        return "Name must be no more than 32 characters long."
+    if name != name.strip():
+        return "Name cannot start or end with a space."
+    for ch in name:
+        if ch in NAME_FORBIDDEN_CHARS or unicodedata.category(ch) in NAME_FORBIDDEN_CATEGORIES:
+            return "Name contains characters that cannot be used."
+    if NAME_BOT_RE.match(name):
+        return "This name cannot be used."
+    return None
 
 try:
     SECRET_KEY = os.environ["RPS_SECRET"]
@@ -321,10 +356,13 @@ class HandManager:
         # 사용법:
         # schemas.HandEnum(self.active_rooms[room_id][person_id]) = (last_hand, last_score_gain)
         self.active_rooms: Dict[int, Dict[int, Tuple[int, int]]] = {}
+        # self.last_hand_time[room_id][person_id] = 마지막으로 받아들여진 손의 시각(time.monotonic())
+        self.last_hand_time: Dict[int, Dict[int, float]] = {}
 
     def initialize_for_room(self, room_id: int, person_ids: List[int]):
         # 방에서 게임이 시작될 때 호출해주어야 함
         self.active_rooms[room_id] = {}
+        self.last_hand_time[room_id] = {}
         for p in person_ids:
             self.active_rooms[room_id][p] = (-1, 0)
 
@@ -354,10 +392,17 @@ class HandManager:
     def update_last_hand(self, room_id: int, person_id: int, last_hand: int, last_score_gain: int):
         if last_hand in iter(schemas.HandEnum) and room_id in self.active_rooms and self.active_rooms[room_id] is not None:
             self.active_rooms[room_id][person_id] = (last_hand, last_score_gain)
+            self.last_hand_time.setdefault(room_id, {})[person_id] = time.monotonic()
+
+    def seconds_since_last_hand(self, room_id: int, person_id: int):
+        # 마지막으로 받아들여진 손 이후 지난 시간(초). 낸 적이 없으면 무한대
+        t = self.last_hand_time.get(room_id, {}).get(person_id)
+        return float("inf") if t is None else time.monotonic() - t
 
     def end_for_room(self, room_id: int):
         # 방에서 게임이 종료될 때 데이터 삭제
         self.active_rooms.pop(room_id, None)
+        self.last_hand_time.pop(room_id, None)
 
 cManager = ConnectionManager()
 bManager = BotManager()         # bManager는 lock과 함께 사용 -> lock은 없어도 됨
@@ -372,9 +417,10 @@ event_loop_for_periodic_manager = asyncio.new_event_loop()
 async def websocket_endpoint(websocket: WebSocket, name: str, token: str, db: Session = Depends(get_db)):
     await get_current_auth_websocket(websocket, token)
 
-    if name is None or name == "":
+    name_error = check_name(name)
+    if name_error is not None:
         await websocket.accept()
-        await ConnectionManager.send_text("signin", "error", "Name is required.", websocket)
+        await ConnectionManager.send_text("signin", "error", name_error, websocket)
         await websocket.close()
         return
     
@@ -1156,6 +1202,11 @@ async def after_signin(websocket: WebSocket, person_id: int, db: Session = Depen
             hand = data.get("hand", -1)
             if hand not in iter(schemas.HandEnum):
                 await ConnectionManager.send_text("hand", "error", "Bad request: hand", websocket)
+                continue
+
+            # 같은 사람이 너무 짧은 간격으로 손을 내는 것을 막음
+            if hManager.seconds_since_last_hand(room_id, person_id) < MIN_HAND_INTERVAL:
+                await ConnectionManager.send_text("hand", "error", "Too fast.", websocket)
                 continue
 
             #lock.acquire()
