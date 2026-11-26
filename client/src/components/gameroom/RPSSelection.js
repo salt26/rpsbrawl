@@ -12,7 +12,7 @@ import { COOL_TIME } from "../../Constants";
 import { GradientText } from "../../styles/font";
 import { isMobile } from "react-device-detect";
 
-function RPSSelection({ lastHand }) {
+function RPSSelection({ lastHand, rejectCount }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
 
   const { room_id } = useParams();
@@ -42,8 +42,38 @@ function RPSSelection({ lastHand }) {
     return () => clearInterval(id);
   }, [coolTime]);
 
+  // 한 손 제한에 걸려 서버가 받지 않은 손은 쿨타임 없이 바로 다시 낼 수 있게
+  useEffect(() => {
+    if (rejectCount) setCoolTime(false);
+  }, [rejectCount]);
+
+  // 길게 눌렀을 때 컨텍스트 메뉴·드래그·선택이 일어나지 않게
+  const noMenu = {
+    draggable: false,
+    onContextMenu: (e) => e.preventDefault(),
+  };
+
+  // 손 버튼 입력. 터치는 길게 눌렀다 떼도 입력되도록 손가락을 떼는 순간에 처리하고,
+  // 손가락이 버튼 밖에서 떨어지면 취소한다. 마우스는 click으로 처리한다.
+  const handProps = (hand) => ({
+    ...noMenu,
+    onClick: () => {
+      if (!coolTime) _addHand(hand);
+    },
+    onTouchEnd: (e) => {
+      e.preventDefault(); // 뒤따르는 click으로 두 번 입력되지 않게
+      const t = e.changedTouches[0];
+      const target = t && document.elementFromPoint(t.clientX, t.clientY);
+      if (!coolTime && e.currentTarget.contains(target)) _addHand(hand);
+    },
+  });
+
   const selectImgStyle = {
     height: isMobile ? "10vh" : "100px",
+    WebkitTouchCallout: "none",
+    WebkitUserSelect: "none",
+    userSelect: "none",
+    touchAction: "none", // 버튼 위에서는 스크롤·확대 제스처가 입력을 가로채지 않게
   };
   return (
     <div
@@ -57,39 +87,37 @@ function RPSSelection({ lastHand }) {
     >
       <img
         src={rpsDic[lastHand]}
+        {...noMenu}
         style={{
           height: isMobile ? "30vh" : "auto",
           width: isMobile ? "auto" : "50%",
+          WebkitTouchCallout: "none",
+          WebkitUserSelect: "none",
+          userSelect: "none",
         }}
       />
       <Row>
         <ImgBox coolTime={coolTime}>
           <img
             src={RockSrc}
+            {...handProps(0)}
             style={selectImgStyle}
-            onClick={() => {
-              if (!coolTime) _addHand(0);
-            }}
           />
         </ImgBox>
 
         <ImgBox coolTime={coolTime}>
           <img
             src={ScissorSrc}
+            {...handProps(1)}
             style={selectImgStyle}
-            onClick={() => {
-              if (!coolTime) _addHand(1);
-            }}
           />
         </ImgBox>
         <ImgBox coolTime={coolTime}>
           {" "}
           <img
             src={PaperSrc}
+            {...handProps(2)}
             style={selectImgStyle}
-            onClick={() => {
-              if (!coolTime) _addHand(2);
-            }}
           />
         </ImgBox>
       </Row>
@@ -122,16 +150,14 @@ const ImgBox = styled.div`
   justify-content: center;
   align-items: center;
 
+  transition: filter 0.15s;
+
   ${({ coolTime }) => {
     if (coolTime) {
-      // 쿨타임이 있으면
-      css`
-        filter: alpha(opacity=40);
-        opacity: 0.4;
-        -moz-opacity: 0.4;
-        background: rgba(217, 217, 217, 72) repeat;
-        pointer-events: "none";
-        cursor: none;
+      // 쿨타임이 있으면 살짝 어둡게, 누를 수 없게
+      return css`
+        filter: brightness(0.6);
+        pointer-events: none;
       `;
     } else {
       //쿨타임이 없으면

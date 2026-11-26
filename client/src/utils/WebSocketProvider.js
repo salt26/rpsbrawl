@@ -36,7 +36,7 @@ export const WebsocketProvider = ({ children }) => {
       const token = localStorage.getItem("access_token");
 
       const socket = new WebSocket(
-        `${process.env.REACT_APP_RPS_BASE_WEBSOCKET_URL}/signin?name=${name}&token=${token}`
+        `${process.env.REACT_APP_RPS_BASE_WEBSOCKET_URL}/signin?name=${encodeURIComponent(name)}&token=${token}`
       );
 
       // 페이지마다 onmessage를 바꿔 끼우므로, 시각 동기화는 별도 리스너로 처리

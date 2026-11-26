@@ -23,6 +23,7 @@ import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
 
 import qs from "qs";
+import { getNameError } from "../utils/NameRule";
 function RuleBox() {
   const mode = useContext(LanguageContext);
   return (
@@ -52,12 +53,9 @@ function LoginBox() {
   const [isLoading, setIsLoading] = useState(false); // 버튼 클릭 후 처리 중인지
 
   const _joinGame = async () => {
-    if (name === "") {
-      alert(Language[mode].name_blank);
-      return;
-    }
-    if (name.length > 32) {
-      alert(Language[mode].name_long);
+    const nameError = getNameError(name);
+    if (nameError) {
+      alert(Language[mode][nameError]);
       return;
     }
 
@@ -238,13 +236,24 @@ const Container = styled.div`
   flex-direction: column;
 
   width: 100%;
-  height: 100%;
   padding-bottom: 3%;
 
   align-items: center;
 
-  height: 100vh;
+  // 높이를 고정하면 넘친 위쪽(로고)이 잘리므로 최소 높이만 둔다
+  min-height: 100vh;
   justify-content: center;
+
+  // 화면이 낮으면 요소를 찌그러뜨리지 않고 아래로 스크롤되게
+  & > * {
+    flex-shrink: 0;
+  }
+
+  // 화면 높이에 맞춰 로고 크기를 줄인다
+  & > :nth-child(2) img {
+    max-height: 28vh;
+    object-fit: contain;
+  }
 `;
 
 const Row = styled.div`

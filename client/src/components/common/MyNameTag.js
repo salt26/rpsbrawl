@@ -49,11 +49,11 @@ const Container = styled.div`
         right: 10%;
         bottom: 5%;
       }
-      @media (min-width: 1200px) {
-        // 데스크탑 일반
+      @media (min-width: 768px) {
+        // 데스크탑: 오른쪽 위는 배경음 버튼 자리라 아래에 둔다
         position: absolute;
-        left: 80%;
-        top: 5%;
+        right: 3%;
+        bottom: 5%;
       }
     `};
 

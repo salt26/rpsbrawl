@@ -23,6 +23,7 @@ import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
 import axios from "axios";
 import qs from "qs";
+import { getNameError } from "../utils/NameRule";
 
 function Tabs({ currentTab, setCurrentTab }) {
   const mode = useContext(LanguageContext);
@@ -117,12 +118,9 @@ function LoginBox() {
   const [isLoading, setIsLoading] = useState(false); // 버튼 클릭 후 처리 중인지
 
   const _joinGame = async () => {
-    if (name === "") {
-      alert(Language[mode].name_blank);
-      return;
-    }
-    if (name.length > 32) {
-      alert(Language[mode].name_long);
+    const nameError = getNameError(name);
+    if (nameError) {
+      alert(Language[mode][nameError]);
       return;
     }
     if (!isLoading) {
@@ -302,13 +300,25 @@ const Container = styled.div`
   flex-direction: column;
 
   width: 100%;
-  height: 100%;
+  min-height: 100%; // 높이를 고정하면 넘친 내용이 잘리므로 최소 높이만 둔다
+  padding-top: 24px; // 위 SizedBox와 합쳐 음악·언어 버튼 아래에서 시작
   padding-bottom: 50px;
   overflow-x: clip; // 로고 이미지의 투명한 양옆이 화면 폭을 넓히지 않도록
 
   align-items: center;
 
   justify-content: space-between;
+
+  // 화면이 낮으면 요소를 찌그러뜨리지 않고 아래로 스크롤되게
+  & > * {
+    flex-shrink: 0;
+  }
+
+  // 화면 높이에 맞춰 로고 크기를 줄인다
+  & > :nth-child(2) img {
+    max-height: 22vh;
+    object-fit: contain;
+  }
 `;
 
 const Row = styled.div`
