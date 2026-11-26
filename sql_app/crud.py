@@ -580,6 +580,14 @@ def create_hand(db: Session, room_id: int, person_id: int, hand: schemas.HandEnu
 
     return (schemas.Hand.from_orm(hands), 0)
 
+def save_hands(db: Session, items: list):
+    # 메모리에서 이미 검사와 점수 계산을 마친 손들을 한 번의 커밋으로 저장 (main.py의 HandWriter가 호출)
+    # items: [(room_id, person_id, hand, time, score), ...] (낸 순서대로)
+    for room_id, person_id, hand, time, score in items:
+        db.add(models.Hand(room_id=room_id, person_id=person_id, hand=schemas.HandEnum(hand), time=time, score=score))
+        update_game(db, room_id=room_id, person_id=person_id, score=score)
+    db.commit()
+
 def get_game(db: Session, room_id: int, person_id: int):
     game = db.query(models.Game).filter(and_(models.Game.room_id == room_id, \
         models.Game.person_id == person_id)).first()
@@ -672,7 +680,7 @@ def get_games_in_room(db: Session, room_id: int, only_human: bool):
 def get_games_with_person(db: Session, room_id: int):
     # 해당 방의 모든 사람(봇 포함)의 전적을 이름, 봇 여부와 함께 한 번의 쿼리로 반환
     return db.query(models.Game.team, models.Game.is_host, models.Game.score, models.Game.win, models.Game.draw, models.Game.lose, \
-        models.Game.room_id, models.Person.name, models.Person.is_human) \
+        models.Game.room_id, models.Game.person_id, models.Person.name, models.Person.is_human) \
         .join(models.Person, models.Person.id == models.Game.person_id) \
         .filter(models.Game.room_id == room_id) \
         .order_by(models.Game.person_id).all()
