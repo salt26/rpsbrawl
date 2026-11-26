@@ -1,10 +1,31 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Outlet, Navigate } from "react-router-dom";
 import { getIsLogin, getUserName } from "./User";
 import { Language } from "../db/Language";
 import { LanguageContext } from "../utils/LanguageProvider";
+import { Medium } from "../styles/font";
 
 import { WebsocketContext } from "./WebSocketProvider";
+
+// "재접속 중" 뒤의 점이 0.3초마다 . → .. → ... 순서로 반복됨
+const ReconnectingMessage = ({ mode }) => {
+  const [dots, setDots] = useState(1);
+
+  useEffect(() => {
+    const timer = setInterval(() => setDots((d) => (d % 3) + 1), 300);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <Medium size="40px" color="white" shadow>
+      {Language[mode].reconnecting.replace(/\.+$/, "")}
+      {/* 점 개수가 바뀌어도 문구가 흔들리지 않도록 너비 고정 */}
+      <span style={{ display: "inline-block", width: "1.2em", textAlign: "left" }}>
+        {".".repeat(dots)}
+      </span>
+    </Medium>
+  );
+};
 
 // 로그인 유저만 접근 가능
 // 비로그인 유저 접근 불가
@@ -32,11 +53,9 @@ const PrivateRoute = () => {
           justifyContent: "center",
           width: "100%",
           height: "100vh",
-          color: "white",
-          fontSize: "28px",
         }}
       >
-        {Language[mode].reconnecting}
+        <ReconnectingMessage mode={mode} />
       </div>
     );
   }
