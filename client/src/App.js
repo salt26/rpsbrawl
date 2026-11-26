@@ -72,7 +72,8 @@ function App() {
     basicAudio.current.pause();
   };
 
-  const audioIconShow = pathname === "/" || params[3] === "waiting";
+  const audioIconShow =
+    pathname === "/" || pathname === "/rooms" || params[3] === "waiting";
 
   const musicIconStyle = {
     cursor: "pointer",
@@ -80,12 +81,11 @@ function App() {
     top: "3%",
     right: "2%",
   };
-  const mobileMusicIconStyle = {
-    cursor: "pointer",
-    position: "absolute",
-    top: "3%",
-    left: "8%",
-  };
+  // 방 목록은 왼쪽 위에 뒤로 가기 버튼이 있어 오른쪽 위에 둔다
+  const mobileMusicIconStyle =
+    pathname === "/rooms"
+      ? { cursor: "pointer", position: "absolute", top: "3%", right: "8%" }
+      : { cursor: "pointer", position: "absolute", top: "3%", left: "8%" };
 
   return (
     <LanguageContext.Provider value={mode}>

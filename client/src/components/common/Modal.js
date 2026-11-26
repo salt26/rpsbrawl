@@ -45,13 +45,10 @@ class Modal extends Component {
 export default Modal;
 
 const Overlay = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  // 스크롤이나 주소창 높이 변화와 관계없이 보이는 화면 전체를 덮는다
+  position: fixed;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.3);
-  width: 100vw;
-  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -40,6 +40,7 @@ export default function MobileInGameScreen() {
   const [roomInfo, setRoomInfo] = useState(state["room"]);
   const [msg, setMsg] = useState("");
   const [showTime, setShowTime] = useState(false);
+  const [rejectCount, setRejectCount] = useState(0); // 한 손 제한으로 거절된 횟수
   const preventGoBack = () => {
     setMsg(Language[mode].quit_warning_text);
     setShowTime(true);
@@ -147,6 +148,7 @@ export default function MobileInGameScreen() {
           ) {
             setMsg(Language[mode].limited_text);
             setShowTime(true);
+            setRejectCount((n) => n + 1); // 손 버튼 쿨타임 해제
             return;
           }
         }
@@ -221,7 +223,7 @@ export default function MobileInGameScreen() {
           <FirstPlace place={firstPlace.current} />
           <MyPlace place={myPlace.current} />
         </Row>
-        <RPSSelection lastHand={lastHand.current} />
+        <RPSSelection lastHand={lastHand.current} rejectCount={rejectCount} />
         <ScoreContainer scoreTime={scoreTime}>
           {lastScore >= 0 ? (
             lastScore === 0 ? (

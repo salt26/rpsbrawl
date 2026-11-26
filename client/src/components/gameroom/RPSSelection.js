@@ -12,7 +12,7 @@ import { COOL_TIME } from "../../Constants";
 import { GradientText } from "../../styles/font";
 import { isMobile } from "react-device-detect";
 
-function RPSSelection({ lastHand }) {
+function RPSSelection({ lastHand, rejectCount }) {
   var rpsDic = { 0: RockSrc, 1: ScissorSrc, 2: PaperSrc };
 
   const { room_id } = useParams();
@@ -42,8 +42,22 @@ function RPSSelection({ lastHand }) {
     return () => clearInterval(id);
   }, [coolTime]);
 
+  // 한 손 제한에 걸려 서버가 받지 않은 손은 쿨타임 없이 바로 다시 낼 수 있게
+  useEffect(() => {
+    if (rejectCount) setCoolTime(false);
+  }, [rejectCount]);
+
+  // 길게 눌렀을 때 컨텍스트 메뉴·드래그·선택이 일어나지 않게
+  const noMenu = {
+    draggable: false,
+    onContextMenu: (e) => e.preventDefault(),
+  };
+
   const selectImgStyle = {
     height: isMobile ? "10vh" : "100px",
+    WebkitTouchCallout: "none",
+    WebkitUserSelect: "none",
+    userSelect: "none",
   };
   return (
     <div
@@ -57,15 +71,20 @@ function RPSSelection({ lastHand }) {
     >
       <img
         src={rpsDic[lastHand]}
+        {...noMenu}
         style={{
           height: isMobile ? "30vh" : "auto",
           width: isMobile ? "auto" : "50%",
+          WebkitTouchCallout: "none",
+          WebkitUserSelect: "none",
+          userSelect: "none",
         }}
       />
       <Row>
         <ImgBox coolTime={coolTime}>
           <img
             src={RockSrc}
+            {...noMenu}
             style={selectImgStyle}
             onClick={() => {
               if (!coolTime) _addHand(0);
@@ -76,6 +95,7 @@ function RPSSelection({ lastHand }) {
         <ImgBox coolTime={coolTime}>
           <img
             src={ScissorSrc}
+            {...noMenu}
             style={selectImgStyle}
             onClick={() => {
               if (!coolTime) _addHand(1);
@@ -86,6 +106,7 @@ function RPSSelection({ lastHand }) {
           {" "}
           <img
             src={PaperSrc}
+            {...noMenu}
             style={selectImgStyle}
             onClick={() => {
               if (!coolTime) _addHand(2);
@@ -122,16 +143,14 @@ const ImgBox = styled.div`
   justify-content: center;
   align-items: center;
 
+  transition: filter 0.15s;
+
   ${({ coolTime }) => {
     if (coolTime) {
-      // 쿨타임이 있으면
-      css`
-        filter: alpha(opacity=40);
-        opacity: 0.4;
-        -moz-opacity: 0.4;
-        background: rgba(217, 217, 217, 72) repeat;
-        pointer-events: "none";
-        cursor: none;
+      // 쿨타임이 있으면 살짝 어둡게, 누를 수 없게
+      return css`
+        filter: brightness(0.6);
+        pointer-events: none;
       `;
     } else {
       //쿨타임이 없으면

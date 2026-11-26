@@ -41,6 +41,7 @@ export default function InGamePage() {
   const [roomInfo, setRoomInfo] = useState(state["room"]);
   const [msg, setMsg] = useState("");
   const [showTime, setShowTime] = useState(false);
+  const [rejectCount, setRejectCount] = useState(0); // 한 손 제한으로 거절된 횟수
   const [scoreTime, setScoreTime] = useState(false); //스코어 점수
 
   const preventGoBack = () => {
@@ -151,6 +152,7 @@ export default function InGamePage() {
           ) {
             setMsg(Language[mode].limited_text);
             setShowTime(true);
+            setRejectCount((n) => n + 1); // 손 버튼 쿨타임 해제
             return;
           }
 
@@ -223,7 +225,7 @@ export default function InGamePage() {
 
         <Left>
           <TimeBar roomInfo={roomInfo} />
-          <RPSSelection lastHand={lastHand.current} />
+          <RPSSelection lastHand={lastHand.current} rejectCount={rejectCount} />
           <ScoreContainer scoreTime={scoreTime}>
             {lastScore >= 0 ? (
               lastScore === 0 ? (
