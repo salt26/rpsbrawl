@@ -21,8 +21,6 @@ import { Language } from "../db/Language";
 
 import { WebsocketContext } from "../utils/WebSocketProvider";
 import { useMediaQuery } from "react-responsive";
-import axios from "axios";
-import qs from "qs";
 import { getNameError } from "../utils/NameRule";
 
 function Tabs({ currentTab, setCurrentTab }) {
@@ -114,7 +112,7 @@ function LoginBox() {
 
   var navigate = useNavigate();
   const mode = useContext(LanguageContext);
-  const [createWebSocketConnection, ready, ws] = useContext(WebsocketContext); //전역 소켓 사용
+  const [createWebSocketConnection, ready, ws, signIn] = useContext(WebsocketContext); //전역 소켓 사용
   const [isLoading, setIsLoading] = useState(false); // 버튼 클릭 후 처리 중인지
 
   const _joinGame = async () => {
@@ -126,31 +124,9 @@ function LoginBox() {
     if (!isLoading) {
       setIsLoading(true);
       console.log("요청!");
-      var body = {
-        grant_type: "",
-        username: process.env.REACT_APP_RPS_USERNAME,
-        password: process.env.REACT_APP_RPS_PASSWORD,
-        scope: "",
-        client_id: "",
-        client_secret: "",
-      };
-
       try {
-        /*비동기 요청*/
-        const response = await axios.post(
-          `${process.env.REACT_APP_RPS_BASE_SERVER_URL}/token`,
-          qs.stringify(body),
-          {
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              Accept: "application/json",
-            },
-          }
-        );
-
-        localStorage.setItem("access_token", response.data.access_token);
-
-        await createWebSocketConnection(name, setIsLoading); // Socket Connection 생성
+        // 토큰 요청과 웹소켓 연결 (WebSocketProvider의 signIn)
+        await signIn(name, setIsLoading);
       } catch (error) {
         console.log(error);
       } finally {
